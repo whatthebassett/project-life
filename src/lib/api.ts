@@ -1,4 +1,6 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
+import { emit, listen } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 // Typed wrappers around the Rust commands in src-tauri/src/lib.rs.
 //
@@ -55,6 +57,27 @@ export async function writeData(name: DataFile, contents: string): Promise<void>
     return;
   }
   await invoke("write_data", { name, contents });
+}
+
+// Another window saved a data file (Tasks popped out saves tasks.json, and the
+// main window reloads it, and the other way round).
+const DATA_CHANGED = "data:changed";
+
+function windowLabel(): string {
+  return inTauri ? getCurrentWindow().label : "browser";
+}
+
+export function announceData(name: DataFile | "settings.json"): void {
+  if (!inTauri) return;
+  void emit(DATA_CHANGED, { name, from: windowLabel() }).catch(() => {});
+}
+
+export function onDataChanged(name: DataFile | "settings.json", reload: () => void): void {
+  if (!inTauri) return;
+  const me = windowLabel();
+  void listen<{ name?: string; from?: string }>(DATA_CHANGED, (e) => {
+    if (e.payload?.name === name && e.payload.from !== me) reload();
+  });
 }
 
 // Text from a public web address (feeds, weather), fetched by Rust so there's
@@ -183,3 +206,25 @@ const lookalikes: Record<string, string> = {
   "∣": "|",
 };
 export const titleOf = (name: string) => name.replace(/\.md$/i, "").replace(/[∕⧵꞉∗？＂＜＞∣]/g, (c) => lookalikes[c]);
+
+// Files attached to tasks, copied into Data\Attachments (attachments.rs).
+export interface Attached {
+  path: string;
+  name: string;
+  size: number;
+}
+
+export async function attachFile(task: string, source: string): Promise<Attached> {
+  if (!inTauri) throw new Error("Attachments work in the Project Life app.");
+  return invoke<Attached>("attach_file", { task, source });
+}
+
+export async function openAttachment(path: string): Promise<void> {
+  if (!inTauri) return;
+  await invoke("open_attachment", { path });
+}
+
+export async function removeAttachment(path: string): Promise<void> {
+  if (!inTauri) return;
+  await invoke("remove_attachment", { path });
+}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import clsx from "clsx";
 import { Ellipsis, Pin, Share } from "lucide-react";
 import { api, titleOf } from "../lib/api";
@@ -16,6 +16,15 @@ import { SegmentedControl } from "../ui/SegmentedControl";
 import NotesSidebar from "./NotesSidebar";
 import { useNotes } from "./NotesContext";
 import { headingsOf, todoCount, wordCount } from "./outline";
+import { todoLinksFor } from "./todoLinks";
+import { useNow } from "../lib/dates";
+import { occurrences } from "../schedule/events";
+import { shortTime } from "../schedule/look";
+import { requestSchedule } from "../schedule/nav";
+import { useEvents } from "../schedule/useEvents";
+import { requestTasks } from "../tasks/nav";
+import { useTasks } from "../tasks/useTasks";
+import { Icon } from "../ui/icons";
 
 // The Notes screen (Notes.dc.html): the notebook, then tabs, the note's bar,
 // the page and a status line, then On this page and Details on the right.
@@ -229,6 +238,9 @@ function Page() {
   }, [nb, name]);
   const priority = (lookup(nb.tags.Priorities, name) ?? 0) as PriorityValue;
   const caret: CaretConfig = { width: 2, rainbow: false, blinkMs: 530 };
+  const { tasks } = useTasks();
+  const now = useNow();
+  const todoLinks = useMemo(() => todoLinksFor(tasks, name, now), [tasks, name, now]);
 
   if (!n.loaded) return <div className="min-h-0 flex-1" />;
 
@@ -284,6 +296,9 @@ function Page() {
           onEmoji={n.openEmoji}
           onEditor={n.onVisualEditor}
           linkPreviews={settings.LinkPreviews !== false}
+          todoLinks={todoLinks}
+          onOpenTodo={(id) => requestTasks({ kind: "open", id })}
+          todoMenu={n.todoMenu}
           spot={spotFor(n.editing, "visual")}
           onSpot={(spot: EditorSpot) => n.editing && rememberSpot(n.editing, "visual", spot)}
         />
@@ -313,7 +328,8 @@ function StatusBar() {
   );
 }
 
-// On this page, then Details (Linked in Project Life arrives with Tasks).
+// On this page, Linked in Project Life (to-dos sent to Tasks, and time on
+// the schedule), then Details.
 function RightPanel() {
   const n = useNotes();
   const [folder, setFolder] = useState("");
@@ -324,6 +340,19 @@ function RightPanel() {
   const words = useMemo(() => wordCount(body), [body]);
   const info = n.notes.find((x) => x.name === n.current);
   const panel = useRef<HTMLElement>(null);
+  const { tasks } = useTasks();
+  const { events } = useEvents();
+  const now = useNow();
+  const sent = tasks.filter((t) => t.Note === n.current && t.NoteTodo);
+  const openSent = sent.filter((t) => !t.Completed);
+  const linkedHere = tasks.filter((t) => t.Note === n.current && !t.NoteTodo && !t.Completed);
+  // The next showing of each event linked to this note.
+  const eventsHere = useMemo(() => {
+    const linked = events.filter((e) => e.Note === n.current);
+    if (!linked.length) return [];
+    const seen = new Set<string>();
+    return occurrences(linked, now, new Date(now.getTime() + 60 * 86_400_000)).filter((o) => !seen.has(o.event.Id) && Boolean(seen.add(o.event.Id)));
+  }, [events, n.current, now]);
 
   useEffect(() => {
     void api
@@ -381,6 +410,50 @@ function RightPanel() {
         {headings.length === 0 && <span className="px-3 text-12 leading-[1.5] text-muted">Headings you add show up here. Type # and a space to make one.</span>}
       </div>
 
+      {(sent.length > 0 || linkedHere.length > 0 || eventsHere.length > 0) && (
+        <div className="flex flex-col gap-[10px]">
+          <SectionLabel>Linked in Project Life</SectionLabel>
+          <div className="flex flex-col gap-[10px] rounded-[16px] border border-line bg-panel p-3.5">
+            {eventsHere.slice(0, 3).map((o, i) => (
+              <Fragment key={o.key}>
+                {i > 0 && <div className="h-px bg-line" />}
+                <LinkedRow
+                  icon={<Icon name="schedule" size={16} stroke={2} />}
+                  tone="accent"
+                  title={o.event.Title}
+                  sub={`${o.start.toDateString() === now.toDateString() ? "Today" : o.start.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} · ${shortTime(o.start)}`}
+                  onClick={() => requestSchedule({ kind: "open", id: o.event.Id, day: o.day })}
+                />
+              </Fragment>
+            ))}
+            {sent.length > 0 && (
+              <>
+                {eventsHere.length > 0 && <div className="h-px bg-line" />}
+                <LinkedRow
+                  icon={<Icon name="tasks" size={16} stroke={2} />}
+                  tone="accent2"
+                  title={openSent.length ? `${openSent.length} ${openSent.length === 1 ? "to-do" : "to-dos"} sent to Tasks` : `${sent.length} sent to Tasks, all done`}
+                  sub="Due dates read from the text"
+                  onClick={() => requestTasks({ kind: "open", id: (openSent[0] ?? sent[0]).Id })}
+                />
+              </>
+            )}
+            {linkedHere.length > 0 && (
+              <>
+                {(eventsHere.length > 0 || sent.length > 0) && <div className="h-px bg-line" />}
+                <LinkedRow
+                  icon={<Icon name="tasks" size={16} stroke={2} />}
+                  tone="accent2"
+                  title={linkedHere.length === 1 ? linkedHere[0].Title : `${linkedHere.length} tasks link here`}
+                  sub={linkedHere.length === 1 ? "Task linked to this note" : "Tasks linked to this note"}
+                  onClick={() => requestTasks({ kind: "open", id: linkedHere[0].Id })}
+                />
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-[10px]">
         <SectionLabel>Details</SectionLabel>
         <div className="grid grid-cols-2 gap-[10px]">
@@ -397,6 +470,18 @@ function RightPanel() {
         </div>
       </div>
     </aside>
+  );
+}
+
+function LinkedRow({ icon, tone, title, sub, onClick }: { icon: React.ReactNode; tone: "accent" | "accent2"; title: string; sub: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="flex items-center gap-3 rounded-[10px] text-left hover:opacity-90">
+      <span className={clsx("flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px]", tone === "accent" ? "bg-accent-soft text-accent" : "bg-panel2 text-accent2")}>{icon}</span>
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="truncate text-13 font-medium">{title}</span>
+        <span className="truncate text-12 text-muted">{sub}</span>
+      </span>
+    </button>
   );
 }
 

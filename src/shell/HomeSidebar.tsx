@@ -1,5 +1,7 @@
 import clsx from "clsx";
 import { useTodayOpenCount } from "../home/useHome";
+import { requestTasks } from "../tasks/nav";
+import { useTasks } from "../tasks/useTasks";
 import { useSettings } from "../lib/SettingsContext";
 import { themeFor, themes } from "../lib/themes";
 import { Icon } from "../ui/icons";
@@ -12,13 +14,8 @@ interface Props {
   onSettings: () => void;
 }
 
-// The default spaces (DESIGN.md §2, calendars and lists). They become real
-// lists with Tasks and Schedule.
-const spaces = [
-  { name: "Personal", color: "var(--accent)" },
-  { name: "Stream & YouTube", color: "var(--accent2)" },
-  { name: "Checkpoint", color: "var(--warn)" },
-];
+// Spaces are your task lists (DESIGN.md §2); a click opens one in Tasks.
+const MAX_SPACES = 6;
 
 // Home's full 240px sidebar (Main.dc.html): nav, spaces, the theme picker and
 // the profile.
@@ -26,6 +23,7 @@ export default function HomeSidebar({ screen, onNavigate, onSettings }: Props) {
   const { settings, update } = useSettings();
   // Today's open tasks, beside Tasks.
   const taskCount = useTodayOpenCount();
+  const { lists } = useTasks();
   const current = themeFor(settings.Theme);
 
   return (
@@ -68,11 +66,15 @@ export default function HomeSidebar({ screen, onNavigate, onSettings }: Props) {
 
       <div className="flex flex-col gap-1.5">
         <SectionLabel className="px-3 pb-1.5">Spaces</SectionLabel>
-        {spaces.map((s) => (
-          <div key={s.name} className="flex h-[38px] items-center gap-3 rounded-[10px] px-3 text-14 text-muted">
-            <span className="h-[9px] w-[9px] rounded-[3px]" style={{ background: s.color }} />
-            {s.name}
-          </div>
+        {lists.slice(0, MAX_SPACES).map((l) => (
+          <button
+            key={l.Id}
+            onClick={() => requestTasks({ kind: "list", id: l.Id })}
+            className="flex h-[38px] items-center gap-3 rounded-[10px] px-3 text-left text-14 text-muted hover:bg-panel hover:text-text"
+          >
+            <span className="h-[9px] w-[9px] shrink-0 rounded-[3px]" style={{ background: `var(--${l.Color})` }} />
+            <span className="truncate">{l.Name}</span>
+          </button>
         ))}
       </div>
 

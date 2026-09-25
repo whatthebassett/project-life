@@ -46,6 +46,7 @@ import { NotedImage, insertDataImages, insertImageFiles } from "../editor/images
 import { NotedCodeBlock } from "../editor/code";
 import { NotedUnderline } from "../editor/underline";
 import { Caret, type CaretConfig } from "../editor/caret";
+import { TaskLinks, taskLinksKey, todoText, type TodoLink } from "../editor/taskLinks";
 import { formatting } from "../editor/formatting";
 import { formattingDefaults, keyOf } from "../lib/shortcuts";
 import { EmojiSuggest, type EmojiSuggestState } from "../editor/emoji";
@@ -82,11 +83,30 @@ interface Props {
   // where they are now as they change.
   spot?: EditorSpot;
   onSpot?: (spot: EditorSpot) => void;
+  // For a toolbar outside the editor (the task pop-up's): the link dialog and
+  // the picture picker.
+  commands?: React.RefObject<EditorCommands | null>;
+  // To-dos sent to Tasks: their chips, what a chip opens, and what
+  // right-clicking a to-do offers (Send to Tasks).
+  todoLinks?: Map<string, TodoLink>;
+  onOpenTodo?: (taskId: string) => void;
+  todoMenu?: (todo: { text: string; checked: boolean }) => MenuItem[];
+}
+
+export interface EditorCommands {
+  link: () => void;
+  image: () => void;
 }
 
 // The formatted editor. Mount it with a key per note: it takes the note's
 // Markdown once and reports Markdown back on every change.
-export default function VisualEditor({ initial, readable, caret, keys, keyFor, onChange, openMenu, onEmoji, onEditor, header, linkPreviews, spot, onSpot }: Props) {
+export default function VisualEditor({ initial, readable, caret, keys, keyFor, onChange, openMenu, onEmoji, onEditor, header, linkPreviews, spot, onSpot, commands, todoLinks, onOpenTodo, todoMenu }: Props) {
+  const todoLinksRef = useRef(todoLinks);
+  todoLinksRef.current = todoLinks;
+  const onOpenTodoRef = useRef(onOpenTodo);
+  onOpenTodoRef.current = onOpenTodo;
+  const todoMenuRef = useRef(todoMenu);
+  todoMenuRef.current = todoMenu;
   const [slash, setSlash] = useState<SlashState | null>(null);
   const [emoji, setEmoji] = useState<EmojiSuggestState | null>(null);
   const [linkDialog, setLinkDialog] = useState<{ href: string } | null>(null);
@@ -168,6 +188,7 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
         onDate: () => openDatePicker(),
         onEmoji: () => onEmojiRef.current(),
       }),
+      TaskLinks.configure({ links: () => todoLinksRef.current ?? new Map(), open: (id) => onOpenTodoRef.current?.(id) }),
       LinkCards.configure({ fetch: api.fetchLinkPreview, open: (url) => void openUrl(url), enabled: () => linkPreviewsRef.current }),
     ],
     content: initial,
@@ -361,11 +382,38 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
     editorRef.current.chain().focus().setImage({ src, alt: "" }).run();
   };
 
-  // Right-click inside a table gets the table menu.
+  useEffect(() => {
+    if (!commands) return;
+    commands.current = { link: openLinkDialog, image: () => void pickImage() };
+    return () => {
+      commands.current = null;
+    };
+  });
+
+  // Tasks changed: redraw the to-do chips.
+  useEffect(() => {
+    if (editor && !editor.isDestroyed) editor.view.dispatch(editor.state.tr.setMeta(taskLinksKey, true));
+  }, [editor, todoLinks]);
+
+  // Right-click inside a table gets the table menu; on a to-do, the to-do's.
   useEffect(() => {
     if (!editor) return;
     const el = editor.view.dom;
     const onContext = (e: MouseEvent) => {
+      const at = editor.view.posAtCoords({ left: e.clientX, top: e.clientY });
+      const menu = todoMenuRef.current;
+      if (at && menu) {
+        const $pos = editor.state.doc.resolve(at.pos);
+        for (let d = $pos.depth; d > 0; d--) {
+          const node = $pos.node(d);
+          if (node.type.name !== "taskItem") continue;
+          const text = todoText(node);
+          if (!text) break;
+          e.preventDefault();
+          openMenu(e.clientX, e.clientY, menu({ text, checked: Boolean(node.attrs.checked) }));
+          return;
+        }
+      }
       if (!editor.isActive("table")) return;
       e.preventDefault();
       openMenu(e.clientX, e.clientY, tableMenuItems(editor));

@@ -1291,3 +1291,53 @@ body.block-dragging * {
   background: color-mix(in srgb, var(--accent) 18%, transparent);
   box-shadow: inset 2px 0 0 var(--accent);
 }
+
+/* The task pop-up's description (TaskFull.dc.html): the notes editor, full
+   width inside its box, growing with its text instead of scrolling. */
+.task-desc .noted-editor {
+  overflow: visible;
+}
+.task-desc .noted-editor > .relative {
+  padding: 16px 22px 10px 30px;
+}
+.task-desc .ProseMirror {
+  min-height: 150px;
+  padding-bottom: 6px;
+  font-size: calc(15px * var(--text-scale));
+  line-height: 1.7;
+}
+.task-desc .ProseMirror > :last-child {
+  margin-bottom: 0;
+}
+
+/* A to-do sent to Tasks: its due day at the end of the line (Notes.dc.html),
+   from editor/taskLinks.ts. */
+.ProseMirror .todo-task-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  margin-left: 10px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  font-family: var(--font-sans, Geist, ui-sans-serif, system-ui, sans-serif);
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 500;
+  line-height: 1;
+  vertical-align: 2px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.ProseMirror .todo-task-chip:hover {
+  border-color: var(--faint);
+}
+.ProseMirror .todo-task-chip.tone-warn {
+  color: var(--warn);
+}
+.ProseMirror .todo-task-chip.tone-danger {
+  color: var(--danger);
+}

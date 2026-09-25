@@ -1,20 +1,26 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window",
-  "windows": ["main"],
+  "description": "Capability for the main window and Tasks' own window",
+  "windows": ["main", "tasks"],
   "permissions": [
     "core:default",
     "core:window:allow-show",
     "core:window:allow-set-focus",
     "core:window:allow-set-theme",
     "core:window:allow-close",
+    "core:window:allow-destroy",
     "core:window:allow-minimize",
+    "core:window:allow-unminimize",
+    "core:window:allow-is-minimized",
     "core:window:allow-toggle-maximize",
     "core:window:allow-is-maximized",
     "core:window:allow-start-dragging",
+    "core:window:allow-set-always-on-top",
+    "core:webview:allow-create-webview-window",
     "window-state:default",
     "opener:default",
-    "dialog:default"
+    "dialog:default",
+    "notification:default"
   ]
 }

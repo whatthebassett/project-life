@@ -36,6 +36,12 @@ import {
 import { flushStats, forgetStats, loadStats, onStatsChange, recordEdit, recordOpen, renameStats, statsSnapshot, type NoteStats } from "../lib/stats";
 import { flushSpots, forgetSpot, renameSpot } from "../lib/positions";
 import { splitFront, withCover, withCoverPosition } from "../lib/frontmatter";
+import { todoText } from "../editor/taskLinks";
+import { eventStore } from "../schedule/useEvents";
+import { setCompleted } from "../tasks/model";
+import { requestTasks } from "../tasks/nav";
+import { taskStore } from "../tasks/useTasks";
+import { linkedTasks, sendAllTodos, sendTodo, todosOf, withTodoChecked } from "./todoLinks";
 import { keyMap, keyOf, keysFor } from "../lib/shortcuts";
 import { initRecents, rememberEmoji, setSkinTone } from "../lib/emoji";
 import { setDefaultCodeLanguage } from "../editor/code";
@@ -127,6 +133,8 @@ interface NotesValue {
   onBodyChange: (body: string) => void;
   setCover: (src: string | null) => void;
   setCoverPosition: (pos: string | null) => void;
+  // Right-clicking a to-do in the open note: Send to Tasks, or open its task.
+  todoMenu: (todo: { text: string; checked: boolean }) => MenuItem[];
   chooseCover: () => Promise<void>;
   commitTitle: () => Promise<void>;
   focusBody: () => void;
@@ -150,6 +158,23 @@ interface NotesValue {
 }
 
 const NotesContext = createContext<NotesValue | null>(null);
+
+// The open note changed: tick or untick the tasks sent from its to-dos to
+// match.
+function syncTodosToTasks(note: string | null, markdown: string) {
+  const store = taskStore();
+  if (!note || store.unread()) return;
+  const linked = linkedTasks(store.getState().file.Tasks, note);
+  if (!linked.length) return;
+  const states = new Map(todosOf(markdown).map((t) => [t.text, t.checked]));
+  const now = new Date();
+  store.update((ts) =>
+    linked.reduce((out, t) => {
+      const checked = states.get(t.NoteTodo!);
+      return checked === undefined || checked === Boolean(t.Completed) ? out : setCompleted(out, t.Id, checked, now);
+    }, ts),
+  );
+}
 
 export function useNotes(): NotesValue {
   const v = useContext(NotesContext);
@@ -245,6 +270,7 @@ export function NotesProvider({ visible, onShow, children }: Props) {
     (markdown: string) => {
       if (markdown === textRef.current) return;
       textRef.current = markdown;
+      syncTodosToTasks(currentRef.current, markdown);
       // Keep state current too: a mode switch mounts a new editor from it.
       setText(markdown);
       dirty.current = true;
@@ -278,6 +304,68 @@ export function NotesProvider({ visible, onShow, children }: Props) {
   // Set or remove the cover, or move the picture in its frame.
   const setCover = useCallback((src: string | null) => editFront((md) => withCover(md, src)), [editFront]);
   const setCoverPosition = useCallback((pos: string | null) => editFront((md) => withCoverPosition(md, pos)), [editFront]);
+
+  // A task sent from a to-do was ticked (or unticked) in Tasks: tick the
+  // to-do. In the open note that goes through the editor, so the change shows
+  // and saves like typing would; any other note is changed on disk.
+  const setTodoChecked = useCallback(
+    async (note: string, text: string, checked: boolean) => {
+      if (note === currentRef.current) {
+        const e = settingsRef.current.EditorMode === "Markdown" ? null : visualRef.current;
+        if (!e || e.isDestroyed) return editFront((md) => withTodoChecked(md, text, checked));
+        let at = -1;
+        e.state.doc.descendants((node, pos) => {
+          if (at >= 0) return false;
+          if (node.type.name === "taskItem" && todoText(node) === text) {
+            at = pos;
+            return false;
+          }
+          return true;
+        });
+        const node = at >= 0 ? e.state.doc.nodeAt(at) : null;
+        if (node && Boolean(node.attrs.checked) !== checked) e.view.dispatch(e.state.tr.setNodeMarkup(at, undefined, { ...node.attrs, checked }));
+        return;
+      }
+      try {
+        const md = await api.readNote(note);
+        const next = withTodoChecked(md, text, checked);
+        if (next !== md) await api.writeNote(note, next);
+      } catch {
+        // The note is gone or can't be read: the task keeps its own state.
+      }
+    },
+    [editFront],
+  );
+
+  useEffect(() => {
+    const store = taskStore();
+    let before: Map<string, boolean> | null = null;
+    const linkedState = () => new Map(store.getState().file.Tasks.filter((t) => t.Note && t.NoteTodo).map((t) => [t.Id, Boolean(t.Completed)]));
+    const run = () => {
+      if (store.unread()) return;
+      const now = linkedState();
+      if (before) {
+        for (const t of store.getState().file.Tasks) {
+          const was = before.get(t.Id);
+          if (t.Note && t.NoteTodo && was !== undefined && was !== Boolean(t.Completed)) void setTodoChecked(t.Note, t.NoteTodo, Boolean(t.Completed));
+        }
+      }
+      before = now;
+    };
+    run();
+    return store.subscribe(run);
+  }, [setTodoChecked]);
+
+  const todoMenu = useCallback((todo: { text: string; checked: boolean }): MenuItem[] => {
+    const note = currentRef.current;
+    if (!note) return [];
+    const task = taskStore()
+      .getState()
+      .file.Tasks.find((t) => t.Note === note && t.NoteTodo === todo.text);
+    return task
+      ? [{ label: "Open in Tasks", onSelect: () => requestTasks({ kind: "open", id: task.Id }) }]
+      : [{ label: "Send to Tasks", onSelect: () => void sendTodo(note, todo.text, todo.checked) }];
+  }, []);
 
   const chooseCover = useCallback(async () => {
     if (!inTauri) return;
@@ -488,6 +576,17 @@ export function NotesProvider({ visible, onShow, children }: Props) {
       await commit(renamed(nb, name, next));
       renameStats(name, next);
       renameSpot(name, next);
+      // Tasks and events linked to the note follow it.
+      taskStore().update((ts) =>
+        ts.some((t) => t.Note === name || t.Attachments?.some((a) => a.Kind === "note" && a.Path === name))
+          ? ts.map((t) => ({
+              ...t,
+              Note: t.Note === name ? next : t.Note,
+              Attachments: t.Attachments?.map((a) => (a.Kind === "note" && a.Path === name ? { ...a, Path: next, Name: titleOf(next) } : a)),
+            }))
+          : ts,
+      );
+      eventStore().change((f) => (f.Events.some((e) => e.Note === name) ? { ...f, Events: f.Events.map((e) => (e.Note === name ? { ...e, Note: next } : e)) } : f));
       setEditing((e) => (e === name ? next : e));
       if (currentRef.current === name) {
         currentRef.current = next;
@@ -865,6 +964,7 @@ export function NotesProvider({ visible, onShow, children }: Props) {
       { label: "Duplicate", disabled: !name, onSelect: () => name && a.duplicate(name) },
       { label: "Move to…", disabled: !name, onSelect: () => name && a.moveTo(name) },
       { label: "Reload from disk", disabled: !name, onSelect: () => void reload() },
+      { label: "Send all to-dos to Tasks", disabled: !name, onSelect: () => name && void sendAllTodos(name, textRef.current) },
       { type: "separator" },
       { label: "Link previews", checked: s.LinkPreviews !== false, onSelect: () => update({ LinkPreviews: s.LinkPreviews === false }) },
       { label: "Word wrap (Markdown)", checked: s.WordWrap !== false, disabled: !markdown, onSelect: () => update({ WordWrap: s.WordWrap === false }) },
@@ -1040,6 +1140,7 @@ export function NotesProvider({ visible, onShow, children }: Props) {
     onBodyChange,
     setCover,
     setCoverPosition,
+    todoMenu,
     chooseCover,
     commitTitle,
     focusBody,

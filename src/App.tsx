@@ -3,17 +3,31 @@ import Gallery from "./dev/Gallery";
 import HomeScreen from "./home/HomeScreen";
 import { NotesProvider } from "./notes/NotesContext";
 import NotesScreen from "./notes/NotesScreen";
-import { Goals, Habits, Schedule, Tasks } from "./screens/screens";
+import { Goals, Habits } from "./screens/screens";
+import ScheduleScreen from "./schedule/ScheduleScreen";
+import { onShowSchedule, requestSchedule } from "./schedule/nav";
 import SettingsPopup from "./settings/SettingsPopup";
 import HomeSidebar from "./shell/HomeSidebar";
 import IconRail from "./shell/IconRail";
 import { screenName, type Screen } from "./shell/nav";
 import TitleBar from "./shell/TitleBar";
+import { listen } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { invoke } from "@tauri-apps/api/core";
+import { inTauri } from "./lib/api";
+import { runBeforeClose } from "./lib/closing";
+import { eventStore } from "./schedule/useEvents";
+import { taskStore } from "./tasks/useTasks";
+import { onShowTasks, requestTasks } from "./tasks/nav";
+import { useTaskReminders } from "./tasks/reminders";
+import TasksScreen from "./tasks/TasksScreen";
+import { TASKS_OPEN } from "./tasks/TasksWindow";
+import { Toaster } from "./ui/Toast";
 
 const screens: Record<Exclude<Screen, "home">, () => React.JSX.Element> = {
   notes: NotesScreen,
-  schedule: Schedule,
-  tasks: Tasks,
+  schedule: ScheduleScreen,
+  tasks: TasksScreen,
   habits: Habits,
   goals: Goals,
   gallery: Gallery,
@@ -24,12 +38,46 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [captureSignal, setCaptureSignal] = useState(0);
   const showNotes = useCallback(() => setScreen("notes"), []);
+  useTaskReminders();
+
+  // Home, notes and shortcuts ask for things in Tasks; so does Tasks' own
+  // window (double-clicking a task opens it here).
+  useEffect(() => {
+    onShowTasks(() => setScreen("tasks"));
+    onShowSchedule(() => setScreen("schedule"));
+    if (!inTauri) return;
+    const unlisten = listen<{ id: string }>(TASKS_OPEN, (e) => {
+      const win = getCurrentWindow();
+      void win.unminimize().then(() => win.setFocus());
+      requestTasks({ kind: "open", id: e.payload.id, popup: true });
+    });
+    // Quit from the tray: save what's waiting, then go.
+    const quitting = listen("app:quit", () => {
+      void Promise.all([taskStore().flush(), eventStore().flush(), runBeforeClose()]).finally(() => void invoke("quit_app"));
+    });
+    return () => {
+      void unlisten.then((f) => f());
+      void quitting.then((f) => f());
+    };
+  }, []);
 
   // Ctrl+, opens and closes Settings; Ctrl+K goes to Home's quick capture,
   // except while typing in a note, where it adds a link.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Ctrl+Shift+T: a new task (Settings → Shortcuts).
+      if (e.ctrlKey && e.shiftKey && !e.altKey && e.key.toLowerCase() === "t" && !document.getElementById("app-content")?.inert) {
+        e.preventDefault();
+        requestTasks({ kind: "new" });
+        return;
+      }
       if (!e.ctrlKey || e.altKey || e.shiftKey) return;
+      // Ctrl+E: a new event, except in a note, where it's inline code.
+      if (e.key.toLowerCase() === "e" && !document.getElementById("app-content")?.inert && !(e.target as HTMLElement | null)?.closest?.(".ProseMirror, .cm-editor")) {
+        e.preventDefault();
+        requestSchedule({ kind: "new" });
+        return;
+      }
       if (e.key === ",") {
         e.preventDefault();
         setSettingsOpen((open) => !open);
@@ -65,8 +113,9 @@ export default function App() {
             {Current ? <Current /> : <HomeScreen onNavigate={setScreen} captureSignal={captureSignal} />}
           </div>
           {/* Pop-ups draw here, over the screen but under the title bar. */}
-          <div id="popup-layer" className="pointer-events-none absolute inset-0" />
+          <div id="popup-layer" className="pointer-events-none absolute inset-0 z-40" />
           {settingsOpen && <SettingsPopup onClose={() => setSettingsOpen(false)} />}
+          <Toaster />
         </div>
       </div>
     </NotesProvider>

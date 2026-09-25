@@ -45,7 +45,7 @@ const groups: { label: string; items: Section[] }[] = [
   {
     label: "APP",
     items: [
-      { id: "general", label: "General", desc: "Startup, dates and language", icon: "settings" },
+      { id: "general", label: "General", desc: "Startup, dates and language", icon: "settings", keywords: "tray startup close" },
       { id: "appearance", label: "Appearance", desc: "Themes, fonts and how the app feels", icon: "appearance", keywords: "theme text size" },
       { id: "home", label: "Home screen", desc: "Pick what shows up on Home", icon: "home" },
       { id: "notifications", label: "Notifications", desc: "What can interrupt you, and when", icon: "notifications" },
@@ -147,10 +147,24 @@ export default function SettingsPopup({ onClose }: { onClose: () => void }) {
           <IconButton icon="close" label="Close settings" title="Close (Esc)" iconStroke={2.2} onClick={onClose} />
         </header>
         <div className="flex min-h-0 flex-1 flex-col gap-[22px] overflow-y-auto px-8 pt-6 pb-8">
-          {current === "appearance" ? <Appearance /> : current === "accessibility" ? <Accessibility /> : current === "notes" ? <NotesSettings /> : <Later />}
+          {current === "general" ? <General /> : current === "appearance" ? <Appearance /> : current === "accessibility" ? <Accessibility /> : current === "notes" ? <NotesSettings /> : <Later />}
         </div>
       </section>
     </Popup>
+  );
+}
+
+function General() {
+  const { settings, update } = useSettings();
+  return (
+    <>
+      <ListGroup title="STARTUP">
+        <ListRow label="Keep running in the tray" description="Reminders still fire when the window is closed">
+          <Switch label="Keep running in the tray" checked={settings.KeepInTray !== false} onChange={(v) => update({ KeepInTray: v })} />
+        </ListRow>
+      </ListGroup>
+      <Later note="Opening when Windows starts, which screen to open to, dates and language arrive in Phase 7." />
+    </>
   );
 }
 

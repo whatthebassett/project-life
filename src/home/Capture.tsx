@@ -29,7 +29,7 @@ export default function Capture({ home, focusSignal }: Props) {
     if (!text) return;
     const now = new Date();
     const parsed = parseCapture(text, home.now);
-    home.updateTasks((tasks) => [...tasks, newTask(parsed, now)]);
+    home.updateTasks((tasks) => [...tasks, newTask({ ...parsed, how: "Created with quick capture on Home" }, now)]);
     setDraft("");
     const when = parsed.due ? formatDue(parsed.due, parsed.time, startOfDay(home.now)) : "no date";
     setSaid(`Added task: ${parsed.title}, due ${when}, on ${listFor(parsed.list).name}.`);

@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { addDays, daysBetween, formatDue, startOfDay, ymd } from "../tasks/dates";
 import { listFor } from "../tasks/lists";
 import { byDue, isOverdue, openCount, setCompleted, todaysTasks, type Task } from "../tasks/model";
+import { requestTasks } from "../tasks/nav";
 import { Checkbox } from "../ui/Checkbox";
 import { Card, CardHeader, Empty } from "./parts";
 import type { HomeData } from "./useHome";
@@ -39,14 +40,18 @@ export default function TasksCard({ home }: { home: HomeData }) {
                 label={`${done ? "Mark not done" : "Mark done"}: ${t.Title}`}
                 className="-my-1.5 -mr-2 -ml-[10px]"
               />
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <button
+                onClick={() => !home.sample && requestTasks({ kind: "open", id: t.Id })}
+                title="Open in Tasks"
+                className="flex min-w-0 flex-1 flex-col gap-1 text-left"
+              >
                 <div className={clsx("truncate text-14 font-medium", done ? "text-muted line-through" : "text-text")}>{t.Title}</div>
                 <div className="flex items-center gap-2 text-12">
                   {t.Due && <span className={dueColor}>{formatDue(t.Due, t.DueTime, today)}</span>}
                   {t.Due && <span className="h-[3px] w-[3px] rounded-full bg-faint" />}
                   <span className="text-muted">{listFor(t.List).name}</span>
                 </div>
-              </div>
+              </button>
             </div>
           );
         })}

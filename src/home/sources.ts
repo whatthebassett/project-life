@@ -14,8 +14,9 @@ export interface HomeEvent {
   meta?: string;
   call?: CallKind;
   joinUrl?: string;
-  // The title of a linked note.
+  // The title of a linked note, and its file name.
   note?: string;
+  noteName?: string;
 }
 
 export interface HomeHabit {

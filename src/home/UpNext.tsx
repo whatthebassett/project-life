@@ -1,6 +1,8 @@
 import clsx from "clsx";
 import { useState } from "react";
 import { openUrl } from "../lib/api";
+import { useNotes } from "../notes/NotesContext";
+import { requestSchedule } from "../schedule/nav";
 import type { Screen } from "../shell/nav";
 import { fromYmd, nowTime, startOfDay, ymd } from "../tasks/dates";
 import { listFor } from "../tasks/lists";
@@ -10,8 +12,8 @@ import { Card, clock, clockRange } from "./parts";
 import { callNames, type HomeEvent } from "./sources";
 import type { HomeData } from "./useHome";
 
-// What's next today: the next (or current) event, or, until Schedule exists,
-// the next timed task. Snooze hides it for ten minutes.
+// What's next today: the next (or current) event, or else the next timed
+// task. Snooze hides it for ten minutes.
 type Next = { kind: "event"; event: HomeEvent } | { kind: "task"; task: Task; start: Date };
 
 const SNOOZE = 10 * 60_000;
@@ -48,6 +50,7 @@ function countdown(start: Date, end: Date | null, now: Date): { value: string; l
 
 export default function UpNext({ home, onNavigate }: { home: HomeData; onNavigate: (s: Screen) => void }) {
   const [snoozed, setSnoozed] = useState<Record<string, number>>({});
+  const { activate } = useNotes();
   const next = pickNext(home, snoozed);
   const snooze = (id: string) => setSnoozed((s) => ({ ...s, [id]: home.now.getTime() + SNOOZE }));
 
@@ -90,7 +93,8 @@ export default function UpNext({ home, onNavigate }: { home: HomeData; onNavigat
         {e.call && (
           <button
             type="button"
-            onClick={() => e.joinUrl && void openUrl(e.joinUrl)}
+            onClick={() => (e.joinUrl ? void openUrl(e.joinUrl) : !home.sample && requestSchedule({ kind: "open", id: e.id.split("@")[0], day: e.id.split("@")[1] }))}
+            title={e.joinUrl ? undefined : `Add the ${callNames[e.call]} link in Schedule`}
             className={clsx(
               "flex h-11 items-center gap-2 rounded-[13px] border border-accent px-[18px] text-14 font-semibold transition-[filter]",
               live ? "bg-accent text-accent-ink hover:brightness-110" : "text-text hover:bg-panel2",
@@ -101,7 +105,7 @@ export default function UpNext({ home, onNavigate }: { home: HomeData; onNavigat
           </button>
         )}
         {e.note && (
-          <button type="button" onClick={() => onNavigate("notes")} className="h-11 rounded-[13px] border border-line bg-panel2 px-4 text-14 font-medium">
+          <button type="button" onClick={() => (e.noteName ? void activate(e.noteName) : onNavigate("notes"))} className="h-11 rounded-[13px] border border-line bg-panel2 px-4 text-14 font-medium">
             Open note
           </button>
         )}

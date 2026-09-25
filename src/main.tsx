@@ -16,6 +16,8 @@ import { inTauri } from "./lib/api";
 import { applyAppearance } from "./lib/appearance";
 import { loadSettings } from "./lib/settings";
 import { SettingsProvider } from "./lib/SettingsContext";
+import TasksWindow from "./tasks/TasksWindow";
+import { isTasksWindow } from "./tasks/window";
 
 // The window starts hidden. Load the settings and put the theme on first, so
 // the app never flashes the wrong colors, then show it.
@@ -25,14 +27,15 @@ async function start() {
   ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
       <SettingsProvider initial={settings}>
-        <App />
+        {isTasksWindow() ? <TasksWindow /> : <App />}
       </SettingsProvider>
     </React.StrictMode>,
   );
 }
 
 void start().finally(() => {
-  if (!inTauri) return;
+  // Tasks' own window shows itself once it's drawn.
+  if (!inTauri || isTasksWindow()) return;
   requestAnimationFrame(() => {
     const win = getCurrentWindow();
     void win.show().then(() => win.setFocus());

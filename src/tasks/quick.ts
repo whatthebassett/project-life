@@ -1,8 +1,9 @@
-// Quick capture: "Pay rent fri 5pm !high #personal" → a task. The priority
-// and list can go anywhere; the date and time are read from the end, the way
-// Checkpoint does it (dates.ts parseQuick).
+// Quick add: "Pay rent fri 5pm !high #personal" → a task. The priority, list
+// and tags can go anywhere; the date and time are read from the end, the way
+// Checkpoint does it (dates.ts parseQuick). A #word that names a list puts the
+// task on it; any other #word becomes a tag.
 import { parseQuick, startOfDay, ymd } from "./dates";
-import { defaultList, listByTag } from "./lists";
+import { defaultListId, listByTag, type TaskList } from "./lists";
 import type { NewTask } from "./model";
 
 const priorities: Record<string, number> = { high: 3, med: 2, medium: 2, low: 1 };
@@ -12,30 +13,38 @@ export interface Captured extends NewTask {
   phrase: string | null;
 }
 
-export function parseCapture(text: string, now: Date, list = defaultList): Captured {
+export interface CaptureOptions {
+  list?: string;
+  // With no date typed: today (Home, the Today view) or none (Someday).
+  undated?: "today" | "none" | "tomorrow";
+}
+
+export function parseCapture(text: string, now: Date, { list, undated = "today" }: CaptureOptions = {}): Captured {
   let rest = ` ${text.trim()} `;
   let priority = 0;
+  let chosen: string | null = null;
+  const tags: string[] = [];
   const p = /\s!(high|medium|med|low)(?=\s)/i.exec(rest);
   if (p) {
     priority = priorities[p[1].toLowerCase()];
     rest = rest.slice(0, p.index) + rest.slice(p.index + p[0].length);
   }
-  for (const m of rest.matchAll(/\s#([\w-]+)(?=\s)/g)) {
-    const found = listByTag(m[1]);
-    if (found) {
-      list = found.id;
-      rest = rest.replace(m[0], "");
-      break;
-    }
+  for (const m of [...rest.matchAll(/\s#([\w-]+)(?=\s)/g)]) {
+    const found: TaskList | undefined = chosen ? undefined : listByTag(m[1]);
+    if (found) chosen = found.id;
+    else if (!tags.includes(m[1].toLowerCase())) tags.push(m[1].toLowerCase());
+    rest = rest.replace(m[0], "");
   }
   const q = parseQuick(rest.trim(), now);
-  // Captured from Home with no date, it's for today (Main.dc.html).
+  const today = startOfDay(now);
+  const fallback = undated === "today" ? ymd(today) : undated === "tomorrow" ? ymd(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)) : null;
   return {
-    title: q.title || text.trim(),
-    due: q.due ?? ymd(startOfDay(now)),
+    title: q.title || rest.trim() || text.trim(),
+    due: q.due ?? fallback,
     time: q.time,
     priority,
-    list,
+    list: chosen ?? list ?? defaultListId(),
+    tags,
     phrase: q.phrase,
   };
 }

@@ -1,4 +1,4 @@
-import { defaultName, readSettings, writeSettings } from "./api";
+import { announceData, defaultName, readSettings, writeSettings } from "./api";
 import { themeFor, type ThemeId } from "./themes";
 
 // Settings live in Data\settings.json. Keys are PascalCase, and keys this
@@ -29,6 +29,17 @@ export interface Settings {
   EmojiSkinTone?: number;
   RecentEmoji?: string[];
   NotesFolder?: string | null;
+  // Tasks: the view ("today", "upcoming", "all", "someday", "completed", or
+  // "list:<id>"), the grouping, and the groups folded shut.
+  TasksView?: string;
+  TasksGroupBy?: "date" | "list";
+  TasksFolded?: string[];
+  // Closing the window keeps Project Life in the tray (default), so
+  // reminders still fire. Read by Rust too (lib.rs).
+  KeepInTray?: boolean;
+  // Schedule: the view, and the calendars hidden from it.
+  ScheduleView?: "week" | "month";
+  ScheduleHidden?: string[];
   [key: string]: unknown;
 }
 
@@ -64,6 +75,10 @@ let queue: Promise<void> = Promise.resolve();
 
 export function saveSettings(settings: Settings): Promise<void> {
   const text = JSON.stringify(settings, null, 2);
-  queue = queue.then(() => writeSettings(text)).catch((e) => console.error("Couldn't save settings", e));
+  queue = queue
+    .then(() => writeSettings(text))
+    // The popped-out Tasks window follows the theme and text size.
+    .then(() => announceData("settings.json"))
+    .catch((e) => console.error("Couldn't save settings", e));
   return queue;
 }

@@ -216,6 +216,23 @@
   animation: pl-zoom-in 180ms cubic-bezier(0.2, 0, 0, 1);
 }
 
+/* Tasks: a checked-off task fades where it is before it moves to Completed
+   (from Checkpoint), and the Undo message rises into place. */
+@keyframes task-settle {
+  0%, 40% { opacity: 1; }
+  100% { opacity: 0.45; }
+}
+.task-settling {
+  animation: task-settle 600ms ease forwards;
+}
+@keyframes pl-toast-in {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.pl-toast {
+  animation: pl-toast-in 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+
 /* Reduce motion: from Settings → Accessibility, or from Windows' own
    "Animation effects" switch. No pulse, no transitions. */
 :root[data-motion="reduced"] .pl-pulse {

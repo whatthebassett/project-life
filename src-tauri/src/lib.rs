@@ -3,8 +3,10 @@
 // The frontend owns the JSON; this side only reads and writes it whole, so
 // keys it doesn't know about are never lost. Notes are Markdown files in
 // their own folder (notes.rs).
+mod attachments;
 mod merge;
 mod notes;
+mod tray;
 mod web;
 
 use std::{
@@ -12,7 +14,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
-use tauri::{Manager, PhysicalPosition, PhysicalSize, WebviewWindow};
+use tauri::{Manager, PhysicalPosition, PhysicalSize, WebviewWindow, WindowEvent};
 
 fn err<E: std::fmt::Display>(e: E) -> String {
     e.to_string()
@@ -142,8 +144,12 @@ pub fn run() {
     }
     notes::load_notes_folder();
     tauri::Builder::default()
+        // A second copy (started again while this one sits in the tray)
+        // just brings this one forward.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| tray::show_main(app)))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         // Pictures in notes, as http://pl.localhost/assets/… (notes.rs).
         .register_uri_scheme_protocol("pl", |_ctx, request| notes::serve_note_file(&request))
         // Remember size and position, but never the frame (the window draws its
@@ -161,7 +167,24 @@ pub fn run() {
             if let Some(win) = app.get_webview_window("main") {
                 fit_to_monitor(&win);
             }
+            tray::setup(app)?;
             Ok(())
+        })
+        // Closing the main window closes Tasks' own window too (it saves first,
+        // in its close handler), so the app doesn't linger.
+        .on_window_event(|win, event| {
+            // Closing the main window hides it to the tray, unless that's off.
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                if win.label() == "main" && tray::keep_in_tray() {
+                    api.prevent_close();
+                    let _ = win.hide();
+                }
+            }
+            if win.label() == "main" && matches!(event, WindowEvent::Destroyed) {
+                if let Some(tasks) = win.app_handle().get_webview_window("tasks") {
+                    let _ = tasks.close();
+                }
+            }
         })
         .invoke_handler(tauri::generate_handler![
             read_settings,
@@ -170,6 +193,11 @@ pub fn run() {
             write_data,
             default_name,
             web::fetch_text,
+            tray::quit_app,
+            tray::show_toast,
+            attachments::attach_file,
+            attachments::open_attachment,
+            attachments::remove_attachment,
             notes::list_notes,
             notes::read_note,
             notes::write_note,
