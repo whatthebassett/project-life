@@ -22,7 +22,7 @@ export default function TasksCard({ home }: { home: HomeData }) {
   const toggle = (t: Task) => home.updateTasks((tasks) => setCompleted(tasks, t.Id, !t.Completed, new Date()));
 
   return (
-    <Card label="Tasks" className="gap-[14px] p-6">
+    <Card label="Tasks" className="flex-1 gap-[14px] p-6">
       <CardHeader title="Tasks">
         <span className="font-mono text-12 text-muted">{left} left</span>
       </CardHeader>

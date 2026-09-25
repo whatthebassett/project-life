@@ -2,6 +2,7 @@ import { dayLabel, greeting, timeLabel } from "../lib/dates";
 import { useSettings } from "../lib/SettingsContext";
 import type { Screen } from "../shell/nav";
 import Capture from "./Capture";
+import GoalsCard from "./GoalsCard";
 import HabitsCard from "./HabitsCard";
 import NewsCard from "./NewsCard";
 import NotesCard from "./NotesCard";
@@ -56,7 +57,10 @@ export default function HomeScreen({ onNavigate, captureSignal }: Props) {
 
       <div className="grid h-[560px] shrink-0 grid-cols-3 gap-5">
         <ScheduleCard home={home} onNavigate={onNavigate} />
-        <TasksCard home={home} />
+        <div className="flex min-h-0 flex-col gap-5">
+          <TasksCard home={home} />
+          <GoalsCard home={home} onNavigate={onNavigate} />
+        </div>
         <div className="flex min-h-0 flex-col gap-5">
           <HabitsCard home={home} onNavigate={onNavigate} />
           <NotesCard home={home} onNavigate={onNavigate} />

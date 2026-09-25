@@ -25,6 +25,9 @@ import { useTasks } from "./useTasks";
 import { groupTasks, inView, listOfView, parseView, viewHeading, type ViewId } from "./views";
 import { openTasksWindow } from "./window";
 import { inTauri } from "../lib/api";
+import HabitTaskRow from "../habits/HabitTaskRow";
+import { activeHabits, doneOn, habitDay, isDue } from "../habits/model";
+import { rulesOf, useHabits } from "../habits/useHabits";
 
 const SETTLE_MS = 650;
 
@@ -56,6 +59,10 @@ export default function TasksScreen() {
   const openMenu = useCallback((x: number, y: number, items: MenuItem[]) => setMenu({ x, y, items }), []);
 
   const listView = listOfView(view);
+  // Habits set to show in Today, on the days they're due.
+  const { habits } = useHabits();
+  const habitToday = habitDay(now, rulesOf(settings));
+  const habitsToday = view === "today" ? activeHabits(habits).filter((h) => h.InTasks && isDue(h, habitToday)) : [];
   const undated = view === "someday" ? "none" : view === "upcoming" ? "tomorrow" : "today";
   const parsed = useMemo(() => (draft.trim() ? parseCapture(draft, now, { list: listView ?? undefined, undated }) : null), [draft, now, listView, undated]);
 
@@ -258,6 +265,23 @@ export default function TasksScreen() {
         {error && <div className="rounded-[12px] border border-danger/40 bg-danger/10 px-4 py-3 text-13 text-danger">{error}</div>}
 
         <div ref={listBox} className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto pb-[60px]">
+          {habitsToday.length > 0 && (
+            <div className="flex flex-col gap-0.5">
+              <div className="flex h-8 items-center gap-2.5 px-1 font-mono text-11 tracking-[0.12em] text-muted uppercase">
+                <span className="w-[11px]" />
+                <span>Habits</span>
+                <span>
+                  {habitsToday.filter((h) => doneOn(h, habitToday)).length}/{habitsToday.length}
+                </span>
+                <span className="h-px flex-1 bg-line" />
+              </div>
+              <div role="list" aria-label="Habits" className="flex flex-col gap-0.5">
+                {habitsToday.map((h) => (
+                  <HabitTaskRow key={h.Id} h={h} today={habitToday} />
+                ))}
+              </div>
+            </div>
+          )}
           {groups.map((g) => {
             const open = isOpen(g.id);
             return (
@@ -301,7 +325,7 @@ export default function TasksScreen() {
               </div>
             );
           })}
-          {groups.length === 0 && <EmptyView view={view} />}
+          {groups.length === 0 && habitsToday.length === 0 && <EmptyView view={view} />}
           {view === "completed" && (
             <button onClick={() => setBinOpen(true)} className="flex h-10 w-fit items-center gap-2 rounded-[10px] px-2 text-13 text-muted hover:bg-panel hover:text-text">
               <Trash2 size={14} strokeWidth={1.8} />

@@ -1,6 +1,5 @@
-// What Home shows from the parts of Project Life that arrive in later
-// phases: events (Phase 5), habits (Phase 6) and notes (Phase 3). Until then
-// these are empty, except in the dev-only sample mode (sample.ts).
+// The shapes Home shows events, habits and notes in, filled from their
+// stores (useHome.ts) or, in the dev-only sample mode, from sample.ts.
 export type CallKind = "teams" | "meet" | "zoom";
 
 export interface HomeEvent {

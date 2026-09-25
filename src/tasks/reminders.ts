@@ -1,4 +1,4 @@
-// Reminders for tasks and events: a Windows notification when one comes due,
+// Reminders for tasks, events, habits and goal check-ins: a Windows notification when one comes due,
 // while Project Life is running (in the tray too, with the window closed).
 // A call's notification has a Join button. Only the main window checks, so
 // each reminder goes off once.
@@ -11,6 +11,10 @@ import { shortTime } from "../schedule/look";
 import { formatTime, fromYmd } from "./dates";
 import { patchTask, type Task } from "./model";
 import { taskStore } from "./useTasks";
+import { activeHabits, defaultRules, doneOn, habitDay, isDue, type HabitRules } from "../habits/model";
+import { habitStore } from "../habits/useHabits";
+import { fmt, paceNote, paceOn, progressOn, statusLabel, statusOf, valueOn as goalValue, type CheckIn } from "../goals/model";
+import { goalStore } from "../goals/useGoals";
 
 // A reminder that was missed by more than this (the app was closed) is let go.
 const STALE_MS = 12 * 60 * 60_000;
@@ -90,15 +94,85 @@ function checkEvents(now: number) {
   for (const t of toShow) void notify(t.title, t.body, t.join);
 }
 
+// Habits: at their reminder time (or every 2 hours, 9 AM to 9 PM) on days
+// they're due, until they're done.
+function checkHabits(now: number) {
+  const store = habitStore();
+  if (store.unread()) return;
+  const rules = rulesNow();
+  const today = habitDay(new Date(now), rules);
+  const base = fromYmd(today);
+  const fired = new Map<string, number>();
+  const toShow: { title: string; body: string }[] = [];
+  for (const h of activeHabits(store.getState().file.Habits)) {
+    if (!h.Reminder.On || !isDue(h, today) || doneOn(h, today)) continue;
+    const hours = h.Reminder.At === "every2" ? [9, 11, 13, 15, 17, 19, 21] : [Number(h.Reminder.At.slice(0, 2))];
+    const due = hours.map((hr) => new Date(base.getFullYear(), base.getMonth(), base.getDate(), hr, 0).getTime()).filter((t) => t <= now && now - t < 2 * 3_600_000);
+    const at = Math.max(...due, 0);
+    if (!at || (h.Reminded && Date.parse(h.Reminded) >= at)) continue;
+    fired.set(h.Id, at);
+    const left = h.Kind === "check" ? "Not checked off yet today" : `${h.Log[today] ?? 0} of ${h.Target} ${h.Unit} so far today`;
+    toShow.push({ title: h.Name, body: left });
+  }
+  if (!fired.size) return;
+  store.change((f) => ({ ...f, Habits: f.Habits.map((h) => (fired.has(h.Id) ? { ...h, Reminded: new Date(fired.get(h.Id)!).toISOString() } : h)) }));
+  for (const t of toShow) void notify(t.title, t.body);
+}
+
+// Goals: the weekly (or monthly) check-in: Sunday 6 PM, Monday 9 AM, or the
+// first of the month at 9 AM.
+function checkGoals(now: number) {
+  const store = goalStore();
+  const habits = habitStore();
+  if (store.unread()) return;
+  const d = new Date(now);
+  const at = (kind: CheckIn): number => {
+    if (kind === "month") return new Date(d.getFullYear(), d.getMonth(), 1, 9, 0).getTime();
+    const target = kind === "sun" ? 0 : 1;
+    const back = (d.getDay() - target + 7) % 7;
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() - back, kind === "sun" ? 18 : 9, 0).getTime();
+  };
+  const today = habitDay(d, rulesNow());
+  const fired = new Map<string, number>();
+  const toShow: { title: string; body: string }[] = [];
+  for (const g of store.getState().file.Goals) {
+    if (g.CheckIn === "none") continue;
+    const when = at(g.CheckIn);
+    if (when > now || now - when > STALE_MS || (g.CheckedIn && Date.parse(g.CheckedIn) >= when)) continue;
+    const hs = habits.getState().file.Habits;
+    const pct = progressOn(g, hs, today);
+    if (pct >= 100) continue;
+    fired.set(g.Id, when);
+    const body =
+      g.Kind === "number"
+        ? `${fmt(goalValue(g, hs, today))} of ${fmt(g.Target)} ${g.Unit}. ${paceNote(g, hs, today)}`
+        : g.Kind === "milestones"
+          ? `${g.Milestones.filter((m) => m.Done).length} of ${g.Milestones.length} milestones.${g.Milestones.find((m) => !m.Done) ? ` Next: ${g.Milestones.find((m) => !m.Done)!.Text}.` : ""}`
+          : `${statusLabel[statusOf(pct, paceOn(g, today))]} · due ${fromYmd(g.Due).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+    toShow.push({ title: `How's “${g.Title}” going?`, body });
+  }
+  if (!fired.size) return;
+  store.change((f) => ({ ...f, Goals: f.Goals.map((g) => (fired.has(g.Id) ? { ...g, CheckedIn: new Date(fired.get(g.Id)!).toISOString() } : g)) }));
+  for (const t of toShow) void notify(t.title, t.body);
+}
+
+// Settings as last loaded (the reminders run outside React).
+let rulesNow = () => defaultRules;
+export function setReminderRules(get: () => HabitRules) {
+  rulesNow = get;
+}
+
 function check() {
   const now = Date.now();
   checkTasks(now);
   checkEvents(now);
+  checkHabits(now);
+  checkGoals(now);
 }
 
 export function useTaskReminders() {
   useEffect(() => {
-    void Promise.all([taskStore().load(), eventStore().load()]).then(check);
+    void Promise.all([taskStore().load(), eventStore().load(), habitStore().load(), goalStore().load()]).then(check);
     const timer = window.setInterval(check, 30_000);
     return () => window.clearInterval(timer);
   }, []);

@@ -3,6 +3,11 @@ import { titleOf } from "../lib/api";
 import { joinUrlOf, occurrences, type Occurrence } from "../schedule/events";
 import { startOfDay } from "../tasks/dates";
 import { useEvents } from "../schedule/useEvents";
+import { stepDay, toggleDay } from "../habits/actions";
+import { activeHabits, currentStreak, doneOn, habitDay, isDue, mondayOf, type Habit, type HabitRules } from "../habits/model";
+import { rulesOf, useHabits } from "../habits/useHabits";
+import { useSettings } from "../lib/SettingsContext";
+import { addDays, fromYmd, ymd } from "../tasks/dates";
 import { useNow } from "../lib/dates";
 import type { Task } from "../tasks/model";
 import { openCount, todaysTasks } from "../tasks/model";
@@ -23,7 +28,6 @@ export interface HomeData {
   notes: HomeNote[];
 }
 
-const none: never[] = [];
 
 // Everything Home shows, from the real stores or, in sample mode, from the
 // mockup's data with the clock pinned to its 4:18 PM.
@@ -33,6 +37,11 @@ export function useHome(): HomeData {
   const real = useTasks();
   const recentNotes = useRecentNotes();
   const { events } = useEvents();
+  const { habits } = useHabits();
+  const { settings } = useSettings();
+  const rules = rulesOf(settings);
+  const habitToday = habitDay(now, rules);
+  const homeHabits = useMemo(() => activeHabits(habits).filter((h) => h.ShowOnHome && isDue(h, habitToday)).map((h) => toHomeHabit(h, habitToday, rules)), [habits, habitToday, rules.dayEnds, rules.streakSaver]); // eslint-disable-line react-hooks/exhaustive-deps
   // Today and the week ahead, repeating events included.
   const day = startOfDay(now).getTime();
   const homeEvents = useMemo(() => occurrences(events, new Date(day), new Date(day + 8 * 86_400_000)).filter((o) => !o.event.AllDay).map(toHome), [events, day]);
@@ -54,10 +63,27 @@ export function useHome(): HomeData {
     tasks: real.tasks,
     updateTasks: (change) => real.store.update(change),
     events: homeEvents,
-    habits: none,
-    toggleHabit: () => {},
+    habits: homeHabits,
+    toggleHabit: (id) => {
+      const h = habits.find((x) => x.Id === id);
+      if (!h) return;
+      // Count and time habits go up a step; check-offs flip.
+      if (h.Kind === "check") toggleDay(h, habitToday);
+      else if (doneOn(h, habitToday)) stepDay(h, habitToday, -Math.ceil(h.Target / (h.Kind === "time" ? 5 : 1)));
+      else stepDay(h, habitToday, 1);
+    },
     notes: recentNotes,
   };
+}
+
+// Home's shape: the streak before today, and this week before today.
+function toHomeHabit(h: Habit, today: string, rules: HabitRules): HomeHabit {
+  const doneToday = doneOn(h, today);
+  const mon = fromYmd(mondayOf(today));
+  const past: boolean[] = [];
+  for (let d = mon; ymd(d) < today; d = addDays(d, 1)) past.push(doneOn(h, ymd(d)));
+  const streak = currentStreak(h, today, rules).count;
+  return { id: h.Id, name: h.Name, streak: Math.max(0, streak - (doneToday ? 1 : 0)), past, doneToday };
 }
 
 function toHome(o: Occurrence): HomeEvent {

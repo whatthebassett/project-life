@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Gallery from "./dev/Gallery";
 import HomeScreen from "./home/HomeScreen";
 import { NotesProvider } from "./notes/NotesContext";
 import NotesScreen from "./notes/NotesScreen";
-import { Goals, Habits } from "./screens/screens";
+import GoalsScreen from "./goals/GoalsScreen";
+import HabitsScreen from "./habits/HabitsScreen";
 import ScheduleScreen from "./schedule/ScheduleScreen";
 import { onShowSchedule, requestSchedule } from "./schedule/nav";
+import { onNavigate } from "./shell/go";
 import SettingsPopup from "./settings/SettingsPopup";
 import HomeSidebar from "./shell/HomeSidebar";
 import IconRail from "./shell/IconRail";
@@ -17,9 +19,13 @@ import { invoke } from "@tauri-apps/api/core";
 import { inTauri } from "./lib/api";
 import { runBeforeClose } from "./lib/closing";
 import { eventStore } from "./schedule/useEvents";
+import { goalStore } from "./goals/useGoals";
+import { habitStore } from "./habits/useHabits";
 import { taskStore } from "./tasks/useTasks";
 import { onShowTasks, requestTasks } from "./tasks/nav";
-import { useTaskReminders } from "./tasks/reminders";
+import { setReminderRules, useTaskReminders } from "./tasks/reminders";
+import { rulesOf } from "./habits/useHabits";
+import { useSettings } from "./lib/SettingsContext";
 import TasksScreen from "./tasks/TasksScreen";
 import { TASKS_OPEN } from "./tasks/TasksWindow";
 import { Toaster } from "./ui/Toast";
@@ -28,8 +34,8 @@ const screens: Record<Exclude<Screen, "home">, () => React.JSX.Element> = {
   notes: NotesScreen,
   schedule: ScheduleScreen,
   tasks: TasksScreen,
-  habits: Habits,
-  goals: Goals,
+  habits: HabitsScreen,
+  goals: GoalsScreen,
   gallery: Gallery,
 };
 
@@ -39,12 +45,17 @@ export default function App() {
   const [captureSignal, setCaptureSignal] = useState(0);
   const showNotes = useCallback(() => setScreen("notes"), []);
   useTaskReminders();
+  const { settings } = useSettings();
+  const habitRules = useRef(rulesOf(settings));
+  habitRules.current = rulesOf(settings);
+  useEffect(() => setReminderRules(() => habitRules.current), []);
 
   // Home, notes and shortcuts ask for things in Tasks; so does Tasks' own
   // window (double-clicking a task opens it here).
   useEffect(() => {
     onShowTasks(() => setScreen("tasks"));
     onShowSchedule(() => setScreen("schedule"));
+    onNavigate(setScreen);
     if (!inTauri) return;
     const unlisten = listen<{ id: string }>(TASKS_OPEN, (e) => {
       const win = getCurrentWindow();
@@ -53,7 +64,7 @@ export default function App() {
     });
     // Quit from the tray: save what's waiting, then go.
     const quitting = listen("app:quit", () => {
-      void Promise.all([taskStore().flush(), eventStore().flush(), runBeforeClose()]).finally(() => void invoke("quit_app"));
+      void Promise.all([taskStore().flush(), eventStore().flush(), habitStore().flush(), goalStore().flush(), runBeforeClose()]).finally(() => void invoke("quit_app"));
     });
     return () => {
       void unlisten.then((f) => f());

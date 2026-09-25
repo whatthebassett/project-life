@@ -44,7 +44,7 @@ export default function ScheduleCard({ home, onNavigate }: { home: HomeData; onN
           );
         })}
         {(lineBefore === -1 || events.length === 0) && nowLine}
-        {events.length === 0 && <Empty className="mt-2">Nothing on your schedule today. Events arrive with Schedule.</Empty>}
+        {events.length === 0 && <Empty className="mt-2">Nothing on your schedule today. Press Ctrl+E to add an event.</Empty>}
       </div>
     </Card>
   );

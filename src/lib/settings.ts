@@ -40,6 +40,16 @@ export interface Settings {
   // Schedule: the view, and the calendars hidden from it.
   ScheduleView?: "week" | "month";
   ScheduleHidden?: string[];
+  // Habits (Settings → Habits and goals, Phase 7): the hour the day ends
+  // (3 = 3 AM), and whether one missed day a week keeps a streak.
+  HabitDayEnds?: number;
+  StreakSaver?: boolean;
+  // Habits: the view, and the habit selected.
+  HabitsView?: "today" | "todo" | "done";
+  // Goals: the view, the area filter, and the sort.
+  GoalsView?: "active" | "behind" | "done";
+  GoalsArea?: string | null;
+  GoalsSort?: "due" | "risk";
   [key: string]: unknown;
 }
 

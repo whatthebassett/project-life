@@ -5,6 +5,8 @@ import { Copy, LayoutGrid, Minus, Square, X } from "lucide-react";
 import { inTauri } from "../lib/api";
 import { runBeforeClose } from "../lib/closing";
 import { eventStore } from "../schedule/useEvents";
+import { goalStore } from "../goals/useGoals";
+import { habitStore } from "../habits/useHabits";
 import { taskStore } from "../tasks/useTasks";
 
 interface Props {
@@ -58,7 +60,7 @@ export default function TitleBar({ title, onGallery, galleryOpen }: Props) {
         <WinButton title={maximized ? "Restore" : "Maximize"} onClick={() => inTauri && void win().toggleMaximize()}>
           {maximized ? <Copy size={13} className="-scale-x-100" /> : <Square size={13} />}
         </WinButton>
-        <WinButton title="Close" close onClick={() => inTauri && void Promise.all([taskStore().flush(), eventStore().flush(), runBeforeClose()]).finally(() => win().close())}>
+        <WinButton title="Close" close onClick={() => inTauri && void Promise.all([taskStore().flush(), eventStore().flush(), habitStore().flush(), goalStore().flush(), runBeforeClose()]).finally(() => win().close())}>
           <X size={17} />
         </WinButton>
       </div>
