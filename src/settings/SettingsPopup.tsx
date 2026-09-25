@@ -9,6 +9,7 @@ import { ListGroup, ListRow, SectionLabel } from "../ui/bits";
 import { Popup } from "../ui/Popup";
 import { SegmentedControl } from "../ui/SegmentedControl";
 import { Switch } from "../ui/Switch";
+import NotesSettings from "./NotesSettings";
 
 // Settings (Settings.dc.html): a 1120 x 900 pop-up with the sections down the
 // side. Phase 1 wires up Appearance and Accessibility; the rest arrive in
@@ -55,7 +56,7 @@ const groups: { label: string; items: Section[] }[] = [
   {
     label: "FEATURES",
     items: [
-      { id: "notes", label: "Notes", desc: "The editor and where notes are kept", icon: "notes" },
+      { id: "notes", label: "Notes", desc: "The editor and where notes are kept", icon: "notes", keywords: "notes folder editor visual markdown link previews word wrap line numbers" },
       { id: "schedule", label: "Schedule", desc: "Defaults for new events", icon: "schedule" },
       { id: "tasks", label: "Tasks", desc: "Quick add, lists and Later", icon: "tasks" },
       { id: "habits", label: "Habits and goals", desc: "Streaks, days and check-ins", icon: "habits" },
@@ -146,7 +147,7 @@ export default function SettingsPopup({ onClose }: { onClose: () => void }) {
           <IconButton icon="close" label="Close settings" title="Close (Esc)" iconStroke={2.2} onClick={onClose} />
         </header>
         <div className="flex min-h-0 flex-1 flex-col gap-[22px] overflow-y-auto px-8 pt-6 pb-8">
-          {current === "appearance" ? <Appearance /> : current === "accessibility" ? <Accessibility /> : <Later />}
+          {current === "appearance" ? <Appearance /> : current === "accessibility" ? <Accessibility /> : current === "notes" ? <NotesSettings /> : <Later />}
         </div>
       </section>
     </Popup>

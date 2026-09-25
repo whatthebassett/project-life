@@ -10,6 +10,8 @@ export function applyAppearance(settings: Settings) {
   const root = document.documentElement;
   const theme = themeFor(settings.Theme);
   root.dataset.theme = theme.id;
+  // Light or dark, for the rules ported from Checkpoint (styles/editor.css).
+  root.dataset.scheme = theme.scheme;
   root.style.setProperty("--text-scale", String(textScale[settings.TextSize] ?? 1));
   if (settings.ReduceMotion) root.dataset.motion = "reduced";
   else delete root.dataset.motion;

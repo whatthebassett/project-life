@@ -1,16 +1,8 @@
 import { dayLabel, isoWeek, useNow, weekRangeLabel, yearProgressLabel } from "../lib/dates";
 import { ComingSoon, ScreenFrame } from "./ScreenFrame";
 
-// Empty screens for Phase 1, laid out like their mockups so the rail, panels
-// and headings are in place for the phases that fill them.
-
-export function Notes() {
-  return (
-    <ScreenFrame title="Notes" listWidth={284} detailsWidth={284}>
-      <ComingSoon phase={3} what="Your notebooks, tabs and the editor" />
-    </ScreenFrame>
-  );
-}
+// Empty screens, laid out like their mockups so the rail, panels and headings
+// are in place for the phases that fill them.
 
 export function Schedule() {
   const now = useNow();

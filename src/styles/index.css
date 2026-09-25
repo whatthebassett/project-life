@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./tokens.css";
+@import "./editor.css";
 
 /* Tailwind reads its colors, fonts and type sizes from the theme tokens, and
    only from them: the default palette is switched off so a stray bg-gray-800
@@ -35,6 +36,11 @@
   --color-hue-3: var(--hue-3);
   --color-hue-4: var(--hue-4);
   --color-hue-5: var(--hue-5);
+  /* The names Checkpoint's ported components use (styles/editor.css maps them). */
+  --color-fg: var(--text);
+  --color-hover: color-mix(in srgb, var(--text) 6%, transparent);
+  --color-active: color-mix(in srgb, var(--text) 10%, transparent);
+  --color-accent-text: var(--accent);
 
   --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;

@@ -17,6 +17,18 @@ export interface Settings {
   TemperatureUnit?: "C" | "F";
   NewsSources?: unknown;
   HomeNewsTopic?: string;
+  // Notes, with Checkpoint's names so Import from Checkpoint can carry them over.
+  EditorMode?: "Visual" | "Markdown";
+  Tabs?: string[];
+  ActiveTab?: string | null;
+  SortByPriority?: boolean;
+  LinkPreviews?: boolean;
+  WordWrap?: boolean;
+  LineNumbers?: boolean;
+  DefaultCodeLanguage?: string;
+  EmojiSkinTone?: number;
+  RecentEmoji?: string[];
+  NotesFolder?: string | null;
   [key: string]: unknown;
 }
 

@@ -24,9 +24,10 @@ interface PopupProps {
   onClose: () => void;
   // Ctrl+Enter.
   onSubmit?: () => void;
-  // The designed size; smaller windows shrink it to fit.
+  // The designed size; smaller windows shrink it to fit. Without a height it
+  // fits its content (small dialogs).
   width: number;
-  height: number;
+  height?: number;
   // The id of the element that names the pop-up (its title); or a plain label.
   labelledBy?: string;
   label?: string;
@@ -110,7 +111,7 @@ export function Popup({ onClose, onSubmit, width, height, labelledBy, label, chi
           "popup-panel relative flex flex-col overflow-hidden rounded-[28px] border border-line bg-bg text-text shadow-[0_40px_120px_rgba(0,0,0,0.55)] outline-none",
           className,
         )}
-        style={{ width: `min(${width}px, 100%)`, height: `min(${height}px, 100%)` }}
+        style={{ width: `min(${width}px, 100%)`, ...(height ? { height: `min(${height}px, 100%)` } : { maxHeight: "100%" }) }}
       >
         {children}
       </div>

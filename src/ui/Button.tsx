@@ -28,6 +28,7 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   // Shown after the label in mono, like "Ctrl Enter" on a pop-up's main button.
   hint?: string;
   children: ReactNode;
+  ref?: React.Ref<HTMLButtonElement>;
 }
 
 export function Button({ variant = "secondary", size = "lg", icon, hint, className, children, type = "button", ...rest }: Props) {

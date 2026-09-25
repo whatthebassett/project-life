@@ -3,6 +3,7 @@ import { useNow } from "../lib/dates";
 import type { Task } from "../tasks/model";
 import { openCount, todaysTasks } from "../tasks/model";
 import { useTasks } from "../tasks/useTasks";
+import { useRecentNotes } from "./recentNotes";
 import { sample, type Sample } from "./sample";
 import type { HomeEvent, HomeHabit, HomeNote } from "./sources";
 
@@ -26,6 +27,7 @@ export function useHome(): HomeData {
   const s = useSyncExternalStore(sample.subscribe, sample.get);
   const now = useNow();
   const real = useTasks();
+  const recentNotes = useRecentNotes();
   if (s) {
     return {
       sample: s,
@@ -46,7 +48,7 @@ export function useHome(): HomeData {
     events: none,
     habits: none,
     toggleHabit: () => {},
-    notes: none,
+    notes: recentNotes,
   };
 }
 

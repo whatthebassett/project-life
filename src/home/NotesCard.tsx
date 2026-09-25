@@ -1,3 +1,4 @@
+import { useNotes } from "../notes/NotesContext";
 import type { Screen } from "../shell/nav";
 import { Card, CardHeader, CardLink, Empty } from "./parts";
 import { ago } from "./time";
@@ -5,6 +6,7 @@ import type { HomeData } from "./useHome";
 
 // The last few notes edited.
 export default function NotesCard({ home, onNavigate }: { home: HomeData; onNavigate: (s: Screen) => void }) {
+  const { activate } = useNotes();
   const notes = [...home.notes].sort((a, b) => b.edited - a.edited).slice(0, 3);
   return (
     <Card label="Recent notes" className="flex-1 gap-3 overflow-hidden px-6 py-[22px]">
@@ -15,7 +17,7 @@ export default function NotesCard({ home, onNavigate }: { home: HomeData; onNavi
         <button
           key={n.id}
           type="button"
-          onClick={() => onNavigate("notes")}
+          onClick={() => (home.sample ? onNavigate("notes") : void activate(n.id))}
           className="-mx-3 flex w-[calc(100%+24px)] flex-col gap-1 rounded-[12px] px-3 py-[10px] text-left transition-colors hover:bg-panel2"
         >
           <span className="flex w-full justify-between gap-2">

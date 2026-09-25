@@ -33,8 +33,9 @@ function playZoomOut(overlay: HTMLElement, parent: HTMLElement, next: ChildNode 
   ghost.style.pointerEvents = "none";
   ghost.style.animation = "none";
   parent.insertBefore(ghost, next && next.parentNode === parent ? next : null);
+  // [data-modal-panel]: Checkpoint's note switcher (components/NotePicker.tsx).
   const scrim = ghost.querySelector<HTMLElement>("[data-popup-scrim]");
-  const panel = ghost.querySelector<HTMLElement>("[data-popup-panel]");
+  const panel = ghost.querySelector<HTMLElement>("[data-popup-panel], [data-modal-panel]");
   if (scrim) scrim.style.animation = "none";
   if (panel) panel.style.animation = "none";
   const done = () => ghost.remove();

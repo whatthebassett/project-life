@@ -147,7 +147,7 @@ fn web_agent(timeout_secs: u64, user_agent: &str) -> ureq::Agent {
 // included) checked against private and loopback addresses, and the body
 // capped at `limit` bytes. Returns where it ended up, its content type, and
 // the bytes.
-fn fetch_public(url: &str, accept: &str, limit: u64, timeout_secs: u64) -> Result<(url::Url, String, Vec<u8>), String> {
+pub(crate) fn fetch_public(url: &str, accept: &str, limit: u64, timeout_secs: u64) -> Result<(url::Url, String, Vec<u8>), String> {
     let agent = web_agent(timeout_secs, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ProjectLife/0.1");
     let mut current = url::Url::parse(url).map_err(err)?;
     for _ in 0..5 {
@@ -205,7 +205,7 @@ pub fn fetch_text(url: String) -> Result<String, String> {
 // Most feeds are UTF-8, but some older ones are Latin-1 or Windows-1252,
 // named in the Content-Type or the XML declaration. Those are decoded here so
 // accented letters and curly quotes come through.
-fn decode_text(content_type: &str, bytes: &[u8]) -> String {
+pub(crate) fn decode_text(content_type: &str, bytes: &[u8]) -> String {
     let bytes = bytes.strip_prefix(&[0xEF, 0xBB, 0xBF][..]).unwrap_or(bytes);
     let head = String::from_utf8_lossy(&bytes[..bytes.len().min(256)]).to_lowercase();
     let declared = regex::Regex::new(r#"charset\s*=\s*"?([\w-]+)"#)

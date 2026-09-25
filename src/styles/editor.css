@@ -1,0 +1,1293 @@
+/* The note editor's styles, ported from Checkpoint (src/index.css there).
+   Checkpoint's color and type variables are mapped onto Project Life's theme
+   tokens here, so its rules carry over unchanged and follow all four themes. */
+:root {
+  --fg: var(--text);
+  --hover: color-mix(in srgb, var(--text) 6%, transparent);
+  --active: color-mix(in srgb, var(--text) 10%, transparent);
+  --accent-text: var(--accent);
+  --code-bg: var(--panel2);
+  --menu: var(--panel);
+  --font-ui: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+  /* Notes.dc.html: 16px body text in a 660px column. */
+  --note-font: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --note-size: calc(16px * var(--text-scale));
+  --note-width: 660px;
+  --caret-width: 2px;
+  --emoji-in-note: 1.25em;
+  --emoji-menu: 22px;
+}
+
+/* A date in a note (editor/dateTime.ts): a chip with a calendar glyph. Today
+   is in the accent; past dates fade back. */
+.ProseMirror .date-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0 0.4em;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent-text);
+  font-size: 0.92em;
+  line-height: 1.5;
+  white-space: nowrap;
+  cursor: pointer;
+  vertical-align: baseline;
+  transition: background-color 120ms;
+}
+.ProseMirror .date-chip::before {
+  content: "";
+  width: 0.95em;
+  height: 0.95em;
+  flex-shrink: 0;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 2v4M16 2v4'/%3E%3Crect width='18' height='18' x='3' y='4' rx='2'/%3E%3Cpath d='M3 10h18'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 2v4M16 2v4'/%3E%3Crect width='18' height='18' x='3' y='4' rx='2'/%3E%3Cpath d='M3 10h18'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.ProseMirror .date-chip:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+.ProseMirror .date-chip[data-when="today"] { background: color-mix(in srgb, var(--accent) 22%, transparent); font-weight: 600; }
+.ProseMirror .date-chip[data-when="past"] { background: var(--hover); color: var(--muted); }
+.ProseMirror .date-chip.ProseMirror-selectednode { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* The cursor fades through the rainbow; typing keeps it visible. */
+@keyframes rainbow-caret {
+  0% { caret-color: #ef4444; }
+  17% { caret-color: #f97316; }
+  33% { caret-color: #eab308; }
+  50% { caret-color: #22c55e; }
+  67% { caret-color: #3b82f6; }
+  83% { caret-color: #a855f7; }
+  100% { caret-color: #ef4444; }
+}
+@keyframes rainbow-border {
+  0% { border-color: #ef4444; }
+  17% { border-color: #f97316; }
+  33% { border-color: #eab308; }
+  50% { border-color: #22c55e; }
+  67% { border-color: #3b82f6; }
+  83% { border-color: #a855f7; }
+  100% { border-color: #ef4444; }
+}
+/* Visual mode draws its own cursor (editor/caret.ts); hide the system one. */
+.ProseMirror.custom-caret {
+  caret-color: transparent;
+}
+.noted-caret {
+  position: absolute;
+  display: none;
+  pointer-events: none;
+  border-radius: 1px;
+  z-index: 2;
+}
+/* Markdown mode's cursor takes the same thickness and color. */
+.noted-source .cm-cursor {
+  border-left-width: var(--caret-width, 2px);
+  border-left-color: var(--accent) !important;
+}
+.rainbow-caret .cm-cursor {
+  animation: rainbow-border 6s linear infinite;
+}
+
+.drop-before { box-shadow: inset 0 2px 0 var(--accent); }
+.drop-after { box-shadow: inset 0 -2px 0 var(--accent); }
+.drop-inside { background: color-mix(in srgb, var(--accent) 25%, transparent) !important; }
+
+/* ---------- Visual editor ---------- */
+.noted-editor {
+  user-select: text;
+}
+
+.noted-editor .ProseMirror {
+  outline: none;
+  font-family: var(--note-font);
+  font-size: var(--note-size);
+  line-height: 1.6;
+  min-height: 100%;
+  padding-bottom: 40vh;
+}
+
+.noted-editor.readable .ProseMirror {
+  max-width: var(--note-width);
+  margin: 0 auto;
+}
+
+.ProseMirror p {
+  margin: 0 0 0.55em;
+}
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 1.1em 0 0.4em;
+}
+.ProseMirror h1 { font-size: 1.75em; }
+.ProseMirror h2 { font-size: 1.4em; }
+.ProseMirror h3 { font-size: 1.18em; }
+.ProseMirror h4 { font-size: 1.05em; }
+.ProseMirror h5,
+.ProseMirror h6 { font-size: 1em; }
+.ProseMirror > :first-child { margin-top: 0; }
+
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.6em;
+  margin: 0 0 0.55em;
+}
+.ProseMirror ul { list-style: disc; }
+.ProseMirror ol { list-style: decimal; }
+.ProseMirror li > p { margin: 0; }
+.ProseMirror li + li { margin-top: 0.15em; }
+
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0.2em;
+}
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  gap: 0.5em;
+  align-items: flex-start;
+}
+.ProseMirror ul[data-type="taskList"] li > label {
+  flex: 0 0 auto;
+  margin-top: 0.3em;
+}
+.ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1 1 auto;
+}
+.ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+.ProseMirror input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+.ProseMirror a {
+  color: var(--accent-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ProseMirror code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--code-bg);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+.ProseMirror pre {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.7em 0.9em;
+  margin: 0 0 0.7em;
+  overflow-x: auto;
+  white-space: pre;
+}
+.ProseMirror pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* Code blocks: a language label in the corner, highlighting from theme colors. */
+.ProseMirror pre.code-block {
+  position: relative;
+  padding-top: 1.7em;
+}
+.ProseMirror .code-lang {
+  position: absolute;
+  top: 0.35em;
+  right: 0.5em;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 0.4em;
+  border-radius: 4px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+  user-select: none;
+}
+.ProseMirror .code-lang:hover {
+  background: var(--hover);
+  color: var(--fg);
+}
+.ProseMirror pre code {
+  display: block;
+  white-space: pre;
+}
+
+:root {
+  --hl-keyword: #a626a4;
+  --hl-string: #50a14f;
+  --hl-number: #986801;
+  --hl-comment: #a0a1a7;
+  --hl-title: #4078f2;
+  --hl-type: #c18401;
+  --hl-meta: #0184bc;
+  --hl-variable: #e45649;
+}
+:root[data-scheme="dark"] {
+  --hl-keyword: #c678dd;
+  --hl-string: #98c379;
+  --hl-number: #d19a66;
+  --hl-comment: #7f848e;
+  --hl-title: #61afef;
+  --hl-type: #e5c07b;
+  --hl-meta: #56b6c2;
+  --hl-variable: #e06c75;
+}
+.ProseMirror pre .hljs-keyword,
+.ProseMirror pre .hljs-selector-tag,
+.ProseMirror pre .hljs-literal,
+.ProseMirror pre .hljs-doctag {
+  color: var(--hl-keyword);
+}
+.ProseMirror pre .hljs-string,
+.ProseMirror pre .hljs-regexp,
+.ProseMirror pre .hljs-addition,
+.ProseMirror pre .hljs-attribute,
+.ProseMirror pre .hljs-meta .hljs-string {
+  color: var(--hl-string);
+}
+.ProseMirror pre .hljs-number,
+.ProseMirror pre .hljs-attr,
+.ProseMirror pre .hljs-selector-attr,
+.ProseMirror pre .hljs-selector-pseudo {
+  color: var(--hl-number);
+}
+.ProseMirror pre .hljs-comment,
+.ProseMirror pre .hljs-quote {
+  color: var(--hl-comment);
+  font-style: italic;
+}
+.ProseMirror pre .hljs-title,
+.ProseMirror pre .hljs-section,
+.ProseMirror pre .hljs-title.function_ {
+  color: var(--hl-title);
+}
+.ProseMirror pre .hljs-type,
+.ProseMirror pre .hljs-built_in,
+.ProseMirror pre .hljs-title.class_,
+.ProseMirror pre .hljs-class .hljs-title {
+  color: var(--hl-type);
+}
+.ProseMirror pre .hljs-meta,
+.ProseMirror pre .hljs-symbol,
+.ProseMirror pre .hljs-bullet,
+.ProseMirror pre .hljs-link {
+  color: var(--hl-meta);
+}
+.ProseMirror pre .hljs-variable,
+.ProseMirror pre .hljs-template-variable,
+.ProseMirror pre .hljs-tag,
+.ProseMirror pre .hljs-name,
+.ProseMirror pre .hljs-selector-id,
+.ProseMirror pre .hljs-selector-class,
+.ProseMirror pre .hljs-deletion {
+  color: var(--hl-variable);
+}
+.ProseMirror pre .hljs-emphasis {
+  font-style: italic;
+}
+.ProseMirror pre .hljs-strong {
+  font-weight: 600;
+}
+
+.ProseMirror blockquote {
+  border-left: 3px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  margin: 0 0 0.7em;
+  padding: 0.1em 0 0.1em 0.9em;
+  color: var(--muted);
+}
+
+.ProseMirror hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 1.2em 0;
+}
+
+.ProseMirror img {
+  max-width: 100%;
+  border-radius: 6px;
+}
+
+/* Columns keep a usable width (cellMinWidth in VisualEditor); a table with
+   more columns than fit scrolls sideways instead of squeezing them. */
+.ProseMirror .tableWrapper {
+  overflow-x: auto;
+  margin: 0 0 0.8em;
+}
+.ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0 0 0.8em;
+  table-layout: fixed;
+}
+.ProseMirror .tableWrapper > table {
+  margin: 0;
+}
+.ProseMirror th,
+.ProseMirror td {
+  border: 1px solid var(--line);
+  padding: 0.3em 0.55em;
+  vertical-align: top;
+  position: relative;
+}
+.ProseMirror th {
+  background: var(--hover);
+  font-weight: 600;
+  text-align: left;
+}
+.ProseMirror td[align="center"],
+.ProseMirror th[align="center"] { text-align: center; }
+.ProseMirror td[align="right"],
+.ProseMirror th[align="right"] { text-align: right; }
+.ProseMirror td > p,
+.ProseMirror th > p {
+  margin: 0;
+}
+.ProseMirror .selectedCell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  pointer-events: none;
+}
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--accent);
+  pointer-events: none;
+}
+.ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+
+/* Callouts: a tinted card outlined in its color, icon top-left, text beside it. */
+.ProseMirror .callout {
+  position: relative;
+  margin: 0 0 0.7em;
+  padding: 0.55em 0.8em 0.55em 2.4em;
+  border: 1px solid color-mix(in srgb, var(--callout-color) 55%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--callout-color) 12%, transparent);
+}
+.ProseMirror .callout::before {
+  content: "";
+  position: absolute;
+  left: 0.75em;
+  top: 0.72em;
+  width: 1.1em;
+  height: 1.1em;
+  background: var(--callout-color);
+  -webkit-mask: var(--callout-icon) center / contain no-repeat;
+  mask: var(--callout-icon) center / contain no-repeat;
+  pointer-events: none;
+}
+.ProseMirror .callout > :last-child {
+  margin-bottom: 0;
+}
+
+/* A newly added callout pops in with an overshoot, and its icon follows. */
+@keyframes callout-bounce {
+  0% { transform: scale(0.92); opacity: 0.3; }
+  40% { transform: scale(1.03); opacity: 1; }
+  65% { transform: scale(0.985); }
+  85% { transform: scale(1.006); }
+  100% { transform: scale(1); }
+}
+@keyframes callout-icon-pop {
+  0%, 20% { transform: scale(0.2) rotate(-25deg); }
+  55% { transform: scale(1.35) rotate(8deg); }
+  80% { transform: scale(0.92) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+.ProseMirror .callout.callout-bounce {
+  transform-origin: 30% 50%;
+  animation: callout-bounce 560ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.ProseMirror .callout.callout-bounce::before {
+  animation: callout-icon-pop 620ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+/* Spoilers: hidden until hovered or the cursor is inside. */
+.ProseMirror .spoiler {
+  background: var(--fg);
+  color: transparent;
+  border-radius: 3px;
+  transition: background 0.15s, color 0.15s;
+}
+.ProseMirror .spoiler::selection,
+.ProseMirror .spoiler *::selection {
+  color: var(--fg);
+}
+.ProseMirror .spoiler:hover,
+.ProseMirror .spoiler:has(+ .ProseMirror-separator) {
+  background: var(--code-bg);
+  color: inherit;
+}
+.ProseMirror-focused .spoiler.spoiler-open {
+  background: var(--code-bg);
+  color: inherit;
+}
+
+/* Link cards beneath a line with web links. */
+.ProseMirror .link-card {
+  display: flex;
+  gap: 0.7em;
+  align-items: stretch;
+  margin: -0.15em 0 0.7em;
+  max-width: 34rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--hover);
+  cursor: pointer;
+  user-select: none;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+}
+.ProseMirror .link-card:hover {
+  background: var(--active);
+}
+.ProseMirror .link-card-image {
+  width: 96px;
+  min-height: 64px;
+  object-fit: cover;
+  flex: 0 0 auto;
+  border-radius: 0;
+}
+.ProseMirror .link-card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 0.5em 0.7em;
+  min-width: 0;
+}
+.ProseMirror .link-card-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ProseMirror .link-card-desc {
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ProseMirror .link-card-site {
+  color: var(--muted);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Block handles (components/BlockHandle.tsx, editor/blocks.ts) ---------- */
+
+/* The grab handle: a small square of 3×3 dots beside the hovered block. It
+   glides between blocks and fades in. */
+.block-handle {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: var(--muted);
+  cursor: grab;
+  touch-action: none;
+  animation: block-handle-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition:
+    top 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    left 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 120ms,
+    color 120ms,
+    transform 140ms,
+    opacity 120ms;
+}
+.block-handle:hover {
+  background: var(--hover);
+  color: var(--fg);
+  box-shadow: 0 0 0 1px var(--line);
+}
+.block-handle:active {
+  cursor: grabbing;
+  transform: scale(0.92);
+}
+.block-handle.is-dragging {
+  opacity: 0;
+}
+@keyframes block-handle-in {
+  from {
+    opacity: 0;
+    transform: translateX(4px) scale(0.85);
+  }
+}
+
+/* Every menu, submenu and picker unrolls downward as it opens, its rows
+   following one after another. Only the first dozen rows are staggered, so a
+   long list (fonts, languages) doesn't take seconds to appear. Settings →
+   Accessibility → Animations turns this off with everything else. */
+.menu-drop,
+.noted-source .cm-tooltip.cm-tooltip-autocomplete {
+  transform-origin: top left;
+  animation: menu-drop 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes menu-drop {
+  from {
+    clip-path: inset(0 0 100% 0 round 8px);
+    transform: translateY(-4px);
+  }
+  to {
+    clip-path: inset(0 0 0 0 round 8px);
+    transform: none;
+  }
+}
+.menu-drop-row {
+  animation: menu-drop-row 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(min(var(--row, 0), 12) * 14ms);
+}
+.noted-source .cm-tooltip-autocomplete > ul > li {
+  animation: menu-drop-row 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.noted-source .cm-tooltip-autocomplete > ul > li:nth-child(n + 2) { animation-delay: 14ms; }
+.noted-source .cm-tooltip-autocomplete > ul > li:nth-child(n + 3) { animation-delay: 28ms; }
+.noted-source .cm-tooltip-autocomplete > ul > li:nth-child(n + 4) { animation-delay: 42ms; }
+.noted-source .cm-tooltip-autocomplete > ul > li:nth-child(n + 5) { animation-delay: 56ms; }
+.noted-source .cm-tooltip-autocomplete > ul > li:nth-child(n + 6) { animation-delay: 70ms; }
+@keyframes menu-drop-row {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+/* The block under the handle. */
+.ProseMirror .block-hovered {
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+/* While dragging: the blocks slide apart with a little spring, and the
+   dragged block's own place is left empty (it's travelling with the pointer). */
+.ProseMirror .block-shift {
+  transition: transform 240ms cubic-bezier(0.2, 0.9, 0.3, 1.15);
+  will-change: transform;
+}
+.ProseMirror .block-lifted {
+  opacity: 0 !important;
+}
+
+/* The space opened where the block will land. */
+.block-slot {
+  position: absolute;
+  z-index: 1;
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 60%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  pointer-events: none;
+  transition: top 240ms cubic-bezier(0.2, 0.9, 0.3, 1.15);
+  animation: block-slot-breathe 1.6s ease-in-out infinite;
+}
+@keyframes block-slot-breathe {
+  50% {
+    border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+    background: color-mix(in srgb, var(--accent) 4%, transparent);
+  }
+}
+
+/* A block floating above the page: the drag card, or a deleted block fading.
+   It carries the editor's classes so the copy looks exactly like the block. */
+.block-float {
+  position: fixed;
+  z-index: 70;
+  pointer-events: none;
+  border-radius: 8px;
+  background: var(--bg);
+  box-shadow:
+    0 0 0 6px var(--bg),
+    0 0 0 7px var(--line),
+    0 18px 44px rgba(0, 0, 0, 0.28);
+  transform-origin: 30% 50%;
+}
+.block-float .ProseMirror {
+  min-height: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.block-float .ProseMirror > * {
+  margin: 0 !important;
+}
+body.block-dragging,
+body.block-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+/* The note's own header: cover image, title, details. */
+.note-header {
+  position: relative;
+  user-select: none;
+}
+.cover-button {
+  background: rgba(20, 20, 20, 0.55);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  transition: background 0.15s;
+}
+.cover-button:hover {
+  background: rgba(20, 20, 20, 0.72);
+}
+.cover-button:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 1px;
+}
+.note-title {
+  font-family: var(--note-font);
+  font-size: calc(var(--note-size) * 2.1);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--fg);
+  caret-color: var(--accent);
+  user-select: text;
+}
+
+/* Emoji in notes, at Settings → Editing → Emoji size. */
+.ProseMirror .emoji,
+.noted-source .cm-emoji {
+  font-family: "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  font-size: var(--emoji-in-note, 1.3em);
+  line-height: 1;
+  vertical-align: -0.08em;
+}
+.noted-source .cm-tooltip-autocomplete .cm-completionLabel {
+  font-size: 12.5px;
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Placeholder hints (VisualEditor's Placeholder). Only on text lines: a
+   callout's own ::before is its icon. */
+.ProseMirror :is(p, h1, h2, h3, h4, h5, h6).is-empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted);
+  opacity: 0.75;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+/* The empty note's description reads as a sentence, not a single line. */
+.ProseMirror > p.is-editor-empty:first-child::before {
+  float: none;
+  display: block;
+  height: 0;
+  opacity: 0.85;
+}
+
+.ProseMirror ::selection {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* ---------- Source editor ---------- */
+/* The page around CodeMirror scrolls (with the note's header on it), so
+   CodeMirror itself grows to fit instead of scrolling. */
+.noted-source {
+  user-select: text;
+}
+.noted-source .cm-editor {
+  height: auto;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+}
+.noted-source .cm-editor.cm-focused {
+  outline: none;
+}
+.noted-source .cm-scroller {
+  overflow: visible;
+  line-height: 1.55;
+  padding-bottom: 40vh;
+}
+.noted-source .cm-content {
+  padding: 0;
+}
+.noted-source .cm-line {
+  padding: 0;
+}
+.noted-source .cm-gutters {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+}
+.noted-source .cm-activeLine,
+.noted-source .cm-activeLineGutter {
+  background: var(--hover);
+}
+.noted-source .cm-cursor {
+  border-left-color: var(--fg);
+}
+/* Markdown mode's ":emoji" suggestions, styled like the app's menus. */
+.noted-source .cm-tooltip.cm-tooltip-autocomplete {
+  background: var(--menu);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  padding: 4px;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+}
+.noted-source .cm-tooltip-autocomplete > ul {
+  max-height: 280px;
+  font-family: var(--font-ui);
+}
+.noted-source .cm-tooltip-autocomplete > ul > li {
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: var(--fg);
+}
+.noted-source .cm-tooltip-autocomplete > ul > li[aria-selected] {
+  background: var(--active);
+  color: var(--fg);
+}
+.noted-source .cm-completionDetail {
+  color: var(--muted);
+  font-style: normal;
+  margin-left: 12px;
+}
+
+.noted-source .cm-selectionBackground,
+.noted-source .cm-editor.cm-focused .cm-selectionBackground {
+  background: color-mix(in srgb, var(--accent) 35%, transparent) !important;
+}
+
+
+/* The "/" menu (VisualEditor.tsx): roomy rows with an icon tile. The row you're
+   on takes the accent: a soft wash, an outline, and a filled icon (callouts
+   fill with their own color). */
+.slash-row {
+  transition: background-color 120ms, box-shadow 120ms;
+}
+.slash-row .slash-icon {
+  background: var(--hover);
+  border-color: var(--line);
+  color: var(--tint, var(--fg));
+  transition: background-color 140ms, color 140ms, border-color 140ms, transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.slash-row:hover:not(.is-active) {
+  background: var(--hover);
+}
+.slash-row.is-active {
+  background: color-mix(in srgb, var(--tint, var(--accent)) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tint, var(--accent)) 30%, transparent);
+}
+.slash-row.is-active .slash-label {
+  color: color-mix(in srgb, var(--tint, var(--accent)) 60%, var(--fg));
+}
+.slash-row.is-active .slash-icon {
+  background: var(--tint, var(--accent));
+  border-color: transparent;
+  color: #fff;
+  transform: scale(1.06);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--tint, var(--accent)) 35%, transparent);
+}
+.slash-row .slash-enter {
+  color: color-mix(in srgb, var(--tint, var(--accent)) 70%, var(--fg));
+}
+.slash-key {
+  display: inline-flex;
+  min-width: 1.5em;
+  justify-content: center;
+  padding: 0 0.35em;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--fg);
+}
+
+/* The note switcher and new tab (NotePicker.tsx): a big search bar that drops
+   in, and results in the same accent language as the "/" menu. */
+.picker-panel {
+  animation: picker-in 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes picker-in {
+  from { opacity: 0; transform: scale(0.94); }
+}
+.picker-row { transition: background-color 120ms, box-shadow 120ms; }
+.picker-row .picker-icon {
+  background: var(--hover);
+  border-color: var(--line);
+  color: var(--muted);
+  transition: background-color 140ms, color 140ms, border-color 140ms, transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.picker-row.is-active {
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.picker-row.is-active .picker-title { color: var(--accent-text); }
+.picker-row.is-active .picker-icon {
+  background: var(--accent);
+  border-color: transparent;
+  color: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.picker-row .picker-enter { color: var(--accent-text); }
+.picker-mark {
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+/* Frosted glass for the switcher: the app shows through, softly blurred and
+   a little brighter, under a translucent pane with a lit top edge and a thin
+   bright rim. Light and dark themes each get their own tint. */
+.picker-backdrop {
+  background: rgba(0, 0, 0, 0.24);
+  backdrop-filter: blur(6px) saturate(1.1);
+  animation: picker-fade 180ms ease-out;
+}
+@keyframes picker-fade {
+  from { background: rgba(0, 0, 0, 0); backdrop-filter: blur(0); }
+}
+.picker-glass {
+  position: relative;
+  isolation: isolate;
+  background: color-mix(in srgb, var(--menu) 58%, transparent);
+  backdrop-filter: blur(28px) saturate(1.7);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 24px 60px rgba(0, 0, 0, 0.22),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+}
+/* A soft sheen across the top, like light on glass. */
+.picker-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 42%),
+    radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 60%);
+}
+.picker-glass .picker-divider { border-color: rgba(255, 255, 255, 0.45); }
+.picker-glass .picker-row .picker-icon {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+:root[data-scheme="dark"] .picker-backdrop { background: rgba(0, 0, 0, 0.4); }
+:root[data-scheme="dark"] .picker-glass {
+  background: color-mix(in srgb, var(--menu) 52%, transparent);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 24px 60px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+}
+:root[data-scheme="dark"] .picker-glass::before {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 40%),
+    radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%);
+}
+:root[data-scheme="dark"] .picker-glass .picker-divider { border-color: rgba(255, 255, 255, 0.09); }
+:root[data-scheme="dark"] .picker-glass .picker-row .picker-icon {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+/* The highlighted row keeps its accent tile on glass. */
+.picker-glass .picker-row.is-active .picker-icon {
+  background: var(--accent);
+  border-color: transparent;
+}
+
+/* Menu icons draw at one size, whatever size they were made at. */
+.menu-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* A pinned note dragged over the note list: dropping it there unpins it. */
+.drop-unpin {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  border-radius: 8px;
+  transition: background-color 120ms, box-shadow 120ms;
+}
+
+/* Modals zoom in as they open: the backdrop fades up while the panel grows
+   from just under full size. Closing plays it in reverse (lib/motion.ts:
+   zoomOut). Settings → Accessibility → Animations turns both off. */
+.modal-backdrop {
+  animation: modal-fade 170ms ease-out;
+}
+@keyframes modal-fade {
+  from { opacity: 0; }
+}
+.modal-panel {
+  animation: modal-zoom 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes modal-zoom {
+  from { opacity: 0; transform: scale(0.94); }
+}
+
+
+/* Table of contents (editor/toc.ts): a card listing the note's headings, each
+   one a link; nested headings step in, with a guide line down the left. */
+.ProseMirror .toc {
+  margin: 0.4em 0 0.9em;
+  padding: 0.7em 0.9em 0.6em;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%);
+  font-size: 0.93em;
+  user-select: none;
+}
+.ProseMirror .toc.ProseMirror-selectednode {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.ProseMirror .toc-title {
+  margin-bottom: 0.35em;
+  font-size: 0.78em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ProseMirror .toc-empty {
+  color: var(--muted);
+  font-style: italic;
+}
+.ProseMirror .toc-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ProseMirror .toc-item {
+  margin: 0;
+  padding: 0;
+}
+.ProseMirror .toc-item::before { content: none; }
+.ProseMirror .toc-level-1 { padding-left: 1.1em; }
+.ProseMirror .toc-level-2 { padding-left: 2.2em; }
+.ProseMirror .toc-level-3 { padding-left: 3.3em; }
+.ProseMirror .toc-level-4 { padding-left: 4.4em; }
+.ProseMirror .toc-level-0 .toc-link { font-weight: 500; }
+.ProseMirror .toc-link {
+  display: block;
+  width: 100%;
+  padding: 0.12em 0.45em;
+  margin-left: -0.45em;
+  border-radius: 5px;
+  text-align: left;
+  color: var(--fg);
+  cursor: pointer;
+  transition: background-color 120ms, color 120ms;
+}
+.ProseMirror .toc-item:not(.toc-level-0) .toc-link {
+  color: color-mix(in srgb, var(--fg) 78%, var(--muted));
+  box-shadow: inset 1px 0 0 var(--line);
+  border-radius: 0 5px 5px 0;
+}
+.ProseMirror .toc-link:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent-text);
+}
+/* The heading a contents link jumped to glows for a moment. */
+.ProseMirror .toc-target {
+  animation: toc-target 1.2s ease-out;
+  border-radius: 6px;
+}
+@keyframes toc-target {
+  0% { background: color-mix(in srgb, var(--accent) 26%, transparent); }
+  100% { background: transparent; }
+}
+
+/* Notes picked for acting on together (Ctrl/Shift+click in the notebook). */
+.note-selected {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.note-selected:hover {
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+}
+.selection-bar {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  animation: selection-bar-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes selection-bar-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
+/* ======================================================================
+   Project Life's look (Notes.dc.html), over Checkpoint's rules above.
+   Only how things are drawn changes; the editor behaves the same.
+   ====================================================================== */
+
+/* 16px text at 1.65, 18px between blocks, headings in a quieter scale. */
+.noted-editor .ProseMirror {
+  line-height: 1.65;
+}
+.ProseMirror > :is(p, ul, ol, blockquote, pre, .callout, .tableWrapper, .toc, hr, img, [data-type="taskList"]) {
+  margin-top: 0;
+  margin-bottom: 18px;
+}
+.ProseMirror :is(h1, h2, h3, h4, h5, h6) {
+  letter-spacing: -0.01em;
+}
+.ProseMirror > :is(h1, h2, h3, h4, h5, h6) {
+  margin: 28px 0 18px;
+}
+.ProseMirror > :first-child {
+  margin-top: 0;
+}
+.ProseMirror h1 { font-size: 1.625em; }
+.ProseMirror h2 { font-size: 1.25em; }
+.ProseMirror h3 { font-size: 1.0625em; }
+
+/* Callouts: a soft wash of their color, a line border, radius 16, and the
+   icon in a filled 28px tile. */
+.ProseMirror .callout {
+  padding: 16px 18px 16px 60px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--callout-color) 16%, transparent);
+  font-size: 0.9375em;
+  line-height: 1.55;
+}
+.ProseMirror .callout::before {
+  left: 18px;
+  top: 16px;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: var(--callout-color);
+  -webkit-mask: none;
+  mask: none;
+}
+.ProseMirror .callout::after {
+  content: "";
+  position: absolute;
+  left: 24px;
+  top: 22px;
+  width: 16px;
+  height: 16px;
+  background: var(--accent-ink);
+  -webkit-mask: var(--callout-icon) center / contain no-repeat;
+  mask: var(--callout-icon) center / contain no-repeat;
+  pointer-events: none;
+}
+.ProseMirror .callout > p { margin: 0 0 4px; }
+/* Headings in a callout: whatever opens it sits on the icon's line (a
+   heading's usual top margin pushed it below the icon); one further down
+   keeps a smaller gap above it. */
+.ProseMirror .callout > :is(h1, h2, h3, h4, h5, h6) {
+  margin: 12px 0 4px;
+  line-height: 1.3;
+}
+.ProseMirror .callout > :first-child { margin-top: 0; }
+.ProseMirror .callout > :last-child { margin-bottom: 0; }
+
+/* To-dos: a 20px rounded square, filled with a check when done. */
+.ProseMirror ul[data-type="taskList"] li {
+  gap: 10px;
+  align-items: flex-start;
+}
+.ProseMirror ul[data-type="taskList"] li > label {
+  margin-top: 0.2em;
+  display: flex;
+}
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border-radius: 6px;
+  border: 1.5px solid var(--faint);
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition: background-color 150ms, border-color 150ms;
+}
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"]::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  background: var(--accent-ink);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12.5 4 4 8-9'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12.5 4 4 8-9'/%3E%3C/svg%3E") center / contain no-repeat;
+  transform: scale(0);
+  transition: transform 150ms;
+}
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"]:checked::before {
+  transform: scale(1);
+}
+
+/* Code: inline on panel2, blocks as a bordered panel. */
+.ProseMirror code {
+  border-radius: 6px;
+}
+.ProseMirror pre {
+  background: var(--panel);
+  border-radius: 14px;
+  padding: 1em 1.1em;
+}
+.ProseMirror pre.code-block {
+  padding-top: 2em;
+}
+
+/* Tables: rounded, bordered, a panel header row in small muted type. */
+.ProseMirror table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  font-size: 0.875em;
+}
+.ProseMirror th,
+.ProseMirror td {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 11px 16px;
+}
+.ProseMirror tr:last-child > td {
+  border-bottom: 0;
+}
+.ProseMirror th {
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 0.857em;
+  font-weight: 600;
+}
+
+/* Link cards: a panel with the picture at the left. */
+.ProseMirror .link-card {
+  gap: 16px;
+  max-width: none;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--panel);
+  font-size: 13px;
+}
+.ProseMirror .link-card:hover {
+  border-color: var(--faint);
+  background: var(--panel);
+}
+.ProseMirror .link-card-image {
+  width: 96px;
+  height: 72px;
+  min-height: 0;
+  border-radius: 10px;
+}
+.ProseMirror .link-card-body {
+  padding: 0;
+  gap: 4px;
+}
+.ProseMirror .link-card-title {
+  font-size: 14px;
+}
+.ProseMirror .link-card-site {
+  font-family: var(--font-mono);
+}
+
+/* Quotes. */
+.ProseMirror blockquote {
+  border-left: 3px solid var(--line);
+  padding-left: 1em;
+  color: var(--muted);
+}
+
+/* The hint on an empty line. */
+.ProseMirror :is(p, h1, h2, h3, h4, h5, h6).is-empty::before {
+  color: var(--muted);
+}
+
+/* Markdown mode: the source as a panel in the note's column. */
+.noted-source {
+  max-width: var(--note-width);
+  margin: 0 auto;
+  box-sizing: content-box;
+}
+.noted-source .cm-editor {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 20px 22px;
+  font-size: 13.5px;
+}
+.noted-source .cm-scroller {
+  line-height: 1.75;
+  padding-bottom: 0;
+}
+.noted-source .cm-activeLine,
+.noted-source .cm-activeLineGutter {
+  background: transparent;
+}
+
+/* The "/" menu (Notes.dc.html): tiles on panel2, the active row in the
+   accent's soft wash. */
+.slash-row .slash-icon {
+  background: var(--panel2);
+  border: 0;
+  box-shadow: none;
+  color: var(--tint, var(--muted));
+}
+.slash-row.is-active {
+  background: var(--accent-soft);
+  box-shadow: none;
+}
+.slash-row.is-active .slash-icon {
+  background: var(--panel2);
+  box-shadow: none;
+  color: var(--tint, var(--accent));
+}
+.slash-row.is-active .slash-label {
+  color: var(--text);
+}
+
+/* Rows picked together in the notebook. */
+.note-selected {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}

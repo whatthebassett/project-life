@@ -1,7 +1,10 @@
 // The file layer. Project Life keeps everything local, in a Data folder beside
 // the executable: settings, and tasks, events, habits and goals as JSON files.
 // The frontend owns the JSON; this side only reads and writes it whole, so
-// keys it doesn't know about are never lost.
+// keys it doesn't know about are never lost. Notes are Markdown files in
+// their own folder (notes.rs).
+mod merge;
+mod notes;
 mod web;
 
 use std::{
@@ -137,8 +140,12 @@ pub fn run() {
     if !prepare_portable() {
         return;
     }
+    notes::load_notes_folder();
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
+        // Pictures in notes, as http://pl.localhost/assets/… (notes.rs).
+        .register_uri_scheme_protocol("pl", |_ctx, request| notes::serve_note_file(&request))
         // Remember size and position, but never the frame (the window draws its
         // own) or visibility (the page shows the window once its theme is on).
         .plugin(
@@ -156,7 +163,36 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![read_settings, write_settings, read_data, write_data, default_name, web::fetch_text])
+        .invoke_handler(tauri::generate_handler![
+            read_settings,
+            write_settings,
+            read_data,
+            write_data,
+            default_name,
+            web::fetch_text,
+            notes::list_notes,
+            notes::read_note,
+            notes::write_note,
+            notes::create_note,
+            notes::seed_notes,
+            notes::rename_note,
+            notes::recycle_note,
+            notes::delete_note,
+            notes::list_trash,
+            notes::restore_note,
+            notes::delete_trash,
+            notes::import_notes,
+            notes::export_note,
+            notes::export_all,
+            notes::open_notes_folder,
+            notes::save_asset,
+            notes::import_asset,
+            notes::read_meta,
+            notes::write_meta,
+            notes::notes_folder_info,
+            notes::set_notes_folder,
+            notes::fetch_link_preview
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
