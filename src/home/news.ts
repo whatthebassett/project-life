@@ -35,6 +35,7 @@ const cache = new Map<string, FeedResult>();
 const inFlight = new Map<string, Promise<FeedResult>>();
 
 export const cachedFeed = (url: string) => cache.get(url);
+export const clearNewsCache = () => cache.clear();
 export const isFresh = (r: FeedResult | undefined, now = Date.now()) => !!r && now - r.fetchedAt < staleAfter;
 
 export function loadFeed(url: string): Promise<FeedResult> {

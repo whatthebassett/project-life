@@ -59,15 +59,21 @@ export default function TasksScreen() {
   const openMenu = useCallback((x: number, y: number, items: MenuItem[]) => setMenu({ x, y, items }), []);
 
   const listView = listOfView(view);
-  // Habits set to show in Today, on the days they're due.
+  // Habits set to show in Today (or all of them, from Settings → Habits and
+  // goals), on the days they're due.
   const { habits } = useHabits();
   const habitToday = habitDay(now, rulesOf(settings));
-  const habitsToday = view === "today" ? activeHabits(habits).filter((h) => h.InTasks && isDue(h, habitToday)) : [];
+  const habitsToday = view === "today" ? activeHabits(habits).filter((h) => (h.InTasks || settings.HabitsInTasks) && isDue(h, habitToday)) : [];
   const undated = view === "someday" ? "none" : view === "upcoming" ? "tomorrow" : "today";
   const parsed = useMemo(() => (draft.trim() ? parseCapture(draft, now, { list: listView ?? undefined, undated }) : null), [draft, now, listView, undated]);
 
   const shown = useMemo(() => tasks.filter((t) => inView(t, view, now) || settling.has(t.Id)), [tasks, view, now, settling]);
-  const groups = useMemo(() => groupTasks(shown, listView ? "date" : groupBy, lists.map((l) => listFor(l.Id)), now, settling), [shown, groupBy, listView, lists, now, settling]);
+  // Settings → Tasks → Completed tasks: Hide leaves them to the Completed view.
+  const hideDone = settings.CompletedTasks === "hide" && view !== "completed";
+  const groups = useMemo(
+    () => groupTasks(shown, listView ? "date" : groupBy, lists.map((l) => listFor(l.Id)), now, settling).filter((g) => !(hideDone && g.id === "completed")),
+    [shown, groupBy, listView, lists, now, settling, hideDone],
+  );
   const isOpen = (id: string) => view === "completed" || !folded.has(id);
   const visibleIds = useMemo(() => groups.flatMap((g) => (isOpen(g.id) ? g.tasks.map((t) => t.Id) : [])), [groups, folded, view]); // eslint-disable-line react-hooks/exhaustive-deps
 

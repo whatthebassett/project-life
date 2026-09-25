@@ -20,7 +20,7 @@ export function ListGroup({ title, className, children }: { title?: string; clas
 // control on the right. 60px tall at least.
 export function ListRow({ label, description, danger, children }: { label: ReactNode; description?: ReactNode; danger?: boolean; children?: ReactNode }) {
   return (
-    <div className="flex min-h-[60px] items-center gap-4 py-[10px] pr-[14px] pl-[18px]">
+    <div data-row="list" className="flex min-h-[60px] items-center gap-4 py-[10px] pr-[14px] pl-[18px]">
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className={clsx("text-14 font-medium", danger ? "text-danger" : "text-text")}>{label}</span>
         {description && <span className="text-12 leading-[1.45] text-muted">{description}</span>}

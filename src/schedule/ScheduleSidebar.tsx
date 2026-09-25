@@ -1,3 +1,5 @@
+import { weekLetters } from "../lib/format";
+import { locale } from "../lib/format";
 import clsx from "clsx";
 import { ArrowRight, Check, ChevronLeft, ChevronRight, Copy, FileText, Plus, Sparkles, Video } from "lucide-react";
 import { useState } from "react";
@@ -56,7 +58,7 @@ export default function ScheduleSidebar(props: Props) {
 
   const whenOf = (e: CalEvent) => {
     const day = fromYmd(e.Start.slice(0, 10));
-    const d = day.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+    const d = day.toLocaleDateString(locale(), { weekday: "long", month: "short", day: "numeric" });
     return e.AllDay ? `${d} · All day` : `${d} · ${rangeLabel({ start: fromStamp(e.Start), end: fromStamp(e.End) })}`;
   };
 
@@ -103,7 +105,7 @@ export default function ScheduleSidebar(props: Props) {
 
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between px-1">
-          <span className="text-14 font-semibold">{month.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</span>
+          <span className="text-14 font-semibold">{month.toLocaleDateString(locale(), { month: "long", year: "numeric" })}</span>
           <div className="flex gap-0.5 text-muted">
             <button aria-label="Previous month" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} className="flex h-[30px] w-[30px] items-center justify-center rounded-[8px] hover:bg-panel hover:text-text">
               <ChevronLeft size={14} strokeWidth={2.2} />
@@ -114,7 +116,7 @@ export default function ScheduleSidebar(props: Props) {
           </div>
         </div>
         <div className="grid grid-cols-7 gap-0.5">
-          {["M", "T", "W", "T", "F", "S", "S"].map((h, i) => (
+          {weekLetters().map((h, i) => (
             <span key={i} className="flex h-[22px] items-center justify-center font-mono text-10 text-muted">
               {h}
             </span>
@@ -127,7 +129,7 @@ export default function ScheduleSidebar(props: Props) {
             return (
               <button
                 key={key}
-                aria-label={d.toLocaleDateString(undefined, { month: "long", day: "numeric" })}
+                aria-label={d.toLocaleDateString(locale(), { month: "long", day: "numeric" })}
                 onClick={() => props.onPickDay(d)}
                 className={clsx(
                   "flex h-[30px] flex-col items-center justify-center gap-0.5 rounded-[10px] text-12",
@@ -185,7 +187,7 @@ function SelectedCard({ occ, now, calendarOf, onEdit }: { occ: Occurrence; now: 
   const cal = calendarOf(e.Calendar);
   const join = joinState(occ, now);
   const meta = e.Place || e.Description?.split("\n").find((l) => l.trim()) || (e.Kind === "focus" ? "Focus time" : e.Kind === "reminder" ? "Reminder" : "");
-  const day = occ.start.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+  const day = occ.start.toLocaleDateString(locale(), { weekday: "long", month: "short", day: "numeric" });
 
   const primary = join.call
     ? {

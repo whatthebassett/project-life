@@ -9,6 +9,7 @@ import { Button } from "../ui/Button";
 import { ListGroup, ListRow } from "../ui/bits";
 import { SegmentedControl } from "../ui/SegmentedControl";
 import { Switch } from "../ui/Switch";
+import { Seg, Toggle } from "./controls";
 
 // Settings → Notes: the editor, and where notes are kept. The folder part is
 // Checkpoint's (including 1.1.2's fix): copying into a folder that already
@@ -76,6 +77,18 @@ export default function NotesSettings() {
         <ListRow label="Link previews" description="Fetches the title and picture for links on a line of their own">
           <Switch label="Link previews" checked={settings.LinkPreviews !== false} onChange={(v) => update({ LinkPreviews: v })} />
         </ListRow>
+        <Toggle label="Spell check" value={settings.SpellCheck !== false} onChange={(v) => update({ SpellCheck: v })} />
+        <Seg
+          label="Cursor"
+          value={settings.Cursor ?? "line"}
+          onChange={(v) => update({ Cursor: v })}
+          options={[
+            { value: "line", label: "Line" },
+            { value: "block", label: "Block" },
+            { value: "underline", label: "Underline" },
+          ]}
+        />
+        <Toggle label="Open notes in a new tab" desc="Instead of replacing the note in the current tab" value={Boolean(settings.OpenInNewTab)} onChange={(v) => update({ OpenInNewTab: v })} />
         <ListRow label="Word wrap in Markdown">
           <Switch label="Word wrap in Markdown" checked={settings.WordWrap !== false} onChange={(v) => update({ WordWrap: v })} />
         </ListRow>

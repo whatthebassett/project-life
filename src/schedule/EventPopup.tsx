@@ -1,3 +1,5 @@
+import { clockShort, hour12 } from "../lib/format";
+import { locale } from "../lib/format";
 import clsx from "clsx";
 import { ArrowRight, CalendarDays, CheckSquare, ChevronDown, FileText, Globe, Link2, MapPin, TriangleAlert, X } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -6,7 +8,7 @@ import NotePicker from "../components/NotePicker";
 import { titleOf } from "../lib/api";
 import { useNotes } from "../notes/NotesContext";
 import Calendar from "../tasks/Calendar";
-import { addDays, formatTime, fromYmd, startOfDay, ymd } from "../tasks/dates";
+import { addDays, fromYmd, startOfDay, ymd } from "../tasks/dates";
 import { currentLists, listFor } from "../tasks/lists";
 import { useTasks } from "../tasks/useTasks";
 import { Button } from "../ui/Button";
@@ -74,7 +76,7 @@ interface Form {
 
 const minutesOf = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 const fromMinutes = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
-const timeLabel = (t: string) => (t === "24:00" ? "12 AM" : formatTime(t).replace(":00", ""));
+const timeLabel = (t: string) => (t === "24:00" ? (hour12() ? "12 AM" : "24:00") : clockShort(new Date(`2000-01-01T${t}`)));
 const PREVIEW_START = 8;
 const PREVIEW_HOUR = 42;
 
@@ -185,8 +187,8 @@ export default function EventPopup({ event, occ, isNew, events, now, openMenu, o
   };
 
   const preview = dayOccurrences(events, ymd(start)).filter((o) => o.event.Id !== self && o.event.Of !== self);
-  const dayTitle = ymd(start) === todayKey ? "Today" : start.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
-  const dateLabel = fromYmd(f.day).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+  const dayTitle = ymd(start) === todayKey ? "Today" : start.toLocaleDateString(locale(), { weekday: "long", month: "short", day: "numeric" });
+  const dateLabel = fromYmd(f.day).toLocaleDateString(locale(), { weekday: "long", month: "short", day: "numeric" });
   const wallRange = f.kind === "reminder" ? timeLabel(f.start) : `${timeLabel(f.start)} – ${timeLabel(f.end)}`;
   const summary = [
     f.allDay ? `${dateLabel} · All day` : `${dateLabel} · ${wallRange}${f.zone ? ` ${zoneName(zone).replace(/.*\((.*)\)$/, "$1")}` : ""}`,
@@ -296,11 +298,11 @@ export default function EventPopup({ event, occ, isNew, events, now, openMenu, o
                     key={key}
                     role="radio"
                     aria-checked={on}
-                    aria-label={d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+                    aria-label={d.toLocaleDateString(locale(), { weekday: "long", month: "long", day: "numeric" })}
                     onClick={() => set({ day: key })}
                     className={clsx("flex h-12 flex-col items-center justify-center gap-0.5 rounded-[13px] border", on ? "border-accent bg-accent text-accent-ink" : "border-line bg-panel text-text hover:border-faint")}
                   >
-                    <span className="font-mono text-10 tracking-[0.08em] opacity-85">{key === todayKey ? "TODAY" : d.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase()}</span>
+                    <span className="font-mono text-10 tracking-[0.08em] opacity-85">{key === todayKey ? "TODAY" : d.toLocaleDateString(locale(), { weekday: "short" }).toUpperCase()}</span>
                     <span className="text-18 font-semibold">{d.getDate()}</span>
                   </button>
                 );
@@ -343,7 +345,7 @@ export default function EventPopup({ event, occ, isNew, events, now, openMenu, o
               <div className="text-12 text-muted">
                 That's {shortTime(start)}
                 {f.kind !== "reminder" ? ` – ${shortTime(end)}` : ""} your time
-                {ymd(start) !== f.day ? `, ${start.toLocaleDateString(undefined, { weekday: "long" })}` : ""}.
+                {ymd(start) !== f.day ? `, ${start.toLocaleDateString(locale(), { weekday: "long" })}` : ""}.
               </div>
             )}
             {clash && (
@@ -377,7 +379,7 @@ export default function EventPopup({ event, occ, isNew, events, now, openMenu, o
                   <option value="never">Doesn't repeat</option>
                   <option value="daily">Every day</option>
                   <option value="weekdays">Every weekday</option>
-                  <option value="weekly">Every {fromYmd(f.day).toLocaleDateString(undefined, { weekday: "long" })}</option>
+                  <option value="weekly">Every {fromYmd(f.day).toLocaleDateString(locale(), { weekday: "long" })}</option>
                   <option value="monthly">Every month on the {ordinal(fromYmd(f.day).getDate())}</option>
                 </select>
                 <ChevronDown size={14} className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-muted" />

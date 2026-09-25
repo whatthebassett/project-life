@@ -1,3 +1,4 @@
+import { locale } from "../lib/format";
 // Goals as they live in Data\goals.json, with their areas, and how progress,
 // pace and status are worked out (DESIGN.md §2: goal status). PascalCase
 // keys, and keys this version doesn't know are kept.
@@ -213,7 +214,7 @@ export function paceNote(goal: Goal, habits: Habit[], today: string): string {
   if (left <= 0) return "Goal reached. Nice work.";
   const days = Math.max(1, daysBetween(today, goal.Due));
   const perWeek = left / (days / 7);
-  const due = fromYmd(goal.Due).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const due = fromYmd(goal.Due).toLocaleDateString(locale(), { month: "short", day: "numeric" });
   if (days < 7) return `${fmt(left)} ${goal.Unit} to go by ${due}.`;
   return `About ${fmt(perWeek)} ${goal.Unit} a week gets you there by ${due}.`;
 }

@@ -1,3 +1,4 @@
+import { locale } from "../lib/format";
 // What people do to tasks, shared by the Tasks screen, the task pop-up, the
 // popped-out window and Home. Each change goes through the task store and,
 // where it's worth remembering, into the task's activity.
@@ -5,7 +6,9 @@ import { priorityLabel, type PriorityValue } from "../lib/notebook";
 import { freeSlot, localStamp, type CalEvent } from "../schedule/events";
 import { eventStore } from "../schedule/useEvents";
 import { toast } from "../ui/Toast";
-import { addDays, formatTime, fromYmd, nextMonday, parseQuick, startOfDay, weekend, ymd } from "./dates";
+import { announce } from "../lib/announce";
+import { currentSettings } from "../lib/settings";
+import { addDays, formatTime, fromYmd, nextMonday, nowTime, parseQuick, startOfDay, weekend, ymd } from "./dates";
 import { listFor } from "./lists";
 import { newId, newTask, patchTask, recycle, restore, setCompleted, setDue, type NewTask, type RepeatId, type ReminderId, type Status, type Subtask, type Task } from "./model";
 import { taskStore } from "./useTasks";
@@ -48,6 +51,7 @@ export function addTask(fields: NewTask): Task {
 
 export function toggleTask(task: Task) {
   store().update((ts) => setCompleted(ts, task.Id, !task.Completed, new Date()));
+  announce(task.Completed ? `Not done: ${task.Title}` : `Done: ${task.Title}`);
 }
 
 export function setStatus(task: Task, status: Status | "done") {
@@ -108,22 +112,41 @@ export interface LaterChoice {
   time: string | null;
 }
 
-const shortDay = (d: Date) => d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+const shortDay = (d: Date) => d.toLocaleDateString(locale(), { weekday: "short", month: "short", day: "numeric" });
 
-// The Later menu (Tasks.dc.html): Later today at 7 PM while that's still to
-// come, Tomorrow, This weekend, Next week, and Someday (no date). A task keeps
-// its time of day, except for Later today.
+// "Later today" from Settings → Tasks: 7 PM, 9 PM, or three hours from now
+// (on the hour). Null once that's no longer today.
+export function laterTodayTime(now: Date): string | null {
+  const pick = currentSettings().LaterToday ?? "19:00";
+  if (pick === "3h") {
+    const later = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 3 + (now.getMinutes() > 0 ? 1 : 0));
+    return ymd(later) === ymd(now) ? nowTime(later) : null;
+  }
+  return nowTime(now) < pick ? pick : null;
+}
+
+// The time an untimed task gets when it moves to tomorrow (Settings → Tasks).
+export function tomorrowTime(keep: string | null): string | null {
+  if (keep) return keep;
+  const t = currentSettings().TomorrowTime ?? "09:00";
+  return t === "none" ? null : t;
+}
+
+// The Later menu (Tasks.dc.html): Later today while that's still to come,
+// Tomorrow, This weekend, Next week, and Someday (no date). A task keeps its
+// time of day, except for Later today.
 export function laterChoices(task: Task, now: Date): LaterChoice[] {
   const today = startOfDay(now);
   const keep = task.DueTime ?? null;
   const out: LaterChoice[] = [];
-  if (now.getHours() < 19) out.push({ id: "today", label: "Later today", hint: formatTime("19:00").replace(":00", ""), due: ymd(today), time: "19:00" });
+  const later = laterTodayTime(now);
+  if (later) out.push({ id: "today", label: "Later today", hint: formatTime(later).replace(":00", ""), due: ymd(today), time: later });
   const tomorrow = addDays(today, 1);
   // On a Friday, Saturday is already Tomorrow: the weekend means Sunday.
   let sat = weekend(today, true);
   if (today.getDay() === 5) sat = addDays(sat, 1);
   const mon = nextMonday(today);
-  out.push({ id: "tomorrow", label: "Tomorrow", hint: shortDay(tomorrow), due: ymd(tomorrow), time: keep });
+  out.push({ id: "tomorrow", label: "Tomorrow", hint: shortDay(tomorrow), due: ymd(tomorrow), time: tomorrowTime(keep) });
   out.push({ id: "weekend", label: today.getDay() === 0 ? "Next weekend" : "This weekend", hint: shortDay(sat), due: ymd(sat), time: keep });
   out.push({ id: "nextweek", label: "Next week", hint: shortDay(mon), due: ymd(mon), time: keep });
   out.push({ id: "someday", label: "Someday", hint: "No date", due: null, time: null });
@@ -131,6 +154,7 @@ export function laterChoices(task: Task, now: Date): LaterChoice[] {
 }
 
 export function applyLater(task: Task, choice: LaterChoice) {
+  announce(`${task.Title} moved to ${choice.due ? choice.label.toLowerCase() : "Someday"}`);
   store().update((ts) =>
     patchTask(setDue(ts, task.Id, choice.due, choice.time), task.Id, {}, { text: choice.due ? `Moved to ${choice.label.toLowerCase()}` : "Moved to Someday", kind: "edit" }),
   );

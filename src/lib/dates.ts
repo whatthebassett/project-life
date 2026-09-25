@@ -1,3 +1,5 @@
+import { locale } from "./format";
+import { clockText } from "./format";
 import { useEffect, useState } from "react";
 
 // The current time, updated on the minute, for greetings and date labels.
@@ -17,12 +19,12 @@ export function useNow(): Date {
 
 // "FRIDAY, SEPTEMBER 25"
 export function dayLabel(d: Date): string {
-  return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }).toUpperCase();
+  return d.toLocaleDateString(locale(), { weekday: "long", month: "long", day: "numeric" }).toUpperCase();
 }
 
 // "4:18 PM"
 export function timeLabel(d: Date): string {
-  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return clockText(d);
 }
 
 // Home's greeting. The mockup says "Good evening" at 4:18 PM, so evening starts at 4.
@@ -43,7 +45,7 @@ const DAY = 86_400_000;
 export function weekRangeLabel(d: Date): string {
   const monday = new Date(startOfDay(d).getTime() - ((d.getDay() + 6) % 7) * DAY);
   const sunday = new Date(monday.getTime() + 6 * DAY);
-  const month = (x: Date) => x.toLocaleDateString("en-US", { month: "short" });
+  const month = (x: Date) => x.toLocaleDateString(locale(), { month: "short" });
   const end = monday.getMonth() === sunday.getMonth() ? String(sunday.getDate()) : `${month(sunday)} ${sunday.getDate()}`;
   return `${month(monday)} ${monday.getDate()} – ${end}`;
 }

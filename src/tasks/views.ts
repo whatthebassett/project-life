@@ -1,3 +1,4 @@
+import { locale } from "../lib/format";
 // The Tasks screen's views and groups (Tasks.dc.html), as pure functions.
 import { daysBetween, formatDue, formatTime, fromYmd, startOfDay, ymd } from "./dates";
 import { listFor, type TaskList } from "./lists";
@@ -131,7 +132,7 @@ export function dueLabel(t: Task, now: Date): string {
         ? "Tomorrow"
         : diff === -1
           ? "Yesterday"
-          : fromYmd(t.Due).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: fromYmd(t.Due).getFullYear() === today.getFullYear() ? undefined : "numeric" });
+          : fromYmd(t.Due).toLocaleDateString(locale(), { weekday: "short", month: "short", day: "numeric", year: fromYmd(t.Due).getFullYear() === today.getFullYear() ? undefined : "numeric" });
   return t.DueTime ? `${day} · ${formatTime(t.DueTime)}` : day;
 }
 
@@ -142,5 +143,5 @@ export function dueTone(t: Task, now: Date): "danger" | "accent" | "muted" {
 }
 
 export function shortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString(locale(), { month: "short", day: "numeric" });
 }

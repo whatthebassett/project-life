@@ -1,3 +1,5 @@
+import { locale } from "../lib/format";
+import { clockText } from "../lib/format";
 import { Fragment, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import clsx from "clsx";
 import { Ellipsis, Pin, Share } from "lucide-react";
@@ -385,9 +387,9 @@ function RightPanel() {
     if (!ms) return "—";
     const d = new Date(ms);
     const today = new Date();
-    const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    const time = clockText(d);
     if (d.toDateString() === today.toDateString()) return `Today, ${time}`;
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: d.getFullYear() === today.getFullYear() ? undefined : "numeric" });
+    return d.toLocaleDateString(locale(), { month: "short", day: "numeric", year: d.getFullYear() === today.getFullYear() ? undefined : "numeric" });
   };
 
   return (
@@ -421,7 +423,7 @@ function RightPanel() {
                   icon={<Icon name="schedule" size={16} stroke={2} />}
                   tone="accent"
                   title={o.event.Title}
-                  sub={`${o.start.toDateString() === now.toDateString() ? "Today" : o.start.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} · ${shortTime(o.start)}`}
+                  sub={`${o.start.toDateString() === now.toDateString() ? "Today" : o.start.toLocaleDateString(locale(), { weekday: "short", month: "short", day: "numeric" })} · ${shortTime(o.start)}`}
                   onClick={() => requestSchedule({ kind: "open", id: o.event.Id, day: o.day })}
                 />
               </Fragment>

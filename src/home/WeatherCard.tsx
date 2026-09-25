@@ -154,7 +154,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 // Search Open-Meteo's places by name. Project Life never looks up where the
 // computer is; the place is only ever one picked here.
-function PlaceSearch({ onPick, onCancel }: { onPick: (p: Place) => void; onCancel?: () => void }) {
+export function PlaceSearch({ onPick, onCancel }: { onPick: (p: Place) => void; onCancel?: () => void }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Place[]>([]);
   const [status, setStatus] = useState<string | null>(null);

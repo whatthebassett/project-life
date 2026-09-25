@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { announcing } from "../lib/announce";
 
 // A short message at the bottom of the window, with Undo when the change can
 // be taken back ("Moved “Pay rent” to the Recycle Bin · Undo"). One at a
@@ -38,7 +39,7 @@ export function Toaster() {
     () => current,
   );
   return (
-    <div role="status" aria-live="polite" className="pointer-events-none absolute inset-x-0 bottom-6 z-50 flex justify-center">
+    <div role="status" aria-live={announcing() ? "polite" : "off"} className="pointer-events-none absolute inset-x-0 bottom-6 z-50 flex justify-center">
       {t && (
         <div key={t.key} className="pl-toast pointer-events-auto flex h-12 items-center gap-3 rounded-[14px] border border-line bg-panel pr-2 pl-4 text-13 text-text shadow-[0_18px_50px_rgba(0,0,0,0.4)]">
           <span className="max-w-[520px] truncate">{t.message}</span>

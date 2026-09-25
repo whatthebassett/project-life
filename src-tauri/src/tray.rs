@@ -80,7 +80,7 @@ pub fn quit_app(app: AppHandle) {
 // A reminder. With a join link, the toast gets a button ("Join Teams") that
 // opens it; clicking the toast itself brings Project Life forward.
 #[tauri::command]
-pub fn show_toast(app: AppHandle, title: String, body: String, join_label: Option<String>, join_url: Option<String>) -> Result<(), String> {
+pub fn show_toast(app: AppHandle, title: String, body: String, join_label: Option<String>, join_url: Option<String>, sound: Option<String>) -> Result<(), String> {
     #[cfg(windows)]
     {
         use tauri_plugin_opener::OpenerExt;
@@ -91,7 +91,14 @@ pub fn show_toast(app: AppHandle, title: String, body: String, join_label: Optio
         let exe_dir = std::env::current_exe().ok().and_then(|e| e.parent().map(|p| p.to_path_buf()));
         let dev = exe_dir.map(|d| d.ends_with("target/debug") || d.ends_with("target\\debug") || d.ends_with("target\\release")).unwrap_or(true);
         let id = if dev { Toast::POWERSHELL_APP_ID.to_string() } else { app.config().identifier.clone() };
-        let mut toast = Toast::new(&id).title(&title).text1(&body);
+        use tauri_winrt_notification::Sound;
+        // Settings → Notifications → Sound (and quiet hours, which send "none").
+        let audio = match sound.as_deref() {
+            Some("none") => None,
+            Some("pop") => Some(Sound::IM),
+            _ => Some(Sound::Default),
+        };
+        let mut toast = Toast::new(&id).title(&title).text1(&body).sound(audio);
         if let (Some(label), Some(url)) = (join_label.as_deref(), join_url.as_deref()) {
             if url.starts_with("https://") {
                 toast = toast.add_button(label, url);
@@ -111,7 +118,7 @@ pub fn show_toast(app: AppHandle, title: String, body: String, join_label: Optio
     }
     #[cfg(not(windows))]
     {
-        let _ = (app, title, body, join_label, join_url);
+        let _ = (app, title, body, join_label, join_url, sound);
     }
     Ok(())
 }

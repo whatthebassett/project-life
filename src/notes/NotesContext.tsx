@@ -45,6 +45,7 @@ import { linkedTasks, sendAllTodos, sendTodo, todosOf, withTodoChecked } from ".
 import { keyMap, keyOf, keysFor } from "../lib/shortcuts";
 import { initRecents, rememberEmoji, setSkinTone } from "../lib/emoji";
 import { setDefaultCodeLanguage } from "../editor/code";
+import { currentSettings } from "../lib/settings";
 import { useSettings } from "../lib/SettingsContext";
 import { beforeClose } from "../lib/closing";
 import { motionReduced } from "../lib/motion";
@@ -424,7 +425,9 @@ export function NotesProvider({ visible, onShow, children }: Props) {
       if (name === active && cur.includes(name)) return;
       let next = cur;
       if (!cur.includes(name)) {
-        next = newTab || !active || !cur.includes(active) ? [...cur, name] : cur.map((t) => (t === active ? name : t));
+        // Settings → Notes → Open notes in a new tab.
+        const inNew = newTab || currentSettings().OpenInNewTab === true;
+        next = inNew || !active || !cur.includes(active) ? [...cur, name] : cur.map((t) => (t === active ? name : t));
       }
       setTabList(next, name);
       await open(name);
@@ -898,8 +901,10 @@ export function NotesProvider({ visible, onShow, children }: Props) {
 
   const openMenu = useCallback((x: number, y: number, items: MenuItem[]) => setMenu({ x, y, items }), []);
   const closeMenu = useCallback(() => setMenu(null), []);
-  const keys = useMemo(() => keyMap(), []);
-  const keyFor = useCallback((id: string) => keysFor(id), []);
+  // Settings → Keyboard shortcuts; App handles the Everywhere ones.
+  const shortcutOverrides = settings.Shortcuts;
+  const keys = useMemo(() => keyMap(shortcutOverrides, ["Notes", "Tabs", "Formatting"]), [shortcutOverrides]);
+  const keyFor = useCallback((id: string) => keysFor(id, shortcutOverrides), [shortcutOverrides]);
   const mode = settings.EditorMode === "Markdown" ? "Markdown" : "Visual";
   const setMode = useCallback((m: "Visual" | "Markdown") => update({ EditorMode: m }), [update]);
 

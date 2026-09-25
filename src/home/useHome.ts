@@ -4,7 +4,7 @@ import { joinUrlOf, occurrences, type Occurrence } from "../schedule/events";
 import { startOfDay } from "../tasks/dates";
 import { useEvents } from "../schedule/useEvents";
 import { stepDay, toggleDay } from "../habits/actions";
-import { activeHabits, currentStreak, doneOn, habitDay, isDue, mondayOf, type Habit, type HabitRules } from "../habits/model";
+import { activeHabits, currentStreak, doneOn, habitDay, isDue, weekStartOf, type Habit, type HabitRules } from "../habits/model";
 import { rulesOf, useHabits } from "../habits/useHabits";
 import { useSettings } from "../lib/SettingsContext";
 import { addDays, fromYmd, ymd } from "../tasks/dates";
@@ -79,7 +79,7 @@ export function useHome(): HomeData {
 // Home's shape: the streak before today, and this week before today.
 function toHomeHabit(h: Habit, today: string, rules: HabitRules): HomeHabit {
   const doneToday = doneOn(h, today);
-  const mon = fromYmd(mondayOf(today));
+  const mon = fromYmd(weekStartOf(today));
   const past: boolean[] = [];
   for (let d = mon; ymd(d) < today; d = addDays(d, 1)) past.push(doneOn(h, ymd(d)));
   const streak = currentStreak(h, today, rules).count;

@@ -1,14 +1,15 @@
+import { dayOfWeek, weekLetters } from "../lib/format";
 import clsx from "clsx";
 import type { Screen } from "../shell/nav";
 import { Card, CardHeader, CardLink, Empty } from "./parts";
 import type { HomeData } from "./useHome";
 
-const letters = ["M", "T", "W", "T", "F", "S", "S"];
 
 // This week for each habit, Monday first: done days filled, missed ones
 // outlined, today clickable, the days to come dashed.
 export default function HabitsCard({ home, onNavigate }: { home: HomeData; onNavigate: (s: Screen) => void }) {
-  const todayIdx = (home.now.getDay() + 6) % 7;
+  const todayIdx = dayOfWeek(home.now);
+  const letters = weekLetters();
   return (
     <Card label="Habits" className="gap-3 px-6 py-[22px]">
       <CardHeader title="Habits">

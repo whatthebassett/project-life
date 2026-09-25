@@ -2,6 +2,7 @@ import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import { motionReduced } from "../lib/motion";
+import { currentSettings } from "../lib/settings";
 
 export interface CaretConfig {
   // Thickness in pixels, 1–8.
@@ -77,12 +78,24 @@ class CaretView {
     }
     const box = parent.getBoundingClientRect();
     const width = Math.min(8, Math.max(1, this.config().width));
+    const height = Math.max(coords.bottom - coords.top, 8);
     const s = this.el.style;
     s.display = "block";
-    s.width = `${width}px`;
-    s.height = `${Math.max(coords.bottom - coords.top, 8)}px`;
-    s.left = `${coords.left - box.left - width / 2}px`;
-    s.top = `${coords.top - box.top}px`;
+    // Settings → Notes → Cursor: a line, a block the size of a letter, or an
+    // underline beneath one.
+    const shape = currentSettings().Cursor ?? "line";
+    if (shape === "line") {
+      s.width = `${width}px`;
+      s.height = `${height}px`;
+      s.left = `${coords.left - box.left - width / 2}px`;
+      s.top = `${coords.top - box.top}px`;
+    } else {
+      const letter = Math.max(6, Math.round(height * 0.5));
+      s.width = `${letter}px`;
+      s.height = shape === "block" ? `${height}px` : `${width}px`;
+      s.left = `${coords.left - box.left}px`;
+      s.top = shape === "block" ? `${coords.top - box.top}px` : `${coords.bottom - box.top - width}px`;
+    }
     this.restart();
   }
 
@@ -102,7 +115,9 @@ class CaretView {
   private paint() {
     const { alpha, step } = caretFrame(performance.now() - this.start, this.cycle());
     this.el.style.opacity = String(alpha);
-    this.el.style.background = this.config().rainbow ? rainbow[(colorOffset + step) % rainbow.length] : "var(--accent)";
+    const color = this.config().rainbow ? rainbow[(colorOffset + step) % rainbow.length] : "var(--accent)";
+    // A block sits over the letter, so it's see-through.
+    this.el.style.background = currentSettings().Cursor === "block" ? `color-mix(in srgb, ${color} 45%, transparent)` : color;
   }
 
   private readonly tick = () => {

@@ -7,6 +7,7 @@ import { languages } from "@codemirror/language-data";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags as t } from "@lezer/highlight";
 import { motionReduced } from "../lib/motion";
+import { currentSettings } from "../lib/settings";
 import type { EditorSpot } from "../lib/positions";
 import { autocompletion, type CompletionContext, type CompletionResult } from "@codemirror/autocomplete";
 import { emojiPattern, loadEmoji, nativeOf, rememberEmoji, searchEmoji } from "../lib/emoji";
@@ -119,6 +120,8 @@ export default function SourceEditor({ initial, lineNumbers: gutter, wordWrap, b
           placeholder("Write in Markdown: # for headings, - for lists, > [!info] for a callout. Type : for emoji."),
           emojiGlyphs,
           ...(wordWrap ? [EditorView.lineWrapping] : []),
+          // Settings → Notes → Spell check (CodeMirror turns it off by default).
+          EditorView.contentAttributes.of(() => ({ spellcheck: currentSettings().SpellCheck === false ? "false" : "true" })),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) change.current(update.state.doc.toString());
             if (update.selectionSet) report(update.view);

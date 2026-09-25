@@ -1,8 +1,10 @@
+import { weekLetters } from "../lib/format";
+import { locale } from "../lib/format";
 import { Pencil } from "lucide-react";
 import { addDays, fromYmd, ymd } from "../tasks/dates";
 import { SectionLabel } from "../ui/bits";
 import { HabitIcon } from "./icons";
-import { bestStreak, currentStreak, doneOn, frequencyLabel, goalLabel, hueColor, hueSoft, level, mondayOf, rate30, reminderLabel, todLabel, totalDone, type Habit, type HabitRules } from "./model";
+import { bestStreak, currentStreak, doneOn, frequencyLabel, goalLabel, hueColor, hueSoft, level, rate30, weekStartOf, reminderLabel, todLabel, totalDone, type Habit, type HabitRules } from "./model";
 
 const opacity = [1, 0.35, 0.65, 1];
 
@@ -21,10 +23,11 @@ export default function HabitDetails({ h, today, rules, onEdit }: { h: Habit | n
   const streak = currentStreak(h, today, rules);
   const best = bestStreak(h, today, rules);
   const done = doneOn(h, today);
-  const lastMonday = fromYmd(mondayOf(today));
+  const lastMonday = fromYmd(weekStartOf(today));
+  const rowLetters = weekLetters().map((l, i) => (i % 2 === 0 ? l : ""));
   const firstMonday = addDays(lastMonday, -77);
   const cells = Array.from({ length: 84 }, (_, i) => ymd(addDays(firstMonday, Math.floor(i / 7) * 7 + (i % 7))));
-  const range = `${firstMonday.toLocaleDateString(undefined, { month: "short" })} – ${fromYmd(today).toLocaleDateString(undefined, { month: "short" })}`;
+  const range = `${firstMonday.toLocaleDateString(locale(), { month: "short" })} – ${fromYmd(today).toLocaleDateString(locale(), { month: "short" })}`;
   const rate = rate30(h, today);
 
   return (
@@ -68,7 +71,7 @@ export default function HabitDetails({ h, today, rules, onEdit }: { h: Habit | n
         </div>
         <div className="flex gap-1.5">
           <div className="flex flex-col gap-1 font-mono text-9 text-muted">
-            {["M", "", "W", "", "F", "", "S"].map((l, i) => (
+            {rowLetters.map((l, i) => (
               <span key={i} className="flex h-[17px] items-center">
                 {l}
               </span>
@@ -81,7 +84,7 @@ export default function HabitDetails({ h, today, rules, onEdit }: { h: Habit | n
               return (
                 <span
                   key={day}
-                  title={fromYmd(day).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+                  title={fromYmd(day).toLocaleDateString(locale(), { weekday: "short", month: "short", day: "numeric" })}
                   className="rounded-[4px] border"
                   style={{
                     background: future ? "transparent" : lv ? color : "var(--panel2)",

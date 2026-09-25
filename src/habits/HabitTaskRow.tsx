@@ -10,7 +10,7 @@ export default function HabitTaskRow({ h, today }: { h: Habit; today: string }) 
   const done = doneOn(h, today);
   const color = hueColor(h.Hue);
   return (
-    <div role="listitem" className="flex min-h-[58px] items-center gap-3 rounded-[14px] py-1.5 pr-2.5 pl-2.5 hover:bg-panel/60">
+    <div role="listitem" data-row="task" className="flex min-h-[58px] items-center gap-3 rounded-[14px] py-1.5 pr-2.5 pl-2.5 hover:bg-panel/60">
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px]" style={{ background: hueSoft(h.Hue), color }}>
         <HabitIcon id={h.Icon} size={16} />
       </span>

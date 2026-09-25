@@ -225,3 +225,29 @@ pub(crate) fn decode_text(content_type: &str, bytes: &[u8]) -> String {
     ];
     bytes.iter().map(|&b| if (0x80..0xA0).contains(&b) { HIGH[(b - 0x80) as usize] } else { b as char }).collect()
 }
+
+// Fixed, known addresses (Google Fonts): a plain user agent, so Google Fonts
+// answers with desktop .ttf files rather than the web-only .woff2 it gives
+// browsers.
+fn plain_get(url: &str, limit: u64, timeout_secs: u64) -> Result<Vec<u8>, String> {
+    let agent = web_agent(timeout_secs, "ProjectLife/0.1");
+    let mut response = agent.get(url).call().map_err(|e| format!("Couldn't download it: {e}."))?;
+    if response.status().as_u16() != 200 {
+        return Err(format!("The download answered {}.", response.status().as_u16()));
+    }
+    let mut reader = std::io::Read::take(response.body_mut().as_reader(), limit + 1);
+    let mut bytes = Vec::new();
+    std::io::Read::read_to_end(&mut reader, &mut bytes).map_err(err)?;
+    if bytes.len() as u64 > limit {
+        return Err("That download is too large.".into());
+    }
+    Ok(bytes)
+}
+
+pub(crate) fn fetch_plain(url: &str, timeout_secs: u64) -> Result<String, String> {
+    plain_get(url, 2 * 1024 * 1024, timeout_secs).map(|b| String::from_utf8_lossy(&b).into_owned())
+}
+
+pub(crate) fn fetch_bytes(url: &str, limit: u64) -> Result<Vec<u8>, String> {
+    plain_get(url, limit, 40)
+}

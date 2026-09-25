@@ -1,3 +1,4 @@
+import { locale } from "../lib/format";
 // Short, glanceable times for the Home screen (ported from Checkpoint).
 const minute = 60_000;
 const hour = 60 * minute;
@@ -14,9 +15,9 @@ export function ago(when: number, now: number): string {
   today.setHours(0, 0, 0, 0);
   if (diff < 12 * hour || then >= today) return `${Math.floor(diff / hour)}h ago`;
   if (then >= new Date(today.getTime() - day)) return "Yesterday";
-  if (then >= new Date(today.getTime() - 6 * day)) return then.toLocaleDateString("en-US", { weekday: "short" });
+  if (then >= new Date(today.getTime() - 6 * day)) return then.toLocaleDateString(locale(), { weekday: "short" });
   const sameYear = then.getFullYear() === today.getFullYear();
-  return then.toLocaleDateString("en-US", { month: "short", day: "numeric", year: sameYear ? undefined : "numeric" });
+  return then.toLocaleDateString(locale(), { month: "short", day: "numeric", year: sameYear ? undefined : "numeric" });
 }
 
 // Headlines: "now", "12m", "3h", "2d".

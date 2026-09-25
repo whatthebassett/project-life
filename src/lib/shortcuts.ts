@@ -2,7 +2,10 @@
 // versions of Noted, so shortcuts saved in appearance.json carry over.
 // Settings.Shortcuts holds only the ones the writer changed; "" means none.
 
-export type ShortcutGroup = "Notes" | "Tabs" | "Formatting";
+// Everywhere: App's own (they work on any screen). Notes and Tabs: the Notes
+// screen's. Formatting: inside a note, so Ctrl+K and Ctrl+E can mean one
+// thing in a note and another everywhere else.
+export type ShortcutGroup = "Everywhere" | "Notes" | "Tabs" | "Formatting";
 
 export interface ShortcutCommand {
   id: string;
@@ -12,6 +15,14 @@ export interface ShortcutCommand {
 }
 
 export const shortcutCommands: ShortcutCommand[] = [
+  { id: "app.capture", name: "Quick capture", group: "Everywhere", keys: "Ctrl+K" },
+  { id: "app.home", name: "Go to Home", group: "Everywhere", keys: "Alt+Home" },
+  { id: "app.settings", name: "Settings", group: "Everywhere", keys: "Ctrl+," },
+  { id: "app.guide", name: "Guide", group: "Everywhere", keys: "F1" },
+  { id: "app.newTask", name: "New task", group: "Everywhere", keys: "Ctrl+Shift+T" },
+  { id: "app.newEvent", name: "New event", group: "Everywhere", keys: "Ctrl+E" },
+  { id: "app.larger", name: "Larger text", group: "Everywhere", keys: "Ctrl+=" },
+  { id: "app.smaller", name: "Smaller text", group: "Everywhere", keys: "Ctrl+-" },
   { id: "app.new", name: "New note", group: "Notes", keys: "Ctrl+N" },
   { id: "app.newPage", name: "New page inside", group: "Notes", keys: "Ctrl+Alt+N" },
   { id: "app.movePage", name: "Move note to…", group: "Notes", keys: "" },
@@ -32,18 +43,10 @@ export const shortcutCommands: ShortcutCommand[] = [
   { id: "app.bin", name: "Recycle Bin", group: "Notes", keys: "" },
   { id: "app.tag", name: "New tag", group: "Notes", keys: "" },
   { id: "app.tags", name: "Manage tags", group: "Notes", keys: "" },
-  { id: "app.sidebar", name: "Show or hide the notebook (left sidebar)", group: "Notes", keys: "Ctrl+[" },
   { id: "app.mode", name: "Switch Visual / Markdown", group: "Notes", keys: "Ctrl+/" },
-  { id: "app.larger", name: "Larger text", group: "Notes", keys: "Ctrl+=" },
-  { id: "app.smaller", name: "Smaller text", group: "Notes", keys: "Ctrl+-" },
   { id: "app.wrap", name: "Word wrap (Markdown mode)", group: "Notes", keys: "" },
   { id: "app.lines", name: "Line numbers (Markdown mode)", group: "Notes", keys: "" },
-  { id: "app.settings", name: "Settings", group: "Notes", keys: "Ctrl+," },
-  { id: "app.guide", name: "Guide", group: "Notes", keys: "F1" },
-  { id: "app.about", name: "About Checkpoint", group: "Notes", keys: "" },
 
-  { id: "app.home", name: "Home", group: "Tabs", keys: "Alt+Home" },
-  { id: "app.tasks", name: "Show or hide tasks (right sidebar)", group: "Tabs", keys: "Ctrl+]" },
   { id: "app.newTab", name: "Open a note in a new tab", group: "Tabs", keys: "Ctrl+T" },
   { id: "app.switch", name: "Switch note", group: "Tabs", keys: "Ctrl+P" },
   { id: "app.closeTab", name: "Close tab", group: "Tabs", keys: "Ctrl+W" },
@@ -172,10 +175,11 @@ export function keysFor(id: string, overrides?: Record<string, string>): string 
   return defaultKeys(id);
 }
 
-// Shortcut → command id, for everything that has one.
-export function keyMap(overrides?: Record<string, string>): Map<string, string> {
+// Shortcut → command id, for everything that has one (or just some groups).
+export function keyMap(overrides?: Record<string, string>, groups?: ShortcutGroup[]): Map<string, string> {
   const map = new Map<string, string>();
   for (const c of shortcutCommands) {
+    if (groups && !groups.includes(c.group)) continue;
     const k = keysFor(c.id, overrides);
     if (k && !map.has(k)) map.set(k, c.id);
   }
@@ -187,6 +191,13 @@ export function keyMap(overrides?: Record<string, string>): Map<string, string> 
 export const formattingDefaults = new Set(
   shortcutCommands.filter((c) => c.group === "Formatting").map((c) => defaultKeys(c.id)).filter(Boolean),
 );
+
+// Two commands can share keys only when one works inside a note and the
+// other everywhere else (Ctrl+K: link, or quick capture).
+export function clashes(a: ShortcutGroup, b: ShortcutGroup): boolean {
+  const pair = new Set([a, b]);
+  return !(pair.has("Everywhere") && pair.has("Formatting") && a !== b);
+}
 
 // A recorded shortcut must be distinctive enough not to swallow typing.
 export function isAssignable(keys: string): boolean {

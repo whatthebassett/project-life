@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { applyAppearance } from "./appearance";
-import { saveSettings, type Settings } from "./settings";
+import { saveSettings, setCurrentSettings, type Settings } from "./settings";
 
 interface Value {
   settings: Settings;
@@ -17,6 +17,7 @@ export function SettingsProvider({ initial, children }: { initial: Settings; chi
   const update = useCallback((patch: Partial<Settings>) => {
     const next = { ...current.current, ...patch } as Settings;
     current.current = next;
+    setCurrentSettings(next);
     applyAppearance(next);
     setSettings(next);
     void saveSettings(next);

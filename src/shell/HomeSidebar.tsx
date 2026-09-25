@@ -109,8 +109,8 @@ export default function HomeSidebar({ screen, onNavigate, onSettings }: Props) {
       </div>
 
       <div className="flex items-center gap-3 px-1.5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel2 text-14 font-semibold text-accent">
-          {initialOf(settings.DisplayName)}
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-panel2 text-14 font-semibold text-accent">
+          {settings.ProfilePicture ? <img src={settings.ProfilePicture} alt="" className="h-full w-full rounded-full object-cover" /> : initialOf(settings.DisplayName)}
         </div>
         <div className="min-w-0 flex-1 truncate text-14 font-medium">{settings.DisplayName || "You"}</div>
         <button

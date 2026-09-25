@@ -13,8 +13,9 @@ import "@fontsource/geist-mono/latin-500.css";
 import "./styles/index.css";
 import App from "./App";
 import { inTauri } from "./lib/api";
-import { applyAppearance } from "./lib/appearance";
-import { loadSettings } from "./lib/settings";
+import { applyAppearance, watchSystemTheme } from "./lib/appearance";
+import { currentSettings, loadSettings } from "./lib/settings";
+import { refreshAppFonts } from "./lib/fonts";
 import { SettingsProvider } from "./lib/SettingsContext";
 import TasksWindow from "./tasks/TasksWindow";
 import { isTasksWindow } from "./tasks/window";
@@ -24,6 +25,9 @@ import { isTasksWindow } from "./tasks/window";
 async function start() {
   const settings = await loadSettings();
   applyAppearance(settings);
+  void watchSystemTheme(currentSettings);
+  // Fonts added in Settings, for a headline font picked from them.
+  void refreshAppFonts();
   ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
       <SettingsProvider initial={settings}>

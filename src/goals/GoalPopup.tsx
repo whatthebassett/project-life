@@ -1,3 +1,4 @@
+import { locale } from "../lib/format";
 import clsx from "clsx";
 import { ArrowRight, CalendarDays, ChevronDown, Minus, Plus, X } from "lucide-react";
 import { useState } from "react";
@@ -29,7 +30,7 @@ interface Props {
   onClose: () => void;
 }
 
-const short = (d: string) => fromYmd(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: fromYmd(d).getFullYear() === new Date().getFullYear() ? undefined : "numeric" });
+const short = (d: string) => fromYmd(d).toLocaleDateString(locale(), { month: "short", day: "numeric", year: fromYmd(d).getFullYear() === new Date().getFullYear() ? undefined : "numeric" });
 
 // The quick due dates: the end of this month (or next, with under two weeks
 // left), the end of the year (or next, with under a month left), 90 days.
@@ -40,7 +41,7 @@ function dueChoices(today: string): { id: string; label: string; date: string }[
   let yearEnd = new Date(t.getFullYear(), 11, 31);
   if (daysBetween(today, ymd(yearEnd)) < 30) yearEnd = new Date(t.getFullYear() + 1, 11, 31);
   return [
-    { id: "month", label: `End of ${monthEnd.toLocaleDateString(undefined, { month: "long" })}`, date: ymd(monthEnd) },
+    { id: "month", label: `End of ${monthEnd.toLocaleDateString(locale(), { month: "long" })}`, date: ymd(monthEnd) },
     { id: "year", label: yearEnd.getFullYear() === t.getFullYear() ? "End of year" : `End of ${yearEnd.getFullYear()}`, date: ymd(yearEnd) },
     { id: "90", label: "In 90 days", date: ymd(addDays(t, 90)) },
   ];

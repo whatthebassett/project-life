@@ -1,6 +1,7 @@
 // What people do to goals and their areas.
 import { newId } from "../tasks/model";
 import { addDays, daysBetween, fromYmd, ymd } from "../tasks/dates";
+import { currentSettings } from "../lib/settings";
 import { toast } from "../ui/Toast";
 import type { Area, Goal, Milestone } from "./model";
 import { goalStore } from "./useGoals";
@@ -51,7 +52,8 @@ export function blankGoal(area: string): Goal {
     Tasks: [],
     Events: [],
     Notes: [],
-    CheckIn: "sun",
+    // Settings → Habits and goals picks the day new goals check in.
+    CheckIn: currentSettings().GoalCheckIn ?? "sun",
     CheckedIn: new Date().toISOString(),
     Created: new Date().toISOString(),
   };

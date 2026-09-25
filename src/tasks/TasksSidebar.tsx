@@ -100,6 +100,7 @@ export default function TasksSidebar({ tasks, lists, now, view, onView, onPopOut
               key={v.id}
               aria-current={cur ? "page" : undefined}
               onClick={() => onView(v.id)}
+              data-row="nav"
               className={clsx("flex h-[42px] items-center gap-3 rounded-[12px] px-2.5 text-left text-14 font-medium", cur ? "bg-panel text-text" : "text-muted hover:text-text")}
             >
               <span className={clsx("flex h-[22px] w-[22px] items-center justify-center rounded-[7px] font-mono text-11 font-medium", cur ? "bg-accent text-accent-ink" : "bg-panel2 text-muted")}>

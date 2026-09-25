@@ -1,3 +1,5 @@
+import { dayOfWeek } from "../lib/format";
+import { clockText } from "../lib/format";
 // Habits as they live in Data\habits.json, and how streaks, rates and the
 // week strip are worked out. PascalCase keys, and keys this version doesn't
 // know are kept.
@@ -114,9 +116,10 @@ export function habitDay(at: Date, rules: HabitRules = defaultRules): string {
 
 const mondayIndex = (d: Date) => (d.getDay() + 6) % 7;
 
-export function mondayOf(day: string): string {
+// The first day of the week holding `day` (Settings → General → Week starts on).
+export function weekStartOf(day: string): string {
   const d = fromYmd(day);
-  return ymd(addDays(d, -mondayIndex(d)));
+  return ymd(addDays(d, -dayOfWeek(d)));
 }
 
 // Whether the habit asks for a check-in on that day.
@@ -129,9 +132,9 @@ export const valueOn = (h: Habit, day: string) => h.Log[day] ?? 0;
 export const doneOn = (h: Habit, day: string) => valueOn(h, day) >= h.Target;
 export const partialOn = (h: Habit, day: string) => valueOn(h, day) > 0 && !doneOn(h, day);
 
-// Days done in the week (Monday to Sunday) holding `day`.
+// Days done in the week holding `day`.
 export function weekCount(h: Habit, day: string): number {
-  const mon = fromYmd(mondayOf(day));
+  const mon = fromYmd(weekStartOf(day));
   let n = 0;
   for (let i = 0; i < 7; i++) if (doneOn(h, ymd(addDays(mon, i)))) n++;
   return n;
@@ -176,7 +179,7 @@ function dayRun(h: Habit, today: string, rules: HabitRules): { current: number; 
     }
     if (!isDue(h, day) || day === today) continue;
     // A missed day: the streak saver covers one a week.
-    const week = mondayOf(day);
+    const week = weekStartOf(day);
     if (rules.streakSaver && savedWeek !== week && run > 0) {
       savedWeek = week;
       continue;
@@ -189,8 +192,8 @@ function dayRun(h: Habit, today: string, rules: HabitRules): { current: number; 
 // Weeks in a row that hit the times-a-week number. This week counts once
 // it's hit; until then it doesn't break the run.
 function weekStreak(h: Habit, today: string, best: boolean): number {
-  const thisWeek = mondayOf(today);
-  const firstWeek = mondayOf([createdDay(h), ...Object.keys(h.Log)].sort()[0] ?? today);
+  const thisWeek = weekStartOf(today);
+  const firstWeek = weekStartOf([createdDay(h), ...Object.keys(h.Log)].sort()[0] ?? today);
   let run = 0;
   let top = 0;
   for (let w = fromYmd(firstWeek); ymd(w) <= thisWeek; w = addDays(w, 7)) {
@@ -255,7 +258,7 @@ export const reminderLabel = (h: Habit) =>
     ? "Off"
     : h.Reminder.At === "every2"
       ? "Every 2 hours"
-      : new Date(`2000-01-01T${h.Reminder.At}`).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+      : clockText(new Date(`2000-01-01T${h.Reminder.At}`));
 
 // Where a day stands, for the week strip and the 12-week grid.
 export type DayState = "done" | "partial" | "missed" | "off" | "today" | "future";

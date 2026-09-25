@@ -1,3 +1,5 @@
+import { dayOfWeek, weekStartsMonday } from "../lib/format";
+import { locale } from "../lib/format";
 import clsx from "clsx";
 import { addDays, ymd } from "../tasks/dates";
 import type { TaskList } from "../tasks/lists";
@@ -14,10 +16,10 @@ interface Props {
   onSelect: (o: Occurrence) => void;
 }
 
-// Monday first, six weeks from the week holding the 1st.
+// Six weeks from the week holding the 1st, starting on the day weeks start on.
 export function monthGrid(month: Date): Date[] {
   const first = new Date(month.getFullYear(), month.getMonth(), 1);
-  const start = addDays(first, -((first.getDay() + 6) % 7));
+  const start = addDays(first, -dayOfWeek(first));
   return Array.from({ length: 42 }, (_, i) => addDays(start, i));
 }
 
@@ -38,7 +40,7 @@ export default function MonthView({ month, occs, now, calendarOf, onDay, onSelec
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-t-[22px] border border-b-0 border-line bg-panel">
       <div className="grid grid-cols-7 border-b border-line">
-        {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map((d) => (
+        {(weekStartsMonday() ? ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"] : ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]).map((d) => (
           <span key={d} className="p-3 font-mono text-11 tracking-[0.08em] text-muted">
             {d}
           </span>
@@ -55,7 +57,7 @@ export default function MonthView({ month, occs, now, calendarOf, onDay, onSelec
               key={key}
               role="button"
               tabIndex={-1}
-              aria-label={d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+              aria-label={d.toLocaleDateString(locale(), { weekday: "long", month: "long", day: "numeric" })}
               onClick={() => onDay(d)}
               className="flex min-h-0 cursor-pointer flex-col gap-1 overflow-hidden border-b border-l border-line p-2 hover:bg-panel2/40"
               style={{ background: !inMonth ? "var(--bg)" : today ? "var(--today-tint)" : undefined }}

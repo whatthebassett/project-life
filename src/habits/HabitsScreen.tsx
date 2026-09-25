@@ -1,3 +1,4 @@
+import { weekLetters } from "../lib/format";
 import clsx from "clsx";
 import { Archive, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -12,7 +13,7 @@ import HabitDetails from "./HabitDetails";
 import HabitEditPopup from "./HabitEditPopup";
 import HabitRow from "./HabitRow";
 import { HabitIcon } from "./icons";
-import { activeHabits, bestStreak, doneOn, habitDay, hueColor, hueSoft, isDue, mondayOf, rate30, type Habit, type TimeOfDay } from "./model";
+import { activeHabits, bestStreak, doneOn, habitDay, hueColor, hueSoft, isDue, rate30, weekStartOf, type Habit, type TimeOfDay } from "./model";
 import { rulesOf, useHabits } from "./useHabits";
 import { clearHabit, peekHabit } from "../shell/go";
 
@@ -22,7 +23,6 @@ const groups: { id: TimeOfDay; label: string }[] = [
   { id: "anytime", label: "ANYTIME" },
   { id: "evening", label: "EVENING" },
 ];
-const letters = ["M", "T", "W", "T", "F", "S", "S"];
 
 // The Habits screen (Habits.dc.html): today's habits grouped by time of day,
 // the week and records on the left, and the selected habit's streak and 12
@@ -49,7 +49,8 @@ export default function HabitsScreen() {
   const selected = active.find((h) => h.Id === selectedId) ?? shown[0] ?? active[0] ?? null;
 
   // This week: check-ins done out of those due so far, and a bar a day.
-  const mon = fromYmd(mondayOf(today));
+  const letters = weekLetters();
+  const mon = fromYmd(weekStartOf(today));
   const weekDays = letters.map((_, i) => ymd(addDays(mon, i)));
   const dayShare = (day: string) => {
     const due = active.filter((h) => isDue(h, day) && h.Frequency !== "weekly");
@@ -86,6 +87,7 @@ export default function HabitsScreen() {
               key={id}
               aria-current={view === id ? "page" : undefined}
               onClick={() => update({ HabitsView: id })}
+              data-row="nav"
               className={clsx("flex h-[42px] items-center gap-3 rounded-[12px] px-3 text-left text-14 font-medium", view === id ? "bg-panel text-text" : "text-muted hover:text-text")}
             >
               <span className="flex-1">{label}</span>

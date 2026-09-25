@@ -1,3 +1,4 @@
+import { locale, weekStartsMonday } from "../lib/format";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
@@ -20,21 +21,6 @@ interface Props {
 
 const WIDTH = 236;
 
-// The locale's first day of the week (0 = Sunday), where WebView2 knows it.
-function firstDayOfWeek(): number {
-  try {
-    const locale = new Intl.Locale(navigator.language) as Intl.Locale & {
-      getWeekInfo?: () => { firstDay: number };
-      weekInfo?: { firstDay: number };
-    };
-    const info = locale.getWeekInfo?.() ?? locale.weekInfo;
-    if (info) return info.firstDay % 7;
-  } catch {
-    // An unknown language tag: fall through to Sunday.
-  }
-  return 0;
-}
-
 // A small themed month calendar (the native date popup can't be themed).
 // Arrows move by day and week, Page Up/Down by month, Enter picks; a time can
 // be typed underneath. Escape or clicking away closes it.
@@ -46,7 +32,8 @@ export default function Calendar({ anchor, value, time, onPick, onClear, clearLa
   const box = useRef<HTMLDivElement>(null);
   const grid = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: anchor.right - WIDTH, top: anchor.bottom + 4 });
-  const firstDay = useMemo(firstDayOfWeek, []);
+  // Settings → General → Week starts on.
+  const firstDay = weekStartsMonday() ? 1 : 0;
 
   const typedTime = timeText.trim() ? parseTime(timeText) : null;
   const timeInvalid = timeText.trim() !== "" && typedTime === null;
@@ -90,7 +77,7 @@ export default function Calendar({ anchor, value, time, onPick, onClear, clearLa
   }, [month, firstDay]);
 
   const weekdayNames = useMemo(
-    () => days.slice(0, 7).map((d) => d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2)),
+    () => days.slice(0, 7).map((d) => d.toLocaleDateString(locale(), { weekday: "short" }).slice(0, 2)),
     [days],
   );
 
@@ -124,7 +111,7 @@ export default function Calendar({ anchor, value, time, onPick, onClear, clearLa
     }
   };
 
-  const title = month.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const title = month.toLocaleDateString(locale(), { month: "long", year: "numeric" });
   const cursorKey = ymd(cursor);
   const todayKey = ymd(today);
 
@@ -176,7 +163,7 @@ export default function Calendar({ anchor, value, time, onPick, onClear, clearLa
                   id={`cal-${key}`}
                   role="gridcell"
                   aria-selected={selected}
-                  aria-label={d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                  aria-label={d.toLocaleDateString(locale(), { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
                   className={clsx(
                     "flex h-7 cursor-default items-center justify-center rounded-md text-[12px] tabular-nums",
                     selected ? "bg-accent text-accent-ink" : "hover:bg-hover",

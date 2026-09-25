@@ -50,6 +50,74 @@ export interface Settings {
   GoalsView?: "active" | "behind" | "done";
   GoalsArea?: string | null;
   GoalsSort?: "due" | "risk";
+
+  // ----- Settings (Settings.dc.html), section by section -----
+  // Profile: the line at the top of Home, and the picture (a file in Data).
+  Greeting?: "evening" | "hey" | "off";
+  ProfilePicture?: string | null;
+  // General.
+  StartWithWindows?: boolean;
+  OpenTo?: "home" | "notes" | "schedule" | "tasks" | "last";
+  LastScreen?: string;
+  WeekStart?: "sunday" | "monday";
+  Clock?: "12" | "24";
+  DateFormat?: "short" | "dmy" | "iso";
+  Language?: "en-US" | "en-GB";
+  AutoUpdate?: boolean;
+  UpdateChannel?: "stable" | "beta";
+  // Appearance.
+  MatchWindows?: boolean;
+  Accent?: "theme" | "violet" | "mint" | "orange" | "sky" | "pink";
+  Material?: "solid" | "mica" | "acrylic";
+  // "atkinson", "geist", "system", or a font family added in Settings.
+  HeadlineFont?: string;
+  Density?: "comfortable" | "compact";
+  SidebarStyle?: "full" | "icons";
+  // Home screen: cards turned off.
+  HiddenCards?: string[];
+  // Notifications.
+  NotifyEvents?: boolean;
+  NotifyCalls?: boolean;
+  NotifyTasks?: boolean;
+  NotifyHabits?: boolean;
+  NotifyGoals?: boolean;
+  QuietHours?: "2-10" | "23-7" | "off";
+  QuietWhileLive?: boolean;
+  ObsPort?: number;
+  Sound?: "chime" | "pop" | "none";
+  // Keyboard shortcuts: command id → keys, where they differ from the defaults.
+  Shortcuts?: Record<string, string>;
+  // Accessibility.
+  HigherContrast?: boolean;
+  BigTargets?: boolean;
+  UnderlineLinks?: boolean;
+  Announce?: boolean;
+  // Notes.
+  SpellCheck?: boolean;
+  Cursor?: "line" | "block" | "underline";
+  OpenInNewTab?: boolean;
+  // Schedule: new-event defaults, and the time zone new events start in.
+  EventCalendar?: string;
+  EventLength?: number;
+  EventReminder?: number | null;
+  EventVideo?: "none" | "teams" | "meet" | "zoom";
+  ScheduleZone?: string | null;
+  // Tasks.
+  DefaultList?: string;
+  ReadDates?: boolean;
+  LaterToday?: "19:00" | "3h" | "21:00";
+  TomorrowTime?: "09:00" | "12:00" | "none";
+  CompletedTasks?: "show" | "fold" | "hide";
+  // Habits and goals.
+  HabitsInTasks?: boolean;
+  GoalCheckIn?: "sun" | "mon" | "none";
+  Celebrate?: boolean;
+  // Storage and backup.
+  Backup?: boolean;
+  BackupFolder?: string | null;
+  LastBackup?: string | null;
+  // Privacy.
+  SaveCrashReports?: boolean;
   [key: string]: unknown;
 }
 
@@ -74,6 +142,7 @@ export async function loadSettings(): Promise<Settings> {
     // A damaged file shouldn't stop the app from opening; defaults it is.
   }
   const settings: Settings = { ...defaults, ...saved };
+  current = settings;
   settings.Theme = themeFor(settings.Theme).id;
   if (!textSizes.includes(settings.TextSize)) settings.TextSize = "M";
   if (!settings.DisplayName) settings.DisplayName = await defaultName().catch(() => "");
@@ -82,6 +151,18 @@ export async function loadSettings(): Promise<Settings> {
 
 // Saves run one after another, so a fast run of changes can't land out of order.
 let queue: Promise<void> = Promise.resolve();
+
+// The settings as last loaded or changed, for code outside React (dates,
+// reminders, quick add). SettingsContext keeps it up to date.
+let current: Settings = defaults;
+
+export function currentSettings(): Settings {
+  return current;
+}
+
+export function setCurrentSettings(s: Settings) {
+  current = s;
+}
 
 export function saveSettings(settings: Settings): Promise<void> {
   const text = JSON.stringify(settings, null, 2);

@@ -181,6 +181,67 @@
   transform: translate(-50%, -50%);
 }
 
+/* Settings → Accessibility → Bigger click targets: every button reaches a
+   few pixels past its edges, without anything moving. */
+:root[data-targets="big"] button:not(.hit) {
+  position: relative;
+}
+:root[data-targets="big"] button:not(.hit)::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+}
+
+/* Settings → Accessibility → Higher contrast: stronger lines and quieter
+   text made louder, in dark themes and in Daylight. */
+:root[data-contrast="high"][data-scheme="dark"] {
+  --line: rgba(255, 255, 255, 0.18);
+  --muted: #c3c8d4;
+  --faint: #8e95a7;
+}
+:root[data-contrast="high"][data-scheme="light"] {
+  --line: rgba(20, 22, 30, 0.24);
+  --muted: #33363d;
+  --faint: #6a665e;
+}
+
+/* Settings → Accessibility → Underline links. */
+:root[data-links="underline"] a,
+:root[data-links="underline"] .ProseMirror a,
+:root[data-links="underline"] [data-link] {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Settings → Appearance → Density → Compact: shorter rows in the lists. */
+:root[data-density="compact"] [data-row="task"] {
+  min-height: 44px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+:root[data-density="compact"] [data-row="habit"] {
+  min-height: 60px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+:root[data-density="compact"] [data-row="list"] {
+  min-height: 48px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+:root[data-density="compact"] [data-row="nav"] {
+  height: 34px;
+}
+:root[data-density="compact"] [data-row="card"] {
+  padding: 14px;
+  gap: 10px;
+}
+
+/* Mica or Acrylic: the page lets the window's backdrop through. */
+:root[data-material] body {
+  background: var(--bg);
+}
+
 /* The "live" dot beside Up next and the now line. */
 @keyframes pl-pulse {
   0% {
@@ -231,6 +292,16 @@
 }
 .pl-toast {
   animation: pl-toast-in 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* A finished goal (Settings → Habits and goals → Celebrate). */
+@keyframes pl-confetti {
+  from { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  80% { opacity: 1; }
+  to { transform: translate(var(--drift), 105vh) rotate(var(--spin)); opacity: 0; }
+}
+.pl-confetti {
+  animation: pl-confetti 3s cubic-bezier(0.25, 0.4, 0.5, 1) forwards;
 }
 
 /* Reduce motion: from Settings → Accessibility, or from Windows' own

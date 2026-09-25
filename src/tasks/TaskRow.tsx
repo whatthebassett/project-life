@@ -47,6 +47,7 @@ export default function TaskRow({ task, kind, now, selected, tabbable, settling,
   return (
     <div
       role="listitem"
+      data-row="task"
       data-task-id={task.Id}
       tabIndex={tabbable ? 0 : -1}
       aria-label={`${task.Title}${due ? `, due ${due}` : ""}${checked ? ", completed" : ""}`}

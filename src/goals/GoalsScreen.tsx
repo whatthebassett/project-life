@@ -1,3 +1,4 @@
+import { locale } from "../lib/format";
 import clsx from "clsx";
 import { Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -114,6 +115,7 @@ export default function GoalsScreen() {
               key={id}
               aria-current={view === id ? "page" : undefined}
               onClick={() => update({ GoalsView: id })}
+              data-row="nav"
               className={clsx("flex h-[42px] items-center gap-3 rounded-[12px] px-3 text-left text-14 font-medium", view === id ? "bg-panel text-text" : "text-muted hover:text-text")}
             >
               <span className="flex-1">{label}</span>
@@ -318,6 +320,7 @@ function GoalCard({
     <button
       aria-pressed={selected}
       onClick={onPick}
+      data-row="card"
       className="flex flex-col gap-3.5 rounded-[22px] border-[1.5px] bg-panel p-[18px] text-left"
       style={{ borderColor: selected ? color : "var(--line)" }}
     >
@@ -325,7 +328,7 @@ function GoalCard({
         <span className="flex min-w-0 items-center gap-2 text-12 text-muted">
           <span className="h-2 w-2 shrink-0 rounded-[3px]" style={{ background: color }} />
           <span className="truncate">
-            {area.Name} · Due {fromYmd(g.Due).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+            {area.Name} · Due {fromYmd(g.Due).toLocaleDateString(locale(), { month: "short", day: "numeric" })}
           </span>
         </span>
         <span className="flex h-6 shrink-0 items-center rounded-[8px] px-[9px] text-11 font-semibold" style={{ background: statusStyle[status].bg, color: statusStyle[status].fg }}>

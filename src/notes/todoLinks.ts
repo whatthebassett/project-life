@@ -1,3 +1,4 @@
+import { locale } from "../lib/format";
 // Note to-dos sent to Tasks. A sent to-do becomes a task that remembers the
 // note and the to-do's text (Task.Note, Task.NoteTodo); nothing is added to
 // the note. Ticking either one ticks the other, matched by that text.
@@ -77,7 +78,7 @@ export function todoLinksFor(tasks: Task[], note: string | null, now: Date): Map
     let tone: TodoLink["tone"] = "muted";
     if (t.Due) {
       const diff = daysBetween(ymd(today), t.Due);
-      label = diff >= 1 && diff < 7 ? fromYmd(t.Due).toLocaleDateString(undefined, { weekday: "short" }) : formatDue(t.Due, null, today);
+      label = diff >= 1 && diff < 7 ? fromYmd(t.Due).toLocaleDateString(locale(), { weekday: "short" }) : formatDue(t.Due, null, today);
       tone = isOverdue(t, now) && diff < 0 ? "danger" : diff === 0 ? "warn" : "muted";
     }
     map.set(t.NoteTodo!, { taskId: t.Id, label, tone });

@@ -1,3 +1,4 @@
+import { locale } from "../lib/format";
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { listFor } from "../tasks/lists";
@@ -55,7 +56,7 @@ export default function EventPicker({ onPick, onClose }: { onPick: (id: string) 
             <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: listFor(o.event.Calendar).color }} />
             <span className="min-w-0 flex-1 truncate text-14">{o.event.Title}</span>
             <span className="text-12 text-muted">
-              {o.event.Repeat ? repeatLabels[o.event.Repeat] : o.start.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+              {o.event.Repeat ? repeatLabels[o.event.Repeat] : o.start.toLocaleDateString(locale(), { weekday: "short", month: "short", day: "numeric" })}
               {o.event.AllDay ? "" : `, ${shortTime(o.start)}`}
             </span>
           </button>

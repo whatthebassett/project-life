@@ -1,3 +1,6 @@
+import { clockText, dateText, locale } from "../lib/format";
+import { currentSettings } from "../lib/settings";
+
 // Dates for the task manager. Due dates are your own calendar days,
 // stored as "YYYY-MM-DD" (no time zone, so a task due Friday stays due Friday
 // wherever the laptop travels); an optional time is "HH:MM", 24-hour.
@@ -81,18 +84,12 @@ export function parseTime(text: string): string | null {
 
 export function formatTime(time: string): string {
   const [h, m] = time.split(":").map(Number);
-  return new Date(2000, 0, 1, h, m).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  return clockText(new Date(2000, 0, 1, h, m));
 }
 
-// "Sat, Sep 26" (and the year, when it isn't this one).
+// A due date on its own, in the date format from Settings → General.
 export function formatDate(due: string, today: Date): string {
-  const d = fromYmd(due);
-  return d.toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: d.getFullYear() === today.getFullYear() ? undefined : "numeric",
-  });
+  return dateText(fromYmd(due), today);
 }
 
 // How a due date reads in the list: near days by name, the rest as dates.
@@ -102,10 +99,10 @@ export function formatDue(due: string, time: string | null | undefined, today: D
   if (diff === 0) day = "Today";
   else if (diff === 1) day = "Tomorrow";
   else if (diff === -1) day = "Yesterday";
-  else if (diff > 1 && diff < 7) day = fromYmd(due).toLocaleDateString(undefined, { weekday: "short" });
+  else if (diff > 1 && diff < 7) day = fromYmd(due).toLocaleDateString(locale(), { weekday: "short" });
   else {
     const d = fromYmd(due);
-    day = d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: d.getFullYear() === today.getFullYear() ? undefined : "numeric" });
+    day = d.toLocaleDateString(locale(), { month: "short", day: "numeric", year: d.getFullYear() === today.getFullYear() ? undefined : "numeric" });
   }
   return time ? `${day} ${formatTime(time)}` : day;
 }
@@ -131,7 +128,7 @@ const monthOf = (word: string) => months.indexOf(word.slice(0, 3));
 
 // Whether this locale writes 3/4 as the 3rd of April rather than March 4th.
 function dayFirst(): boolean {
-  const parts = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "numeric" }).formatToParts(new Date(2000, 2, 4));
+  const parts = new Intl.DateTimeFormat(locale(), { day: "numeric", month: "numeric" }).formatToParts(new Date(2000, 2, 4));
   return parts.findIndex((p) => p.type === "day") < parts.findIndex((p) => p.type === "month");
 }
 
@@ -292,7 +289,8 @@ export function delayChoices(due: string | null | undefined, time: string | null
       choices.push({ id: "later", label: "Later today", due: ymd(today), time: nowTime(later) });
     }
   }
-  choices.push({ id: "tomorrow", label: "Tomorrow", due: ymd(addDays(today, 1)), time: keep });
+  const t = currentSettings().TomorrowTime ?? "09:00";
+  choices.push({ id: "tomorrow", label: "Tomorrow", due: ymd(addDays(today, 1)), time: keep ?? (t === "none" ? null : t) });
   choices.push({ id: "weekend", label: today.getDay() === 0 ? "Next weekend" : "This weekend", due: ymd(weekend(today, true)), time: keep });
   choices.push({ id: "nextweek", label: "Next week", due: ymd(nextMonday(today)), time: keep });
   return choices;

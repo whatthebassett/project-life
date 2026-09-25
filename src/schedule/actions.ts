@@ -1,7 +1,9 @@
+import { locale } from "../lib/format";
 // What people do to events: add, save, move, delete. Changes to a repeating
 // event apply to just one day or to all of them (the screen asks which).
 import { addDays, fromYmd, ymd } from "../tasks/dates";
-import { defaultListId } from "../tasks/lists";
+import { currentSettings } from "../lib/settings";
+import { currentLists, defaultListId } from "../tasks/lists";
 import { newId } from "../tasks/model";
 import { parseCapture } from "../tasks/quick";
 import { toast } from "../ui/Toast";
@@ -19,7 +21,14 @@ function changeWithUndo(message: string, edit: (events: CalEvent[]) => CalEvent[
   toast(message, () => store().change((f) => ({ ...f, Events: before })));
 }
 
+// How long a new event runs (Settings → Schedule), in minutes.
+export const eventLength = () => currentSettings().EventLength ?? 60;
+
 export function blankEvent(start: Date, end: Date, fields: Partial<CalEvent> = {}): CalEvent {
+  // Settings → Schedule: the calendar, reminder, call and time zone.
+  const s = currentSettings();
+  const calendar = s.EventCalendar && currentLists().some((l) => l.id === s.EventCalendar) ? s.EventCalendar : defaultListId();
+  const reminder = s.EventReminder === null ? [] : [s.EventReminder ?? 10];
   return {
     Id: newId(),
     Title: "",
@@ -27,13 +36,13 @@ export function blankEvent(start: Date, end: Date, fields: Partial<CalEvent> = {
     Start: localStamp(start),
     End: localStamp(end),
     AllDay: false,
-    Calendar: defaultListId(),
-    Call: null,
+    Calendar: calendar,
+    Call: s.EventVideo && s.EventVideo !== "none" ? s.EventVideo : null,
     JoinUrl: null,
     Place: "",
     Description: "",
-    TimeZone: null,
-    Reminders: [10],
+    TimeZone: s.ScheduleZone ?? null,
+    Reminders: reminder,
     // Reminders only go off for times after this.
     Reminded: new Date().toISOString(),
     Repeat: null,
@@ -52,14 +61,15 @@ export function allDayRange(day: string, days = 1): Pick<CalEvent, "Start" | "En
 // once the time has gone by).
 export function parseQuickEvent(text: string, now: Date): CalEvent | null {
   if (!text.trim()) return null;
-  const p = parseCapture(text, now, { undated: "today" });
+  const p = parseCapture(text, now, { undated: "today", readDates: true });
   const day = p.due ?? ymd(now);
-  const base = { Title: p.title, Calendar: p.list ?? defaultListId() };
+  // A #list picks the calendar; otherwise the one from Settings → Schedule.
+  const base = /\s#[\w-]+/.test(` ${text}`) && p.list ? { Title: p.title, Calendar: p.list } : { Title: p.title };
   if (p.time) {
     const [h, m] = p.time.split(":").map(Number);
     const d = fromYmd(day);
     const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m);
-    return blankEvent(start, new Date(start.getTime() + 60 * 60_000), base);
+    return blankEvent(start, new Date(start.getTime() + eventLength() * 60_000), base);
   }
   return { ...blankEvent(fromYmd(day), fromYmd(day), base), ...allDayRange(day), Reminders: [] };
 }
@@ -113,7 +123,7 @@ export function deleteOccurrence(occ: Occurrence, scope: Scope) {
   const e = occ.event;
   const name = `“${e.Title || "Untitled"}”`;
   if (e.Repeat && scope === "one") {
-    changeWithUndo(`Removed ${name} on ${fromYmd(occ.day).toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}`, (events) => skipDay(events, e.Id, occ.day));
+    changeWithUndo(`Removed ${name} on ${fromYmd(occ.day).toLocaleDateString(locale(), { weekday: "long", month: "short", day: "numeric" })}`, (events) => skipDay(events, e.Id, occ.day));
     return;
   }
   // The whole event, and any one-day changes made to it.

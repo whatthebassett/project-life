@@ -29,6 +29,11 @@ import { useSettings } from "./lib/SettingsContext";
 import TasksScreen from "./tasks/TasksScreen";
 import { TASKS_OPEN } from "./tasks/TasksWindow";
 import { Toaster } from "./ui/Toast";
+import GuidePopup from "./shell/GuidePopup";
+import Celebration from "./goals/Celebration";
+import { useBackgroundJobs } from "./lib/jobs";
+import { keyMap, keyOf } from "./lib/shortcuts";
+import { textSizes, type Settings } from "./lib/settings";
 
 const screens: Record<Exclude<Screen, "home">, () => React.JSX.Element> = {
   notes: NotesScreen,
@@ -39,13 +44,41 @@ const screens: Record<Exclude<Screen, "home">, () => React.JSX.Element> = {
   gallery: Gallery,
 };
 
+const openable: Screen[] = ["home", "notes", "schedule", "tasks", "habits", "goals"];
+
+// Settings → General → Open to: a screen, or the last one used.
+function startScreen(s: Settings): Screen {
+  const pick = s.OpenTo === "last" ? s.LastScreen : s.OpenTo;
+  return openable.includes(pick as Screen) ? (pick as Screen) : "home";
+}
+
 export default function App() {
-  const [screen, setScreen] = useState<Screen>("home");
+  const { settings, update } = useSettings();
+  const [screen, setScreen] = useState<Screen>(() => startScreen(settings));
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [captureSignal, setCaptureSignal] = useState(0);
+  const [guideOpen, setGuideOpen] = useState(false);
   const showNotes = useCallback(() => setScreen("notes"), []);
   useTaskReminders();
-  const { settings } = useSettings();
+  useBackgroundJobs();
+  const shortcutsRef = useRef(settings.Shortcuts);
+  shortcutsRef.current = settings.Shortcuts;
+  const textSizeRef = useRef(settings.TextSize);
+  textSizeRef.current = settings.TextSize;
+  const stepTextSize = useCallback(
+    (by: number) => {
+      const i = textSizes.indexOf(textSizeRef.current);
+      const next = textSizes[Math.min(textSizes.length - 1, Math.max(0, i + by))];
+      if (next !== textSizeRef.current) update({ TextSize: next });
+    },
+    [update],
+  );
+
+  // Remember the screen for "Open to: Last screen".
+  const openTo = settings.OpenTo;
+  useEffect(() => {
+    if (openTo === "last" && openable.includes(screen) && settings.LastScreen !== screen) update({ LastScreen: screen });
+  }, [screen, openTo]); // eslint-disable-line react-hooks/exhaustive-deps
   const habitRules = useRef(rulesOf(settings));
   habitRules.current = rulesOf(settings);
   useEffect(() => setReminderRules(() => habitRules.current), []);
@@ -72,36 +105,33 @@ export default function App() {
     };
   }, []);
 
-  // Ctrl+, opens and closes Settings; Ctrl+K goes to Home's quick capture,
-  // except while typing in a note, where it adds a link.
   useEffect(() => {
+    // Settings → Keyboard shortcuts → Everywhere. Inside a note, keys that
+    // are also a formatting shortcut (Ctrl+K, Ctrl+E) stay with the note.
     const onKey = (e: KeyboardEvent) => {
-      // Ctrl+Shift+T: a new task (Settings → Shortcuts).
-      if (e.ctrlKey && e.shiftKey && !e.altKey && e.key.toLowerCase() === "t" && !document.getElementById("app-content")?.inert) {
-        e.preventDefault();
-        requestTasks({ kind: "new" });
-        return;
-      }
-      if (!e.ctrlKey || e.altKey || e.shiftKey) return;
-      // Ctrl+E: a new event, except in a note, where it's inline code.
-      if (e.key.toLowerCase() === "e" && !document.getElementById("app-content")?.inert && !(e.target as HTMLElement | null)?.closest?.(".ProseMirror, .cm-editor")) {
-        e.preventDefault();
-        requestSchedule({ kind: "new" });
-        return;
-      }
-      if (e.key === ",") {
-        e.preventDefault();
-        setSettingsOpen((open) => !open);
-      } else if (e.key.toLowerCase() === "k" && !document.getElementById("app-content")?.inert) {
-        if ((e.target as HTMLElement | null)?.closest?.(".ProseMirror, .cm-editor")) return;
-        e.preventDefault();
+      const keys = keyOf(e);
+      if (!keys) return;
+      const overrides = shortcutsRef.current;
+      const id = keyMap(overrides, ["Everywhere"]).get(keys);
+      if (!id) return;
+      const inEditor = Boolean((e.target as HTMLElement | null)?.closest?.(".ProseMirror, .cm-editor"));
+      if (inEditor && keyMap(overrides, ["Formatting"]).has(keys)) return;
+      const blocked = Boolean(document.getElementById("app-content")?.inert);
+      if (blocked && id !== "app.settings") return;
+      e.preventDefault();
+      if (id === "app.settings") setSettingsOpen((open) => !open);
+      else if (id === "app.capture") {
         setScreen("home");
         setCaptureSignal((n) => n + 1);
-      }
+      } else if (id === "app.home") setScreen("home");
+      else if (id === "app.guide") setGuideOpen(true);
+      else if (id === "app.newTask") requestTasks({ kind: "new" });
+      else if (id === "app.newEvent") requestSchedule({ kind: "new" });
+      else if (id === "app.larger" || id === "app.smaller") stepTextSize(id === "app.larger" ? 1 : -1);
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, []);
+  }, [stepTextSize]);
 
   const openSettings = () => setSettingsOpen(true);
   const Current = screen === "home" ? null : screens[screen];
@@ -116,7 +146,7 @@ export default function App() {
         />
         <div className="relative flex min-h-0 flex-1">
           <div id="app-content" className="flex min-w-0 flex-1">
-            {screen === "home" ? (
+            {screen === "home" && settings.SidebarStyle !== "icons" ? (
               <HomeSidebar screen={screen} onNavigate={setScreen} onSettings={openSettings} />
             ) : (
               <IconRail screen={screen} onNavigate={setScreen} onSettings={openSettings} />
@@ -126,6 +156,8 @@ export default function App() {
           {/* Pop-ups draw here, over the screen but under the title bar. */}
           <div id="popup-layer" className="pointer-events-none absolute inset-0 z-40" />
           {settingsOpen && <SettingsPopup onClose={() => setSettingsOpen(false)} />}
+          {guideOpen && <GuidePopup onClose={() => setGuideOpen(false)} />}
+          <Celebration />
           <Toaster />
         </div>
       </div>

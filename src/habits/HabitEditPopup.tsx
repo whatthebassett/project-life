@@ -1,3 +1,5 @@
+import { weekStartsMonday } from "../lib/format";
+import { locale } from "../lib/format";
 import clsx from "clsx";
 import { Archive, Check, ChevronDown, Minus, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
@@ -20,6 +22,8 @@ interface Props {
 
 const letters = ["M", "T", "W", "T", "F", "S", "S"];
 const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+// Days are stored Monday first; they're shown in the order weeks start on.
+const weekOrder = () => (weekStartsMonday() ? [0, 1, 2, 3, 4, 5, 6] : [6, 0, 1, 2, 3, 4, 5]);
 const remTexts: Record<HabitReminderAt, string> = { every2: "every 2 hours", "09:00": "at 9 AM", "12:00": "at noon", "19:00": "at 7 PM" };
 
 // The habit pop-up (HabitEdit.dc.html), for new habits too: name, icon and
@@ -53,7 +57,7 @@ export default function HabitEditPopup({ habit, isNew, today, rules, onSave, onC
   const sentence = `${lead}, ${freqText}, ${todText}.${h.Reminder.On ? ` Reminds you ${remTexts[h.Reminder.At]}.` : " No reminders."}`;
   const summary = `${name} · ${goalLabel(h)} · ${freqText}`;
   const streak = currentStreak(h, today, rules);
-  const started = new Date(h.Created).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const started = new Date(h.Created).toLocaleDateString(locale(), { month: "short", day: "numeric" });
 
   const save = () => {
     if (!h.Name.trim()) return;
@@ -185,7 +189,8 @@ export default function HabitEditPopup({ habit, isNew, today, rules, onSave, onC
             )}
             {h.Frequency === "days" && (
               <div role="group" aria-label="Days" className="grid grid-cols-7 gap-1.5">
-                {letters.map((l, i) => {
+                {weekOrder().map((i) => {
+                  const l = letters[i];
                   const on = h.Days[i];
                   return (
                     <button
@@ -291,8 +296,9 @@ export default function HabitEditPopup({ habit, isNew, today, rules, onSave, onC
           <div className="flex flex-col gap-2.5 rounded-[18px] p-4" style={{ background: hueSoft(h.Hue, 8) }}>
             <span className="text-13 leading-[1.5]">{sentence.charAt(0).toUpperCase() + sentence.slice(1)}</span>
             <div className="flex gap-[5px]">
-              {letters.map((l, i) => {
-                const on = h.Frequency === "days" ? h.Days[i] : h.Frequency === "weekly" ? i < h.PerWeek : true;
+              {weekOrder().map((i, pos) => {
+                const l = letters[i];
+                const on = h.Frequency === "days" ? h.Days[i] : h.Frequency === "weekly" ? pos < h.PerWeek : true;
                 return (
                   <span
                     key={i}

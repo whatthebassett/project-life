@@ -1,3 +1,4 @@
+import { locale } from "../lib/format";
 import { Check, Ellipsis, Minus, Pencil, Plus } from "lucide-react";
 import type { MenuItem } from "../components/ContextMenu";
 import { currentStreak, hueColor, hueSoft, type Habit, type HabitRules } from "../habits/model";
@@ -30,7 +31,7 @@ interface Props {
 const W = 296;
 const TOP = 8;
 const BOT = 108;
-const day = (d: string) => fromYmd(d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+const day = (d: string) => fromYmd(d).toLocaleDateString(locale(), { month: "short", day: "numeric" });
 
 // The details panel (Goals.dc.html): why it matters, the progress chart
 // against an even pace, logging or milestones, and what feeds the goal.
@@ -95,7 +96,7 @@ export default function GoalDetails({ goal, area, habits, tasks, events, today, 
         key: `e:${e.Id}`,
         tag: "EV",
         name: e.Title,
-        note: `Event · ${next ? `${next.start.toLocaleDateString(undefined, { weekday: e.Repeat ? "long" : "short", month: e.Repeat ? undefined : "short", day: e.Repeat ? undefined : "numeric" })}${e.Repeat ? "s" : ""}, ${shortTime(next.start)}` : "Past"}`,
+        note: `Event · ${next ? `${next.start.toLocaleDateString(locale(), { weekday: e.Repeat ? "long" : "short", month: e.Repeat ? undefined : "short", day: e.Repeat ? undefined : "numeric" })}${e.Repeat ? "s" : ""}, ${shortTime(next.start)}` : "Past"}`,
         color: cal.color,
         soft: `color-mix(in srgb, ${cal.color} 16%, transparent)`,
         open: () => requestSchedule({ kind: "open", id: e.Id, day: next?.day }),

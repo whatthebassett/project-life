@@ -1,6 +1,8 @@
 // The task lists, which double as the calendars and Home's spaces (DESIGN.md
 // §2). They live in tasks.json beside the tasks; people add, rename, recolor
 // and delete them. Colors are theme colors, so every theme suits them.
+import { currentSettings } from "../lib/settings";
+
 export type ListColor = "accent" | "accent2" | "warn" | "danger" | "muted";
 
 export const listColors: { id: ListColor; name: string }[] = [
@@ -61,10 +63,11 @@ export function currentLists(): TaskList[] {
   return current;
 }
 
-// New tasks go to Personal, or the first list once Personal is gone
-// (Settings → Tasks picks another, Phase 7).
+// New tasks go to the list picked in Settings → Tasks, else Personal, or the
+// first list once Personal is gone.
 export function defaultListId(): string {
-  return current.find((l) => l.id === "personal")?.id ?? current[0]?.id ?? "personal";
+  const picked = currentSettings().DefaultList;
+  return current.find((l) => l.id === picked)?.id ?? current.find((l) => l.id === "personal")?.id ?? current[0]?.id ?? "personal";
 }
 
 export function listFor(id: string | undefined): TaskList {

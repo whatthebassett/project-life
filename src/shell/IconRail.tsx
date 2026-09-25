@@ -49,9 +49,9 @@ export default function IconRail({ screen, onNavigate, onSettings }: Props) {
       </button>
       <div
         title={settings.DisplayName}
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-panel2 text-14 font-semibold text-accent"
+        className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-panel2 text-14 font-semibold text-accent"
       >
-        {initialOf(settings.DisplayName)}
+        {settings.ProfilePicture ? <img src={settings.ProfilePicture} alt="" className="h-full w-full rounded-full object-cover" /> : initialOf(settings.DisplayName)}
       </div>
     </nav>
   );

@@ -6,6 +6,7 @@
 mod attachments;
 mod merge;
 mod notes;
+mod system;
 mod tray;
 mod web;
 
@@ -88,6 +89,14 @@ fn write_data(name: String, contents: String) -> Result<(), String> {
     write_atomic(&path, &contents)
 }
 
+fn crash_reports_on() -> bool {
+    fs::read_to_string(data_dir().join("settings.json"))
+        .ok()
+        .and_then(|t| serde_json::from_str::<serde_json::Value>(t.trim_start_matches('\u{feff}')).ok())
+        .and_then(|v| v.get("SaveCrashReports").and_then(|b| b.as_bool()))
+        .unwrap_or(false)
+}
+
 // The name to greet someone by until they set their own in Settings → Profile.
 #[tauri::command]
 fn default_name() -> String {
@@ -143,6 +152,15 @@ pub fn run() {
         return;
     }
     notes::load_notes_folder();
+    // Settings → Privacy → Save crash reports: a crash on this side goes into
+    // Data\Logs too.
+    let default_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        if crash_reports_on() {
+            system::log_crash(&format!("Rust: {info}"));
+        }
+        default_hook(info);
+    }));
     tauri::Builder::default()
         // A second copy (started again while this one sits in the tray)
         // just brings this one forward.
@@ -150,8 +168,23 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
+        // Settings → General → Open when Windows starts.
+        .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, None))
         // Pictures in notes, as http://pl.localhost/assets/… (notes.rs).
-        .register_uri_scheme_protocol("pl", |_ctx, request| notes::serve_note_file(&request))
+        // Downloaded fonts too, as http://pl.localhost/__fonts/… (system.rs).
+        .register_uri_scheme_protocol("pl", |_ctx, request| {
+            let path = percent_encoding::percent_decode_str(request.uri().path()).decode_utf8_lossy().into_owned();
+            if let Some(rel) = path.strip_prefix("/__fonts/") {
+                if let Some(bytes) = system::font_file(rel).and_then(|f| fs::read(f).ok()) {
+                    return tauri::http::Response::builder()
+                        .header("Content-Type", "font/ttf")
+                        .header("Access-Control-Allow-Origin", "*")
+                        .body(std::borrow::Cow::Owned(bytes))
+                        .unwrap();
+                }
+            }
+            notes::serve_note_file(&request)
+        })
         // Remember size and position, but never the frame (the window draws its
         // own) or visibility (the page shows the window once its theme is on).
         .plugin(
@@ -194,6 +227,25 @@ pub fn run() {
             default_name,
             web::fetch_text,
             tray::quit_app,
+            system::system_theme,
+            system::os_build,
+            system::running_apps,
+            system::current_location,
+            system::secret_get,
+            system::secret_set,
+            system::list_system_fonts,
+            system::list_app_fonts,
+            system::download_google_font,
+            system::remove_app_font,
+            system::data_info,
+            system::open_data_folder,
+            system::open_backup_folder,
+            system::export_everything,
+            system::backup_now,
+            system::clear_caches,
+            system::delete_all_data,
+            system::save_crash,
+            system::import_checkpoint,
             tray::show_toast,
             attachments::attach_file,
             attachments::open_attachment,

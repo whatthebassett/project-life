@@ -1,3 +1,4 @@
+import { locale } from "../lib/format";
 import clsx from "clsx";
 import { Video } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
@@ -192,7 +193,7 @@ export default function WeekView({ days, timed, allDay, now, selectedKey, calend
               <div key={i} className="flex min-w-0 flex-col gap-2 border-l border-line px-2.5 pt-3 pb-2.5">
                 <div className="flex items-center gap-2">
                   <span className={clsx("font-mono text-11 tracking-[0.08em]", today ? "text-accent" : "text-muted")}>
-                    {d.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase()}
+                    {d.toLocaleDateString(locale(), { weekday: "short" }).toUpperCase()}
                   </span>
                   <span className={clsx("flex h-[30px] min-w-[30px] items-center justify-center rounded-[10px] px-1.5 text-15 font-semibold", today ? "bg-accent text-accent-ink" : "text-text")}>
                     {d.getDate()}
@@ -266,7 +267,7 @@ export default function WeekView({ days, timed, allDay, now, selectedKey, calend
                         key={o.key}
                         role="button"
                         tabIndex={0}
-                        aria-label={`${o.event.Title || "Untitled event"}, ${o.start.toLocaleDateString(undefined, { weekday: "long" })} ${shortTime(o.start)}`}
+                        aria-label={`${o.event.Title || "Untitled event"}, ${o.start.toLocaleDateString(locale(), { weekday: "long" })} ${shortTime(o.start)}`}
                         aria-pressed={selected}
                         onPointerDown={(e) => startEventDrag(e, o, "move")}
                         onDoubleClick={() => onOpen(o)}

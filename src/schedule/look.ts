@@ -1,5 +1,5 @@
 // How calendars and events look, and what the Join button says.
-import { formatTime } from "../tasks/dates";
+import { clockShort } from "../lib/format";
 import type { ListColor } from "../tasks/lists";
 import { callNames, joinUrlOf, type Occurrence } from "./events";
 
@@ -13,8 +13,7 @@ export function softOf(tone: ListColor): string {
 
 // "5 PM", "5:45 PM".
 export function shortTime(d: Date): string {
-  const hhmm = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-  return formatTime(hhmm).replace(":00", "");
+  return clockShort(d);
 }
 
 export function rangeLabel(o: { start: Date; end: Date }, allDay?: boolean): string {

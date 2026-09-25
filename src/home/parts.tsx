@@ -1,3 +1,4 @@
+import { clockText } from "../lib/format";
 import clsx from "clsx";
 import type { CSSProperties, ReactNode } from "react";
 
@@ -36,7 +37,7 @@ export function Empty({ children, className }: { children: ReactNode; className?
 
 // "9:30 AM"
 export function clock(d: Date): string {
-  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return clockText(d);
 }
 
 // "5:00 – 5:45 PM", or "11:30 AM – 12:30 PM" across noon.

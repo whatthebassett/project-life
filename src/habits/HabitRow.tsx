@@ -4,19 +4,19 @@ import { useEffect, useState } from "react";
 import { addDays, fromYmd, ymd } from "../tasks/dates";
 import { startTimer, stepDay, stopTimer, toggleDay } from "./actions";
 import { HabitIcon } from "./icons";
-import { currentStreak, dayState, doneOn, goalLabel, hueColor, hueSoft, mondayOf, valueOn, weekCount, type Habit, type HabitRules } from "./model";
+import { currentStreak, dayState, doneOn, goalLabel, hueColor, hueSoft, weekStartOf, valueOn, weekCount, type Habit, type HabitRules } from "./model";
 
-const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 // The week strip: done filled, part-done half filled, missed outlined, today
 // outlined in the habit's color, days to come dashed.
 export function WeekStrip({ h, today, size = "md" }: { h: Habit; today: string; size?: "sm" | "md" }) {
-  const mon = fromYmd(mondayOf(today));
+  const mon = fromYmd(weekStartOf(today));
   const color = hueColor(h.Hue);
   return (
     <div aria-label={`This week: ${weekCount(h, today)} done`} className="flex gap-[5px]">
-      {dayNames.map((name, i) => {
+      {[0, 1, 2, 3, 4, 5, 6].map((i) => {
         const day = ymd(addDays(mon, i));
+        const name = fromYmd(day).toLocaleDateString("en-US", { weekday: "long" });
         const state = dayState(h, day, today);
         const style: React.CSSProperties =
           state === "done"
@@ -53,7 +53,7 @@ export default function HabitRow({ h, today, rules, selected, onSelect }: Props)
   const color = hueColor(h.Hue);
   const sub = h.Frequency === "weekly" ? `${weekCount(h, today)} of ${h.PerWeek} this week` : goalLabel(h);
   return (
-    <div className={clsx("flex min-h-20 items-center gap-4 rounded-[18px] border py-3 pr-3.5 pl-3", selected ? "border-line bg-panel" : "border-transparent hover:bg-panel/50")}>
+    <div data-row="habit" className={clsx("flex min-h-20 items-center gap-4 rounded-[18px] border py-3 pr-3.5 pl-3", selected ? "border-line bg-panel" : "border-transparent hover:bg-panel/50")}>
       <button onClick={onSelect} className="flex min-w-0 flex-1 items-center gap-3.5 text-left">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px]" style={{ background: hueSoft(h.Hue), color }}>
           <HabitIcon id={h.Icon} />

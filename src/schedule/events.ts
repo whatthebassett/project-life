@@ -1,3 +1,4 @@
+import { locale } from "../lib/format";
 // Events as they live in Data\events.json (EventNew.dc.html's fields), and
 // the pure operations on them. PascalCase keys, and keys this version doesn't
 // know are kept.
@@ -231,7 +232,7 @@ export function localZone(): string {
 
 // Minutes the zone is ahead of UTC at that moment.
 function zoneOffset(zone: string, at: Date): number {
-  const parts = new Intl.DateTimeFormat("en-US", {
+  const parts = new Intl.DateTimeFormat(locale(), {
     timeZone: zone,
     hourCycle: "h23",
     year: "numeric",
@@ -267,8 +268,8 @@ export function toZone(at: Date, zone: string | null | undefined): string {
 }
 
 export function zoneName(zone: string, at = new Date()): string {
-  const long = new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "long" }).formatToParts(at).find((p) => p.type === "timeZoneName")?.value ?? zone;
-  const short = new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "short" }).formatToParts(at).find((p) => p.type === "timeZoneName")?.value;
+  const long = new Intl.DateTimeFormat(locale(), { timeZone: zone, timeZoneName: "long" }).formatToParts(at).find((p) => p.type === "timeZoneName")?.value ?? zone;
+  const short = new Intl.DateTimeFormat(locale(), { timeZone: zone, timeZoneName: "short" }).formatToParts(at).find((p) => p.type === "timeZoneName")?.value;
   // "Eastern Daylight Time (EDT)" reads better as "Eastern Time (ET)".
   const generic = long.replace(/ (Standard|Daylight|Summer) Time$/, " Time");
   const abbr = short && !/^GMT/.test(short) ? short.replace(/^([A-Z]{1,3})[SD]T$/, "$1T") : null;

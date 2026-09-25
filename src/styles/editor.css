@@ -88,6 +88,17 @@
 .rainbow-caret .cm-cursor {
   animation: rainbow-border 6s linear infinite;
 }
+/* Settings → Notes → Cursor: a block or an underline, a letter wide. */
+:root[data-cursor="block"] .noted-source .cm-cursor {
+  border-left: none !important;
+  width: 0.6em;
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+:root[data-cursor="underline"] .noted-source .cm-cursor {
+  border-left: none !important;
+  width: 0.6em;
+  border-bottom: var(--caret-width, 2px) solid var(--accent);
+}
 
 .drop-before { box-shadow: inset 0 2px 0 var(--accent); }
 .drop-after { box-shadow: inset 0 -2px 0 var(--accent); }

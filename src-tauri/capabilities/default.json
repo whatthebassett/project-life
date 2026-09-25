@@ -2,7 +2,10 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window and Tasks' own window",
-  "windows": ["main", "tasks"],
+  "windows": [
+    "main",
+    "tasks"
+  ],
   "permissions": [
     "core:default",
     "core:window:allow-show",
@@ -21,6 +24,9 @@
     "window-state:default",
     "opener:default",
     "dialog:default",
-    "notification:default"
+    "notification:default",
+    "autostart:default",
+    "core:window:allow-set-effects",
+    "core:window:allow-theme"
   ]
 }

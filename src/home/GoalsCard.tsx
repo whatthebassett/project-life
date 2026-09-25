@@ -1,3 +1,4 @@
+import { locale } from "../lib/format";
 import { useMemo } from "react";
 import { paceOn, progressOn, statusLabel, statusOf, statusStyle } from "../goals/model";
 import { useGoals } from "../goals/useGoals";
@@ -50,7 +51,7 @@ export default function GoalsCard({ home, onNavigate }: { home: HomeData; onNavi
           <button
             key={g.Id}
             type="button"
-            title={`${area?.Name} · due ${fromYmd(g.Due).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`}
+            title={`${area?.Name} · due ${fromYmd(g.Due).toLocaleDateString(locale(), { month: "short", day: "numeric" })}`}
             onClick={() => showGoal(g.Id)}
             className="-mx-3 flex w-[calc(100%+24px)] flex-col gap-1.5 rounded-[12px] px-3 py-1.5 text-left transition-colors hover:bg-panel2"
           >

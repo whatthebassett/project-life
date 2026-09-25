@@ -1,13 +1,25 @@
 // What people do to habits: check in, count, time, and edit.
 import { newId } from "../tasks/model";
 import { toast } from "../ui/Toast";
-import type { Habit } from "./model";
-import { habitStore } from "./useHabits";
+import { announce, announcing } from "../lib/announce";
+import { currentSettings } from "../lib/settings";
+import { currentStreak, doneOn, type Habit } from "./model";
+import { habitStore, rulesOf } from "./useHabits";
 
 const store = () => habitStore();
 
 function edit(id: string, change: (h: Habit) => Habit) {
   store().change((f) => ({ ...f, Habits: f.Habits.map((h) => (h.Id === id ? change(h) : h)) }));
+}
+
+// Checking in, said out loud for screen readers: done, and the streak.
+function sayDay(before: Habit, day: string) {
+  if (!announcing()) return;
+  const after = store().getState().file.Habits.find((h) => h.Id === before.Id);
+  if (!after || doneOn(after, day) === doneOn(before, day)) return;
+  if (!doneOn(after, day)) return announce(`${after.Name}: not done`);
+  const streak = currentStreak(after, day, rulesOf(currentSettings()));
+  announce(streak.count > 1 ? `${after.Name} done, ${streak.count} ${streak.unit === "week" ? "week" : "day"} streak` : `${after.Name} done`);
 }
 
 function withValue(h: Habit, day: string, value: number): Habit {
@@ -20,12 +32,14 @@ function withValue(h: Habit, day: string, value: number): Habit {
 // Check-off habits: done or not for the day.
 export function toggleDay(h: Habit, day: string) {
   edit(h.Id, (x) => withValue(x, day, (x.Log[day] ?? 0) >= x.Target ? 0 : x.Target));
+  sayDay(h, day);
 }
 
 // Count and time habits: up or down a step (one, or five minutes).
 export function stepDay(h: Habit, day: string, by: number) {
   const step = h.Kind === "time" ? 5 : 1;
   edit(h.Id, (x) => withValue(x, day, Math.max(0, Math.min(x.Target * 4, (x.Log[day] ?? 0) + by * step))));
+  sayDay(h, day);
 }
 
 // The timer for time habits: it runs while Project Life is open (the tray

@@ -228,3 +228,51 @@ export async function removeAttachment(path: string): Promise<void> {
   if (!inTauri) return;
   await invoke("remove_attachment", { path });
 }
+
+// ----- Settings (system.rs) -----
+
+export interface AppFont {
+  family: string;
+  weight: number;
+  italic: boolean;
+  path: string;
+  folder: string;
+}
+
+export interface DataInfo {
+  data: string;
+  notes: string;
+  notesInside: boolean;
+  bytes: number;
+  defaultBackups: string;
+}
+
+export interface CheckpointImport {
+  notes: { copied: number; renamed: number; same: number; merged: boolean };
+  tasks: string | null;
+  from: string;
+}
+
+const tauriOnly = <T>(fallback: T, run: () => Promise<T>): Promise<T> => (inTauri ? run() : Promise.resolve(fallback));
+
+export const system = {
+  theme: () => tauriOnly<"light" | "dark">(window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark", () => invoke("system_theme")),
+  osBuild: () => tauriOnly(0, () => invoke<number>("os_build")),
+  runningApps: (names: string[]) => tauriOnly<string[]>([], () => invoke("running_apps", { names })),
+  location: () => (inTauri ? invoke<{ latitude: number; longitude: number }>("current_location") : Promise.reject(new Error("Location works in the Project Life app."))),
+  secretGet: (name: string) => tauriOnly<string | null>(null, () => invoke("secret_get", { name })),
+  secretSet: (name: string, value: string | null) => tauriOnly(undefined, () => invoke<void>("secret_set", { name, value })),
+  systemFonts: () => tauriOnly<string[]>([], () => invoke("list_system_fonts")),
+  appFonts: () => tauriOnly<AppFont[]>([], () => invoke("list_app_fonts")),
+  googleFont: (family: string) => invoke<string>("download_google_font", { family }),
+  removeFont: (folder: string) => invoke<void>("remove_app_font", { folder }),
+  dataInfo: () => tauriOnly<DataInfo>({ data: "(browser preview)", notes: "", notesInside: true, bytes: 0, defaultBackups: "" }, () => invoke("data_info")),
+  openDataFolder: (sub?: "Logs" | "Backups" | "Fonts") => tauriOnly(undefined, () => invoke<void>("open_data_folder", { sub: sub ?? null })),
+  openBackupFolder: (folder: string | null) => tauriOnly(undefined, () => invoke<void>("open_backup_folder", { folder })),
+  exportEverything: (target: string) => invoke<void>("export_everything", { target }),
+  backupNow: (folder: string | null, keep = 14) => invoke<string>("backup_now", { folder, keep }),
+  clearCaches: () => tauriOnly(undefined, () => invoke<void>("clear_caches")),
+  deleteAllData: () => invoke<void>("delete_all_data"),
+  saveCrash: (text: string) => tauriOnly(undefined, () => invoke<void>("save_crash", { text })),
+  importCheckpoint: (folder: string) => invoke<CheckpointImport>("import_checkpoint", { folder }),
+};

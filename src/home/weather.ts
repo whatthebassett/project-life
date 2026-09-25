@@ -1,3 +1,4 @@
+import { locale } from "../lib/format";
 // Weather from Open-Meteo (free, no key), fetched through Rust like the news.
 // The place is only ever one that was searched for and chosen; Project Life never
 // looks up where the computer is.
@@ -106,6 +107,7 @@ const cache = new Map<string, Weather>();
 const keyOf = (place: Place, unit: "C" | "F") => `${place.latitude.toFixed(3)},${place.longitude.toFixed(3)},${unit}`;
 
 export const cachedWeather = (place: Place, unit: "C" | "F") => cache.get(keyOf(place, unit));
+export const clearWeatherCache = () => cache.clear();
 // Fresh: fetched recently, and today (after midnight the forecast's "Today"
 // would be yesterday).
 export const weatherIsFresh = (w: Weather | undefined) =>
@@ -265,7 +267,7 @@ export function describe(code: number, isDay = true): { label: string; Icon: Luc
 export function dayName(date: string, index: number): string {
   if (index === 0) return "Today";
   const [y, m, d] = date.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: "short" });
+  return new Date(y, m - 1, d).toLocaleDateString(locale(), { weekday: "short" });
 }
 
 export const placeLabel = (p: Place) => (p.region ? `${p.name}, ${p.region}` : p.name);
@@ -275,7 +277,7 @@ export function longDayName(date: string, index: number): string {
   if (index === 0) return "Today";
   if (index === 1) return "Tomorrow";
   const [y, m, d] = date.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: "long" });
+  return new Date(y, m - 1, d).toLocaleDateString(locale(), { weekday: "long" });
 }
 
 // Where the wind comes from, in words: "north-northeast".

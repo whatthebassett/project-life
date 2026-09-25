@@ -1,3 +1,5 @@
+import { dayOfWeek } from "../lib/format";
+import { locale } from "../lib/format";
 import clsx from "clsx";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -8,7 +10,7 @@ import { addDays, fromYmd, startOfDay, ymd } from "../tasks/dates";
 import { listFor } from "../tasks/lists";
 import { requestTasks } from "../tasks/nav";
 import { useTasks } from "../tasks/useTasks";
-import { addEvent, blankEvent, deleteOccurrence, moveOccurrence, parseQuickEvent, saveEvent, type Scope } from "./actions";
+import { addEvent, blankEvent, deleteOccurrence, eventLength, moveOccurrence, parseQuickEvent, saveEvent, type Scope } from "./actions";
 import EventPopup from "./EventPopup";
 import { fromStamp, occurrences, type CalEvent, type Occurrence } from "./events";
 import { softOf } from "./look";
@@ -21,7 +23,7 @@ import WeekView, { type AllDayItem } from "./WeekView";
 
 const TASKS_CAL = "tasks";
 
-const mondayOf = (d: Date) => addDays(startOfDay(d), -((d.getDay() + 6) % 7));
+const weekStartOf = (d: Date) => addDays(startOfDay(d), -dayOfWeek(d));
 
 // The Schedule screen (Calendar.dc.html): quick add, the mini month,
 // calendars and the selected event on the left; the week or month on the
@@ -41,7 +43,7 @@ export default function ScheduleScreen() {
   const [menu, setMenu] = useState<MenuState | null>(null);
   const openMenu = useCallback((x: number, y: number, items: MenuItem[]) => setMenu({ x, y, items }), []);
 
-  const weekStart = mondayOf(focus);
+  const weekStart = weekStartOf(focus);
   const monthStart = new Date(focus.getFullYear(), focus.getMonth(), 1);
   const grid = monthGrid(monthStart);
   const [from, to] = view === "week" ? [weekStart, addDays(weekStart, 7)] : [grid[0], addDays(grid[41], 1)];
@@ -90,7 +92,7 @@ export default function ScheduleScreen() {
   const openNew = useCallback((start?: Date, end?: Date) => {
     const n = new Date();
     const s = start ?? new Date(n.getFullYear(), n.getMonth(), n.getDate(), n.getHours() + (n.getMinutes() >= 30 ? 1 : 0), n.getMinutes() >= 30 ? 0 : 30);
-    setEditor({ event: blankEvent(s, end ?? new Date(s.getTime() + 60 * 60_000)), occ: null, isNew: true });
+    setEditor({ event: blankEvent(s, end ?? new Date(s.getTime() + eventLength() * 60_000)), occ: null, isNew: true });
   }, []);
 
   // Asked for from elsewhere.
@@ -146,7 +148,7 @@ export default function ScheduleScreen() {
   });
 
   const step = (n: number) => setFocus(view === "week" ? addDays(focus, 7 * n) : new Date(focus.getFullYear(), focus.getMonth() + n, 1));
-  const { week, year } = isoWeek(weekStart);
+  const { week, year } = isoWeek(addDays(weekStart, 3));
   const monthDays = new Date(focus.getFullYear(), focus.getMonth() + 1, 0).getDate();
 
   return (
@@ -171,7 +173,7 @@ export default function ScheduleScreen() {
         <header className="flex h-12 shrink-0 items-center justify-between">
           <div className="flex items-baseline gap-3.5">
             <h2 className="m-0 font-head text-32 font-bold tracking-[-0.015em]">
-              {view === "week" ? weekRangeLabel(weekStart) : monthStart.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+              {view === "week" ? weekRangeLabel(weekStart) : monthStart.toLocaleDateString(locale(), { month: "long", year: "numeric" })}
             </h2>
             <span className="font-mono text-12 text-muted">{view === "week" ? `WEEK ${week} · ${year}` : `${monthDays} DAYS`}</span>
           </div>
