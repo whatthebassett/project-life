@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project Life · Goals</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:"Geist",ui-sans-serif,system-ui,sans-serif;background:#0A0C11;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button{font:inherit;cursor:pointer;background:none;border:0;padding:0;color:inherit}
+input,textarea,select{font:inherit}
+select{appearance:none;-webkit-appearance:none;cursor:pointer}
+input::placeholder{color:inherit;opacity:.8}
+input:focus{outline:none}
+button:focus-visible,a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:12px;height:12px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background-color:var(--sb-thumb,rgba(128,128,128,.4));border-radius:999px;border:3px solid transparent;background-clip:padding-box;min-height:40px}::-webkit-scrollbar-thumb:hover{background-color:var(--sb-hover,rgba(128,128,128,.7))}::-webkit-scrollbar-thumb:active{background-color:var(--sb-active,rgba(128,128,128,.9))}::-webkit-scrollbar-button{display:none;width:0;height:0}
+</style>
+</helmet>
+
+<div style="--sb-thumb: {{t.faint}}; --sb-hover: {{t.muted}}; --sb-active: {{t.accent}}; width: 1440px; height: 1000px; display: flex; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; font-family: Geist, ui-sans-serif, system-ui, sans-serif">
+<nav aria-label="App" style="width: 72px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 20px 0 18px; background: {{t.side}}; border-right: 1px solid {{t.line}}">
+<div style="width: 36px; height: 36px; border-radius: 11px; background: {{t.accent}}; color: {{t.accentInk}}; display: flex; align-items: center; justify-content: center; margin-bottom: 14px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7.5"></circle><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"></circle><path d="M12 1.8v3M12 19.2v3"></path></svg>
+</div>
+<a href="Main.dc.html" aria-label="Home" title="Home" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg></a>
+<a href="Notes.dc.html" aria-label="Notes" title="Notes" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"></path><path d="M14 3v5h5"></path><path d="M9 13h7M9 17h5"></path></svg></a>
+<a href="Calendar.dc.html" aria-label="Schedule" title="Schedule" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg></a>
+<a href="Tasks.dc.html" aria-label="Tasks" title="Tasks" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="m8 12 3 3 5-6"></path></svg></a>
+<a href="Habits.dc.html" aria-label="Habits" title="Habits" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3L20 9"></path><path d="M20 4v5h-5"></path><path d="M20 12a8 8 0 0 1-14 5.3L4 15"></path><path d="M4 20v-5h5"></path></svg></a>
+<button aria-label="Goals" aria-current="page" title="Goals" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: {{t.accentSoft}}; color: {{t.accent}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"></circle><circle cx="12" cy="12" r="4.5"></circle><circle cx="12" cy="12" r="1"></circle></svg></button>
+<div style="flex-grow: 1"></div>
+<a href="Settings.dc.html" aria-label="Settings" title="Settings" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path><circle cx="16" cy="7" r="2"></circle><circle cx="10" cy="17" r="2"></circle></svg></a>
+<div style="width: 36px; height: 36px; border-radius: 50%; background: {{t.panel2}}; border: 1px solid {{t.line}}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: {{t.accent}}">U</div>
+</nav>
+
+<aside style="width: 256px; flex-shrink: 0; display: flex; flex-direction: column; gap: 22px; padding: 22px 16px 18px; background: {{t.side}}; border-right: 1px solid {{t.line}}">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 0 6px">
+<h1 style="margin: 0; font-family: 'Atkinson Hyperlegible', Geist, ui-sans-serif, system-ui, sans-serif; font-size: 24px; font-weight: 700; letter-spacing: -0.01em">Goals</h1>
+<a href="GoalNew.dc.html" aria-label="New goal" title="New goal" style="width: 40px; height: 40px; border-radius: 12px; background: {{t.accent}}; color: {{t.accentInk}}; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{views}}" as="v" hint-placeholder-count="3">
+<button onClick="{{v.pick}}" aria-current="{{v.cur}}" style="display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 12px; font-size: 14px; font-weight: 500; text-align: left; background: {{v.bg}}; color: {{v.fg}}"><span style="flex-grow: 1">{{v.label}}</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: {{t.muted}}">{{v.count}}</span></button>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<div style="padding: 0 12px 6px"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">AREAS</span></div>
+<sc-for list="{{areaList}}" as="ar" hint-placeholder-count="4">
+<button onClick="{{ar.pick}}" aria-pressed="{{ar.on}}" style="display: flex; align-items: center; gap: 12px; height: 38px; padding: 0 12px; border-radius: 10px; font-size: 14px; text-align: left; background: {{ar.bg}}; color: {{ar.fg}}"><span style="width: 9px; height: 9px; border-radius: 3px; background: {{ar.color}}"></span><span style="flex-grow: 1">{{ar.name}}</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: {{t.muted}}">{{ar.count}}</span></button>
+</sc-for>
+</div>
+<div style="flex-grow: 1"></div>
+<div style="display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 18px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">2026 SO FAR</span>
+<div style="display: flex; align-items: baseline; gap: 8px"><span style="font-family: 'Atkinson Hyperlegible', Geist, sans-serif; font-size: 36px; font-weight: 700; letter-spacing: -0.02em">73%</span><span style="font-size: 13px; color: {{t.muted}}">of 2026 is behind you</span></div>
+<div style="height: 8px; border-radius: 8px; background: {{t.panel2}}; overflow: hidden"><div style="width: 73%; height: 100%; border-radius: 8px; background: {{t.faint}}"></div></div>
+<div style="display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px">
+<span style="height: 26px; padding: 0 9px; border-radius: 8px; display: flex; align-items: center; background: {{t.panel2}}">{{tally.on}} on track</span>
+<span style="height: 26px; padding: 0 9px; border-radius: 8px; display: flex; align-items: center; background: {{tally.aheadBg}}; color: {{t.accent2}}">{{tally.ahead}} ahead</span>
+<span style="height: 26px; padding: 0 9px; border-radius: 8px; display: flex; align-items: center; background: {{tally.behindBg}}; color: {{t.warn}}">{{tally.behind}} behind</span>
+</div>
+</div>
+</aside>
+
+<section style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 20px; padding: 26px 32px 0">
+<header style="display: flex; justify-content: space-between; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.14em; color: {{t.muted}}">Q3 ENDS IN 5 DAYS · 97 DAYS LEFT IN 2026</span>
+<h2 style="margin: 0; font-family: 'Atkinson Hyperlegible', Geist, ui-sans-serif, system-ui, sans-serif; font-size: 40px; font-weight: 700; line-height: 1; letter-spacing: -0.02em">{{heading}}</h2>
+</div>
+<div role="group" aria-label="Sort" style="display: flex; padding: 3px; border-radius: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<sc-for list="{{sorts}}" as="so" hint-placeholder-count="2">
+<button onClick="{{so.pick}}" aria-pressed="{{so.on}}" style="height: 32px; padding: 0 14px; border-radius: 9px; font-size: 13px; font-weight: 500; background: {{so.bg}}; color: {{so.fg}}">{{so.label}}</button>
+</sc-for>
+</div>
+</header>
+
+<div class="pl-scroll" style="flex-grow: 1; min-height: 0; overflow-y: auto; padding-bottom: 32px">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+<sc-for list="{{cards}}" as="c" hint-placeholder-count="6">
+<button onClick="{{c.pick}}" aria-pressed="{{c.selStr}}" style="display: flex; flex-direction: column; gap: 14px; padding: 18px; border-radius: 22px; text-align: left; background: {{t.panel}}; border: 1.5px solid {{c.bd}}">
+<span style="display: flex; justify-content: space-between; align-items: center; width: 100%">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: {{t.muted}}"><span style="width: 8px; height: 8px; border-radius: 3px; background: {{c.color}}"></span>{{c.area}} · {{c.due}}</span>
+<span style="height: 24px; padding: 0 9px; border-radius: 8px; display: flex; align-items: center; font-size: 11px; font-weight: 600; background: {{c.stBg}}; color: {{c.stFg}}">{{c.stLabel}}</span>
+</span>
+<span style="font-size: 18px; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em">{{c.title}}</span>
+<span style="display: flex; flex-direction: column; gap: 8px; width: 100%">
+<span style="display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: {{t.muted}}"><span><b style="font-family: 'Atkinson Hyperlegible', Geist, sans-serif; font-size: 26px; font-weight: 700; color: {{t.text}}; letter-spacing: -0.02em">{{c.pct}}%</b></span><span>{{c.detail}}</span></span>
+<span style="position: relative; display: block; height: 10px; border-radius: 10px; background: {{t.panel2}}">
+<span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{c.pct}}%; border-radius: 10px; background: {{c.color}}"></span>
+<span title="Where you'd be at an even pace" style="position: absolute; top: -4px; bottom: -4px; left: {{c.pace}}%; width: 2px; border-radius: 2px; background: {{t.text}}; opacity: 0.55"></span>
+</span>
+</span>
+<span style="display: flex; gap: 6px; flex-wrap: wrap">
+<sc-for list="{{c.links}}" as="lk" hint-placeholder-count="2">
+<span style="height: 26px; padding: 0 9px; border-radius: 8px; display: flex; align-items: center; gap: 6px; font-size: 11px; background: {{t.panel2}}; color: {{t.muted}}"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{lk.dot}}"></span>{{lk.text}}</span>
+</sc-for>
+</span>
+</button>
+</sc-for>
+</div>
+</div>
+</section>
+
+<aside class="pl-scroll" style="width: 340px; flex-shrink: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; padding: 24px 22px; background: {{t.side}}; border-left: 1px solid {{t.line}}">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: {{t.muted}}"><span style="width: 8px; height: 8px; border-radius: 3px; background: {{sel.color}}"></span>{{sel.area}} · Due {{sel.due}}</span>
+<h3 style="margin: 0; font-family: 'Atkinson Hyperlegible', Geist, ui-sans-serif, system-ui, sans-serif; font-size: 24px; font-weight: 700; line-height: 1.15; letter-spacing: -0.01em">{{sel.title}}</h3>
+</div>
+<div style="padding: 14px 16px; border-radius: 16px; background: {{sel.soft}}; font-size: 14px; line-height: 1.5"><span style="display: block; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.12em; color: {{t.muted}}; margin-bottom: 4px">WHY IT MATTERS</span>{{sel.why}}</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">PROGRESS</span><span style="height: 24px; padding: 0 9px; border-radius: 8px; display: flex; align-items: center; font-size: 11px; font-weight: 600; background: {{sel.stBg}}; color: {{sel.stFg}}">{{sel.stLabel}}</span></div>
+<svg width="296" height="118" viewBox="0 0 296 118" role="img" aria-label="{{sel.chartAria}}" style="display: block">
+<line x1="0" y1="108" x2="296" y2="108" stroke="{{t.line}}" stroke-width="1"></line>
+<line x1="0" y1="8" x2="296" y2="8" stroke="{{t.line}}" stroke-width="1" stroke-dasharray="3 4"></line>
+<line x1="0" y1="108" x2="296" y2="8" stroke="{{t.faint}}" stroke-width="1.5" stroke-dasharray="4 4"></line>
+<polyline points="{{sel.area_pts}}" fill="{{sel.soft}}" stroke="none"></polyline>
+<polyline points="{{sel.pts}}" fill="none" stroke="{{sel.color}}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+<circle cx="{{sel.nowX}}" cy="{{sel.nowY}}" r="5" fill="{{sel.color}}" stroke="{{t.side}}" stroke-width="2"></circle>
+<line x1="{{sel.nowX}}" y1="8" x2="{{sel.nowX}}" y2="108" stroke="{{t.text}}" stroke-width="1" opacity="0.25"></line>
+</svg>
+<div style="display: flex; justify-content: space-between; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; color: {{t.muted}}"><span>{{sel.startLabel}}</span><span>Today</span><span>{{sel.due}}</span></div>
+<div style="display: flex; gap: 14px; font-size: 11px; color: {{t.muted}}"><span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 3px; border-radius: 2px; background: {{sel.color}}"></span>You</span><span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 0; border-top: 2px dashed {{t.faint}}"></span>Even pace</span></div>
+</div>
+
+<sc-if value="{{sel.isNumber}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 18px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<div style="display: flex; align-items: baseline; gap: 8px"><span style="font-family: 'Atkinson Hyperlegible', Geist, sans-serif; font-size: 34px; font-weight: 700; letter-spacing: -0.02em; color: {{sel.color}}">{{sel.current}}</span><span style="font-size: 14px; color: {{t.muted}}">of {{sel.target}} {{sel.unit}}</span></div>
+<span style="font-size: 12px; color: {{t.muted}}">{{sel.paceNote}}</span>
+<div style="display: flex; gap: 8px">
+<button onClick="{{sel.minus}}" aria-label="Log less" style="width: 44px; height: 44px; border-radius: 12px; border: 1px solid {{t.line}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+<button onClick="{{sel.plus}}" style="flex-grow: 1; height: 44px; border-radius: 12px; background: {{sel.color}}; color: {{t.accentInk}}; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>{{sel.plusLabel}}</button>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{sel.isMilestones}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 4px"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">MILESTONES</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}">{{sel.msLabel}}</span></div>
+<sc-for list="{{sel.ms}}" as="m" hint-placeholder-count="4">
+<button onClick="{{m.toggle}}" role="checkbox" aria-checked="{{m.doneStr}}" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 4px; text-align: left; font-size: 14px; color: {{m.fg}}">
+<span style="width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; border: 1.5px solid {{m.cb}}; background: {{m.cbg}}; color: {{t.accentInk}}; display: flex; align-items: center; justify-content: center"><sc-if value="{{m.done}}" hint-placeholder-val="{{false}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 12.5 4 4 8-9"></path></svg></sc-if></span>
+<span style="flex-grow: 1; text-decoration: {{m.deco}}">{{m.text}}</span>
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}">{{m.when}}</span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">FEEDS INTO THIS GOAL</span>
+<sc-for list="{{sel.feeds}}" as="f" hint-placeholder-count="2">
+<a href="{{f.href}}" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<span style="width: 32px; height: 32px; border-radius: 10px; background: {{f.soft}}; color: {{f.color}}; display: flex; align-items: center; justify-content: center; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; font-weight: 600">{{f.tag}}</span>
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 500">{{f.name}}</span><span style="font-size: 11px; color: {{t.muted}}">{{f.note}}</span></span>
+</a>
+</sc-for>
+</div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["midnight","aurora","ember","daylight"],"default":"midnight"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  palette() {
+    return {
+      midnight: { bg: '#0A0C11', side: '#0D1017', panel: '#12161F', panel2: '#1A1F2B', line: 'rgba(255,255,255,0.07)', text: '#ECEEF5', muted: '#969DAF', faint: '#5D6477', accent: '#A092FF', accentInk: '#0A0C11', accentSoft: 'rgba(160,146,255,0.16)', accent2: '#5CE1C6', warn: '#FFB36B', danger: '#FF7A85', scrim: 'rgba(4,5,9,0.62)', hues: ['#A092FF', '#5CE1C6', '#FFB36B', '#FF7A85', '#6FA8FF', '#F28DC4'] },
+      aurora: { bg: '#07110F', side: '#0A1614', panel: '#0F1D1A', panel2: '#162824', line: 'rgba(220,255,245,0.08)', text: '#E8F4F0', muted: '#93ABA4', faint: '#4E6760', accent: '#4FE0B0', accentInk: '#06120F', accentSoft: 'rgba(79,224,176,0.16)', accent2: '#7CB8FF', warn: '#FFC37A', danger: '#FF8590', scrim: 'rgba(2,8,7,0.62)', hues: ['#4FE0B0', '#7CB8FF', '#FFC37A', '#FF8590', '#B69CFF', '#F59BC9'] },
+      ember: { bg: '#110C0A', side: '#16100D', panel: '#1D1512', panel2: '#281E19', line: 'rgba(255,235,220,0.08)', text: '#F6ECE6', muted: '#B5A197', faint: '#6E5A50', accent: '#FF9A5C', accentInk: '#140C08', accentSoft: 'rgba(255,154,92,0.16)', accent2: '#F2CF6A', warn: '#FFC37A', danger: '#FF7A7A', scrim: 'rgba(8,5,4,0.62)', hues: ['#FF9A5C', '#F2CF6A', '#8FD9A8', '#FF7A7A', '#7FB6FF', '#E79AD0'] },
+      daylight: { bg: '#F3F2EE', side: '#ECEAE4', panel: '#FFFFFF', panel2: '#F3F2EE', line: 'rgba(20,22,30,0.09)', text: '#15171D', muted: '#5A5F6B', faint: '#A9A69E', accent: '#5A48E0', accentInk: '#FFFFFF', accentSoft: 'rgba(90,72,224,0.12)', accent2: '#0B8A6D', warn: '#B4501A', danger: '#C62F3D', scrim: 'rgba(20,22,30,0.38)', hues: ['#5A48E0', '#0B8A6D', '#B4501A', '#C62F3D', '#2F6FD6', '#B23A7C'] }
+    };
+  }
+  soft(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+  areas(t) {
+    return {
+      projects: { name: 'Projects', color: t.hues[0] },
+      health: { name: 'Health', color: t.hues[1] },
+      creative: { name: 'Creative', color: t.hues[5] },
+      home: { name: 'Home', color: t.hues[2] }
+    };
+  }
+  status(t, pct, pace) {
+    const diff = pct - pace;
+    if (pct >= 100) return { label: 'Done', fg: t.accentInk, bg: t.accent2 };
+    if (diff >= 8) return { label: 'Ahead', fg: t.accent2, bg: this.soft(t.accent2, 0.14) };
+    if (diff >= -8) return { label: 'On track', fg: t.text, bg: t.panel2 };
+    return { label: 'Behind', fg: t.warn, bg: this.soft(t.warn, 0.14) };
+  }
+
+  goalsData() {
+    return [
+      { id: 'ship', title: 'Ship Checkpoint 1.2', area: 'projects', due: 'Nov 15', start: 'Sep 1', pace: 33, kind: 'ms',
+        why: 'People keep asking for sync and a better first run. Getting 1.2 out makes Project Life the obvious next step.',
+        ms: [{ text: 'New theme picker', when: 'Sep 8', done: true }, { text: 'Tasks in their own window', when: 'Sep 19', done: true }, { text: 'Onboarding flow', when: 'Oct 10', done: false }, { text: 'Release notes and portable build', when: 'Nov 12', done: false }],
+        feeds: [['Tasks', 'Outline onboarding flow', 'Due Mon · 1 of 4 subtasks', 'TaskFull.dc.html', 0], ['Note', 'Checkpoint: theme ideas', 'Linked note', 'Notes.dc.html', 4]] },
+      { id: 'walk', title: 'Walk 300 miles in 2026', area: 'health', due: 'Dec 31', start: 'Jan 1', pace: 73, kind: 'num', current: 214, target: 300, unit: 'miles', step: 2,
+        why: 'Clearer head for streams and less time stuck in the chair.',
+        feeds: [['Habit', 'Morning walk', 'Adds 2 miles each check-in · 22 day streak', 'Habits.dc.html', 1]] },
+      { id: 'channel', title: 'Reach 1,000 YouTube subscribers', area: 'creative', due: 'Dec 31', start: 'Jan 1', pace: 73, kind: 'num', current: 640, target: 1000, unit: 'subscribers', step: 10,
+        why: 'Enough of an audience to start trying sponsored videos without it feeling forced.',
+        feeds: [['Tasks', 'Plan October stream schedule', 'Due Wed', 'Tasks.dc.html', 5], ['Event', 'Record ASMR', 'Thursdays, 7 PM', 'Calendar.dc.html', 5]] },
+      { id: 'books', title: 'Read 12 books this year', area: 'health', due: 'Dec 31', start: 'Jan 1', pace: 73, kind: 'num', current: 9, target: 12, unit: 'books', step: 1,
+        why: 'Less doomscrolling before bed.',
+        feeds: [['Habit', 'Read 20 minutes', '4 day streak', 'Habits.dc.html', 0]] },
+      { id: 'beta', title: 'Launch the Project Life beta', area: 'projects', due: 'Dec 31', start: 'Sep 1', pace: 21, kind: 'ms',
+        why: 'Get it in front of real people before the new year so feedback shapes 1.0.',
+        ms: [{ text: 'Design every main screen', when: 'Oct 3', done: true }, { text: 'Notes and Tasks working end to end', when: 'Oct 31', done: false }, { text: 'Calendar sync with Microsoft and Google', when: 'Nov 21', done: false }, { text: 'Invite 25 testers from Discord', when: 'Dec 5', done: false }, { text: 'Beta build out', when: 'Dec 19', done: false }],
+        feeds: [['Note', 'Checkpoint: theme ideas', 'Linked note', 'Notes.dc.html', 4]] },
+      { id: 'declutter', title: 'Declutter every room', area: 'home', due: 'Nov 30', start: 'Aug 1', pace: 55, kind: 'num', current: 3, target: 8, unit: 'rooms', step: 1,
+        why: 'A clean studio makes it easier to just sit down and create.',
+        feeds: [['Tasks', 'Reorganize the cable drawer', 'Someday', 'Tasks.dc.html', 2]] }
+    ];
+  }
+  renderVals() {
+    const P = this.palette();
+    const s = this.state || {};
+    const t = P[this.props.theme] || P.midnight;
+    const AR = this.areas(t);
+    const vals = s.vals || {};
+    const msState = s.ms || {};
+    const data = this.goalsData().map((g) => {
+      const ms = g.kind === 'ms' ? g.ms.map((m, i) => ({ ...m, done: msState[g.id + i] !== undefined ? msState[g.id + i] : m.done })) : null;
+      const current = g.kind === 'num' ? (vals[g.id] !== undefined ? vals[g.id] : g.current) : null;
+      const pct = g.kind === 'num' ? Math.min(100, Math.round(current / g.target * 100)) : Math.round(ms.filter((m) => m.done).length / ms.length * 100);
+      return { ...g, ms: ms, current: current, pct: pct, st: this.status(t, pct, g.pace) };
+    });
+    const view = s.view || 'active';
+    const areaF = s.area || null;
+    const selId = s.sel || 'ship';
+    const sort = s.sort || 'due';
+
+    let list = data.filter((g) => (view === 'done' ? g.pct >= 100 : (view === 'behind' ? g.st.label === 'Behind' : g.pct < 100)));
+    if (areaF) list = list.filter((g) => g.area === areaF);
+    const order = { 'Nov 15': 1, 'Nov 30': 2, 'Dec 31': 3 };
+    list = list.slice().sort((a, b) => (sort === 'due' ? (order[a.due] - order[b.due]) : ((a.pct - a.pace) - (b.pct - b.pace))));
+
+    const cards = list.map((g) => {
+      const A = AR[g.area];
+      const links = g.feeds.map((f) => ({ text: f[0] + ': ' + f[1], dot: t.hues[f[4]] }));
+      return {
+        title: g.title, area: A.name, color: A.color, due: 'Due ' + g.due, pct: g.pct, pace: g.pace,
+        detail: g.kind === 'num' ? g.current + ' / ' + g.target + ' ' + g.unit : g.ms.filter((m) => m.done).length + ' of ' + g.ms.length + ' milestones',
+        stLabel: g.st.label, stBg: g.st.bg, stFg: g.st.fg, links: links.slice(0, 2),
+        bd: g.id === selId ? A.color : t.line, selStr: String(g.id === selId),
+        pick: () => this.setState({ sel: g.id })
+      };
+    });
+
+    const views = [['active', 'Active', data.filter((g) => g.pct < 100).length], ['behind', 'Needs attention', data.filter((g) => g.st.label === 'Behind').length], ['done', 'Completed', data.filter((g) => g.pct >= 100).length]].map((v) => ({
+      label: v[1], count: v[2], cur: v[0] === view ? 'page' : 'false', bg: v[0] === view ? t.panel : 'transparent', fg: v[0] === view ? t.text : t.muted,
+      pick: () => this.setState({ view: v[0] })
+    }));
+    const areaList = Object.keys(AR).map((k) => ({
+      name: AR[k].name, color: AR[k].color, count: data.filter((g) => g.area === k).length, on: String(areaF === k),
+      bg: areaF === k ? t.panel : 'transparent', fg: areaF === k ? t.text : t.muted,
+      pick: () => this.setState({ area: areaF === k ? null : k })
+    }));
+    const sorts = [['due', 'By due date'], ['risk', 'Most behind']].map((o) => ({ label: o[1], on: String(sort === o[0]), bg: sort === o[0] ? t.panel2 : 'transparent', fg: sort === o[0] ? t.text : t.muted, pick: () => this.setState({ sort: o[0] }) }));
+    const tally = { on: data.filter((g) => g.st.label === 'On track').length, ahead: data.filter((g) => g.st.label === 'Ahead' || g.st.label === 'Done').length, behind: data.filter((g) => g.st.label === 'Behind').length, aheadBg: this.soft(t.accent2, 0.14), behindBg: this.soft(t.warn, 0.14) };
+
+    const g = data.find((x) => x.id === selId) || data[0];
+    const A = AR[g.area];
+    // progress chart: 6 check-ins from start to today (today at pace% of width)
+    const W = 296, top = 8, bot = 108;
+    const nowX = Math.round(g.pace / 100 * W);
+    const steps = 6;
+    const pts = [];
+    for (let i = 0; i <= steps; i++) {
+      const f = i / steps;
+      const wobble = i === 0 || i === steps ? 0 : Math.sin(i * 1.7 + g.title.length) * 4;
+      const v = Math.max(0, Math.min(100, g.pct * Math.pow(f, 1.1) + wobble));
+      pts.push([Math.round(f * nowX), Math.round(bot - (v / 100) * (bot - top))]);
+    }
+    const ptsStr = pts.map((p) => p.join(',')).join(' ');
+    const areaPts = '0,' + bot + ' ' + ptsStr + ' ' + nowX + ',' + bot;
+    const nowY = pts[pts.length - 1][1];
+    const remaining = g.kind === 'num' ? g.target - g.current : 0;
+    const daysLeft = { 'Nov 15': 51, 'Nov 30': 66, 'Dec 31': 97 }[g.due];
+    const perWeek = g.kind === 'num' ? Math.max(0, remaining / (daysLeft / 7)) : 0;
+    const sel = {
+      title: g.title, area: A.name, color: A.color, soft: this.soft(A.color, 0.12), due: g.due, why: g.why, startLabel: g.start,
+      stLabel: g.st.label, stBg: g.st.bg, stFg: g.st.fg,
+      pts: ptsStr, area_pts: areaPts, nowX: nowX, nowY: nowY,
+      chartAria: g.pct + ' percent done, even pace would be ' + g.pace + ' percent by today',
+      isNumber: g.kind === 'num', isMilestones: g.kind === 'ms',
+      current: g.current, target: g.target, unit: g.unit,
+      paceNote: g.kind === 'num' ? (remaining <= 0 ? 'Goal reached. Nice work.' : 'About ' + (perWeek >= 10 ? Math.round(perWeek) : perWeek.toFixed(1)) + ' ' + g.unit + ' a week gets you there by ' + g.due + '.') : '',
+      plus: () => this.setState({ vals: { ...vals, [g.id]: Math.min(g.target, (g.current || 0) + g.step) } }),
+      minus: () => this.setState({ vals: { ...vals, [g.id]: Math.max(0, (g.current || 0) - g.step) } }),
+      plusLabel: g.kind === 'num' ? 'Log ' + g.step + ' ' + (g.step === 1 ? g.unit.replace(/s$/, '') : g.unit) : '',
+      ms: (g.ms || []).map((m, i) => ({
+        text: m.text, when: m.when, done: m.done, doneStr: String(m.done), fg: m.done ? t.muted : t.text, deco: m.done ? 'line-through' : 'none',
+        cb: m.done ? A.color : t.faint, cbg: m.done ? A.color : 'transparent',
+        toggle: () => this.setState({ ms: { ...msState, [g.id + i]: !m.done } })
+      })),
+      msLabel: g.ms ? g.ms.filter((m) => m.done).length + ' of ' + g.ms.length : '',
+      feeds: g.feeds.map((f) => ({ tag: f[0].slice(0, 2).toUpperCase(), name: f[1], note: f[0] + ' · ' + f[2], href: f[3], color: t.hues[f[4]], soft: this.soft(t.hues[f[4]], 0.16) }))
+    };
+
+    return {
+      t: t, views: views, areaList: areaList, sorts: sorts, cards: cards, tally: tally, sel: sel,
+      heading: areaF ? AR[areaF].name + ' goals' : (view === 'done' ? 'Completed' : (view === 'behind' ? 'Needs attention' : 'Your goals'))
+    };
+  }
+}
+</script>
+</body>
+</html>

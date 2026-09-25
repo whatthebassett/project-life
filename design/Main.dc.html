@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project Life · Home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:"Geist",ui-sans-serif,system-ui,sans-serif;background:#0A0C11;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button{font:inherit;cursor:pointer;background:none;border:0;padding:0;color:inherit}
+input{font:inherit}
+input::placeholder{color:inherit;opacity:.75}
+input:focus{outline:none}
+button:focus-visible,a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+a{color:inherit;text-decoration:none}
+a:hover{text-decoration:underline}
+@keyframes pl-pulse{0%{box-shadow:0 0 0 0 rgba(92,225,198,.55)}70%{box-shadow:0 0 0 10px rgba(92,225,198,0)}100%{box-shadow:0 0 0 0 rgba(92,225,198,0)}}
+.pl-pulse{animation:pl-pulse 2.2s ease-out infinite}
+::-webkit-scrollbar{width:12px;height:12px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background-color:var(--sb-thumb,rgba(128,128,128,.4));border-radius:999px;border:3px solid transparent;background-clip:padding-box;min-height:40px}::-webkit-scrollbar-thumb:hover{background-color:var(--sb-hover,rgba(128,128,128,.7))}::-webkit-scrollbar-thumb:active{background-color:var(--sb-active,rgba(128,128,128,.9))}::-webkit-scrollbar-button{display:none;width:0;height:0}
+</style>
+</helmet>
+<div style="--sb-thumb: {{t.faint}}; --sb-hover: {{t.muted}}; --sb-active: {{t.accent}}; width: 1440px; height: 1320px; display: flex; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; font-family: Geist, ui-sans-serif, system-ui, sans-serif">
+
+<aside style="width: 240px; flex-shrink: 0; display: flex; flex-direction: column; gap: 28px; padding: 28px 18px 22px; background: {{t.side}}; border-right: 1px solid {{t.line}}">
+<div style="display: flex; align-items: center; gap: 12px; padding: 0 8px">
+<div style="width: 34px; height: 34px; border-radius: 11px; background: {{t.accent}}; color: {{t.accentInk}}; display: flex; align-items: center; justify-content: center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7.5"></circle><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"></circle><path d="M12 1.8v3M12 19.2v3"></path></svg>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<div style="font-size: 16px; font-weight: 600; letter-spacing: -0.01em">Project Life</div>
+<div style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}; letter-spacing: 0.04em">by Checkpoint</div>
+</div>
+</div>
+
+<nav aria-label="Main" style="display: flex; flex-direction: column; gap: 4px">
+<button onClick="{{nav.home.go}}" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 12px; background: {{nav.home.bg}}; color: {{nav.home.fg}}; font-size: 14px; font-weight: 500; text-align: left">
+<span style="display: flex; color: {{nav.home.ic}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg></span>Home</button>
+<button onClick="{{nav.notes.go}}" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 12px; background: {{nav.notes.bg}}; color: {{nav.notes.fg}}; font-size: 14px; font-weight: 500; text-align: left">
+<span style="display: flex; color: {{nav.notes.ic}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"></path><path d="M14 3v5h5"></path><path d="M9 13h7M9 17h5"></path></svg></span>Notes</button>
+<button onClick="{{nav.calendar.go}}" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 12px; background: {{nav.calendar.bg}}; color: {{nav.calendar.fg}}; font-size: 14px; font-weight: 500; text-align: left">
+<span style="display: flex; color: {{nav.calendar.ic}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg></span>Schedule</button>
+<button onClick="{{nav.tasks.go}}" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 12px; background: {{nav.tasks.bg}}; color: {{nav.tasks.fg}}; font-size: 14px; font-weight: 500; text-align: left">
+<span style="display: flex; color: {{nav.tasks.ic}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="m8 12 3 3 5-6"></path></svg></span><span style="flex-grow: 1">Tasks</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; min-width: 24px; height: 22px; padding: 0 7px; border-radius: 999px; background: {{t.panel2}}; color: {{t.text}}; display: flex; align-items: center; justify-content: center">{{remaining}}</span></button>
+<button onClick="{{nav.habits.go}}" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 12px; background: {{nav.habits.bg}}; color: {{nav.habits.fg}}; font-size: 14px; font-weight: 500; text-align: left">
+<span style="display: flex; color: {{nav.habits.ic}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3L20 9"></path><path d="M20 4v5h-5"></path><path d="M20 12a8 8 0 0 1-14 5.3L4 15"></path><path d="M4 20v-5h5"></path></svg></span>Habits</button>
+<button onClick="{{nav.goals.go}}" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 12px; background: {{nav.goals.bg}}; color: {{nav.goals.fg}}; font-size: 14px; font-weight: 500; text-align: left">
+<span style="display: flex; color: {{nav.goals.ic}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"></circle><circle cx="12" cy="12" r="4.5"></circle><circle cx="12" cy="12" r="1"></circle></svg></span>Goals</button>
+</nav>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}; padding: 0 12px 6px">SPACES</div>
+<button style="display: flex; align-items: center; gap: 12px; height: 38px; padding: 0 12px; border-radius: 10px; color: {{t.muted}}; font-size: 14px; text-align: left"><span style="width: 9px; height: 9px; border-radius: 3px; background: {{t.accent}}"></span>Personal</button>
+<button style="display: flex; align-items: center; gap: 12px; height: 38px; padding: 0 12px; border-radius: 10px; color: {{t.muted}}; font-size: 14px; text-align: left"><span style="width: 9px; height: 9px; border-radius: 3px; background: {{t.accent2}}"></span>Stream &amp; YouTube</button>
+<button style="display: flex; align-items: center; gap: 12px; height: 38px; padding: 0 12px; border-radius: 10px; color: {{t.muted}}; font-size: 14px; text-align: left"><span style="width: 9px; height: 9px; border-radius: 3px; background: {{t.warn}}"></span>Checkpoint</button>
+</div>
+
+<div style="flex-grow: 1"></div>
+
+<div style="display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: 16px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">THEME</span>
+<span style="font-size: 13px; font-weight: 500">{{themeName}}</span>
+</div>
+<div style="display: flex; gap: 12px">
+<sc-for list="{{swatches}}" as="sw" hint-placeholder-count="4">
+<button onClick="{{sw.pick}}" aria-label="{{sw.aria}}" title="{{sw.label}}" style="width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, {{sw.bg}} 0 52%, {{sw.accent}} 52% 100%); border: 1px solid {{t.line}}; box-shadow: 0 0 0 2px {{t.panel}}, 0 0 0 4px {{sw.ring}}"></button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 12px; padding: 0 6px">
+<div style="width: 36px; height: 36px; border-radius: 50%; background: {{t.panel2}}; border: 1px solid {{t.line}}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: {{t.accent}}">U</div>
+<div style="flex-grow: 1; font-size: 14px; font-weight: 500">Ultima</div>
+<a href="Settings.dc.html" aria-label="Settings" style="width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path><circle cx="16" cy="7" r="2"></circle><circle cx="10" cy="17" r="2"></circle></svg></a>
+</div>
+</aside>
+
+<main style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px; padding: 32px 40px; background: radial-gradient(900px 520px at 88% -12%, {{t.glow}}, transparent 62%), {{t.bg}}">
+
+<header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 32px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.14em; color: {{t.muted}}">FRIDAY, SEPTEMBER 25 · 4:18 PM</div>
+<h1 style="margin: 0; font-family: 'Atkinson Hyperlegible', Geist, ui-sans-serif, system-ui, sans-serif; font-weight: 700; font-size: 50px; line-height: 1.05; letter-spacing: -0.02em">Good evening, <span style="color: {{t.accent}}">Ultima.</span></h1>
+</div>
+<div style="display: flex; gap: 10px; align-items: center">
+<label for="pl-capture" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Quick capture</label>
+<div style="display: flex; align-items: center; gap: 10px; width: 420px; height: 50px; padding: 0 8px 0 16px; border-radius: 16px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.muted}}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+<input id="pl-capture" value="{{draft}}" onChange="{{onDraft}}" onKeyDown="{{onKey}}" placeholder="Capture a task, note or event…" style="flex-grow: 1; min-width: 0; height: 100%; background: transparent; border: 0; color: {{t.text}}; font-size: 14px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; padding: 4px 7px; border-radius: 7px; border: 1px solid {{t.line}}; color: {{t.muted}}">Ctrl K</span>
+</div>
+<button onClick="{{addTask}}" style="height: 50px; padding: 0 20px; border-radius: 16px; background: {{t.accent}}; color: {{t.accentInk}}; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Add</button>
+</div>
+</header>
+
+<section style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; height: 208px; flex-shrink: 0">
+<div style="grid-column: span 2; display: flex; gap: 28px; padding: 26px 30px; border-radius: 24px; background: radial-gradient(520px 240px at 100% 0%, {{t.glow}}, transparent 70%), {{t.panel}}; border: 1px solid {{t.line}}">
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 14px; min-width: 0">
+<div style="display: flex; align-items: center; gap: 10px">
+<span class="pl-pulse" style="width: 8px; height: 8px; border-radius: 50%; background: {{t.accent2}}"></span>
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.14em; color: {{t.accent2}}">UP NEXT</span>
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: {{t.muted}}">5:00 – 5:45 PM</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-family: 'Atkinson Hyperlegible', Geist, ui-sans-serif, system-ui, sans-serif; font-size: 32px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.1">Design review</div>
+<div style="font-size: 15px; color: {{t.muted}}">Checkpoint theme pass · Teams call · Linked note attached</div>
+</div>
+<div style="flex-grow: 1"></div>
+<div style="display: flex; gap: 10px">
+<button style="height: 44px; padding: 0 18px; border-radius: 13px; background: {{t.accent}}; color: {{t.accentInk}}; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="3"></rect><path d="m16 10 5-3v10l-5-3"></path></svg>Join Teams</button>
+<button style="height: 44px; padding: 0 16px; border-radius: 13px; background: {{t.panel2}}; border: 1px solid {{t.line}}; font-size: 14px; font-weight: 500">Open note</button>
+<button style="height: 44px; padding: 0 16px; border-radius: 13px; border: 1px solid {{t.line}}; font-size: 14px; font-weight: 500; color: {{t.muted}}">Snooze 10m</button>
+</div>
+</div>
+<div style="width: 150px; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 2px; border-left: 1px solid {{t.line}}">
+<div style="font-family: 'Atkinson Hyperlegible', Geist, ui-sans-serif, system-ui, sans-serif; font-weight: 400; font-size: 96px; line-height: 0.9; letter-spacing: -0.04em; color: {{t.text}}">42</div>
+<div style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.14em; color: {{t.muted}}">MIN TO GO</div>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 24px; padding: 26px; border-radius: 24px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<div style="position: relative; width: 132px; height: 132px; flex-shrink: 0">
+<svg width="132" height="132" viewBox="0 0 132 132" aria-hidden="true"><circle cx="66" cy="66" r="54" fill="none" stroke="{{t.panel2}}" stroke-width="12"></circle><circle cx="66" cy="66" r="54" fill="none" stroke="{{t.accent}}" stroke-width="12" stroke-linecap="round" stroke-dasharray="{{ring.c}}" stroke-dashoffset="{{ring.off}}" transform="rotate(-90 66 66)"></circle></svg>
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px">
+<div style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 26px; font-weight: 500">{{ring.pct}}</div>
+<div style="font-size: 11px; color: {{t.muted}}; letter-spacing: 0.08em">DONE</div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+<div style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.14em; color: {{t.muted}}">TODAY</div>
+<div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px">
+<div style="display: flex; gap: 8px; align-items: baseline"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-weight: 500; color: {{t.accent}}">{{doneCount}}/{{total}}</span><span style="color: {{t.muted}}">tasks</span></div>
+<div style="display: flex; gap: 8px; align-items: baseline"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-weight: 500; color: {{t.accent2}}">{{habitsDone}}/3</span><span style="color: {{t.muted}}">habits</span></div>
+<div style="display: flex; gap: 8px; align-items: baseline"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-weight: 500; color: {{t.warn}}">3</span><span style="color: {{t.muted}}">events left</span></div>
+</div>
+</div>
+</div>
+</section>
+
+<section style="height: 560px; flex-shrink: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px">
+
+<div style="display: flex; flex-direction: column; gap: 18px; padding: 24px; border-radius: 24px; background: {{t.panel}}; border: 1px solid {{t.line}}; min-height: 0">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Schedule</h2>
+<a href="#" style="font-size: 13px; color: {{t.muted}}">View week</a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<sc-for list="{{events}}" as="ev" hint-placeholder-count="7">
+<sc-if value="{{ev.isNow}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; align-items: center; gap: 10px; height: 26px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.1em; color: {{t.accent2}}; width: 64px">NOW 4:18</span>
+<span style="width: 8px; height: 8px; border-radius: 50%; background: {{t.accent2}}"></span>
+<span style="flex-grow: 1; height: 1.5px; background: {{t.accent2}}"></span>
+</div>
+</sc-if>
+<sc-if value="{{ev.isEvent}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; align-items: center; gap: 10px; min-height: 58px; padding: 8px 10px 8px 0; border-radius: 14px; background: {{ev.bg}}">
+<div style="width: 64px; flex-shrink: 0; text-align: right; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: {{ev.timeColor}}; padding-right: 2px">{{ev.time}}</div>
+<span style="width: 4px; align-self: stretch; margin: 4px 4px; border-radius: 4px; background: {{ev.bar}}"></span>
+<div style="display: flex; flex-direction: column; gap: 3px; min-width: 0">
+<div style="font-size: 14px; font-weight: 500; color: {{ev.titleColor}}">{{ev.title}}</div>
+<div style="font-size: 12px; color: {{t.muted}}">{{ev.meta}}</div>
+</div>
+</div>
+</sc-if>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 14px; padding: 24px; border-radius: 24px; background: {{t.panel}}; border: 1px solid {{t.line}}; min-height: 0">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Tasks</h2>
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: {{t.muted}}">{{remaining}} left</span>
+</div>
+<div class="pl-scroll" style="display: flex; flex-direction: column; gap: 2px; overflow-y: auto; min-height: 0; flex-grow: 1">
+<sc-for list="{{tasks}}" as="task" hint-placeholder-count="6">
+<div style="display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 6px 4px; border-bottom: 1px solid {{t.line}}">
+<button onClick="{{task.toggle}}" aria-label="{{task.aria}}" style="width: 44px; height: 44px; margin: -6px -8px -6px -10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center">
+<span style="width: 22px; height: 22px; border-radius: 7px; border: 1.5px solid {{task.cb}}; background: {{task.cbg}}; color: {{t.accentInk}}; display: flex; align-items: center; justify-content: center">
+<sc-if value="{{task.done}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 12.5 4 4 8-9"></path></svg></sc-if>
+</span>
+</button>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 14px; font-weight: 500; color: {{task.titleColor}}; text-decoration: {{task.deco}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{task.title}}</div>
+<div style="display: flex; gap: 8px; align-items: center; font-size: 12px">
+<span style="color: {{task.dueColor}}">{{task.due}}</span>
+<span style="width: 3px; height: 3px; border-radius: 50%; background: {{t.faint}}"></span>
+<span style="color: {{t.muted}}">{{task.tag}}</span>
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 20px; min-height: 0">
+<div style="display: flex; flex-direction: column; gap: 12px; padding: 22px 24px; border-radius: 24px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Habits</h2>
+<div style="display: flex; gap: 6px">
+<sc-for list="{{dayLetters}}" as="dl" hint-placeholder-count="7">
+<span style="width: 22px; text-align: center; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{dl.color}}">{{dl.l}}</span>
+</sc-for>
+</div>
+</div>
+<sc-for list="{{habits}}" as="h" hint-placeholder-count="3">
+<div style="display: flex; justify-content: space-between; align-items: center; min-height: 44px">
+<div style="display: flex; flex-direction: column; gap: 3px">
+<div style="font-size: 14px; font-weight: 500">{{h.name}}</div>
+<div style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}">{{h.streak}} day streak</div>
+</div>
+<div style="display: flex; gap: 6px; align-items: center">
+<sc-for list="{{h.days}}" as="d" hint-placeholder-count="7">
+<sc-if value="{{d.isToday}}" hint-placeholder-val="{{false}}">
+<button onClick="{{d.toggle}}" aria-label="{{d.aria}}" style="width: 22px; height: 22px; border-radius: 7px; background: {{d.bg}}; border: 1.5px {{d.bs}} {{d.bc}}; box-shadow: 0 0 0 3px {{t.accentSoft}}"></button>
+</sc-if>
+<sc-if value="{{d.notToday}}" hint-placeholder-val="{{true}}">
+<span style="width: 22px; height: 22px; border-radius: 7px; background: {{d.bg}}; border: 1.5px {{d.bs}} {{d.bc}}"></span>
+</sc-if>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 22px 24px; border-radius: 24px; background: {{t.panel}}; border: 1px solid {{t.line}}; overflow: hidden">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Recent notes</h2>
+<a href="#" style="font-size: 13px; color: {{t.muted}}">All notes</a>
+</div>
+<sc-for list="{{notes}}" as="n" hint-placeholder-count="3">
+<button style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; margin: 0 -12px; border-radius: 12px; text-align: left; width: calc(100% + 24px)">
+<div style="display: flex; justify-content: space-between; gap: 8px; width: 100%">
+<span style="font-size: 14px; font-weight: 500">{{n.title}}</span>
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}; white-space: nowrap">{{n.when}}</span>
+</div>
+<div style="font-size: 13px; color: {{t.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%">{{n.snippet}}</div>
+</button>
+</sc-for>
+</div>
+</div>
+
+</section>
+
+<section style="height: 324px; flex-shrink: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px">
+
+<div style="grid-column: span 2; display: flex; flex-direction: column; gap: 16px; padding: 22px 24px; border-radius: 24px; background: {{t.panel}}; border: 1px solid {{t.line}}; min-height: 0">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 16px">
+<div style="display: flex; align-items: center; gap: 16px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">News</h2>
+<div role="group" aria-label="News topics" style="display: flex; gap: 6px">
+<sc-for list="{{newsTabs}}" as="nt" hint-placeholder-count="4">
+<button onClick="{{nt.pick}}" aria-pressed="{{nt.on}}" style="height: 30px; padding: 0 12px; border-radius: 999px; font-size: 12px; font-weight: 500; background: {{nt.bg}}; color: {{nt.fg}}; border: 1px solid {{nt.bd}}">{{nt.label}}</button>
+</sc-for>
+</div>
+</div>
+<a href="#" style="font-size: 13px; color: {{t.muted}}">Manage sources</a>
+</div>
+<div style="flex-grow: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{news}}" as="nw" hint-placeholder-count="4">
+<a href="#" style="display: flex; gap: 14px; padding: 14px; border-radius: 16px; background: {{t.panel2}}; border: 1px solid {{t.line}}; min-width: 0">
+<span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 12px; background: {{nw.chipBg}}; color: {{nw.chipFg}}; display: flex; align-items: center; justify-content: center; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13px; font-weight: 500">{{nw.initials}}</span>
+<span style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+<span style="display: flex; gap: 8px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}"><span style="color: {{nw.chipFg}}">{{nw.topic}}</span><span>{{nw.source}}</span><span>{{nw.when}}</span></span>
+<span style="font-size: 14px; font-weight: 500; line-height: 1.4; color: {{t.text}}; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden">{{nw.title}}</span>
+</span>
+</a>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 14px; padding: 22px 24px; border-radius: 24px; background: radial-gradient(420px 220px at 100% 0%, {{t.glow}}, transparent 70%), {{t.panel}}; border: 1px solid {{t.line}}">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Weather</h2>
+<span style="font-size: 12px; color: {{t.muted}}">Yarmouth Port, MA</span>
+</div>
+<button onClick="{{toggleUnit}}" aria-label="{{unitAria}}" style="height: 30px; padding: 0 10px; border-radius: 9px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; border: 1px solid {{t.line}}; color: {{t.muted}}">°{{unit}}</button>
+</div>
+<div style="display: flex; align-items: center; gap: 16px">
+<span style="color: {{t.warn}}; display: flex"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"></circle><path d="M9 1.8v1.4M3.4 4.2l1 1M1.8 8h1.4M14.6 4.2l-1 1"></path><path d="M8.5 20h9a3.5 3.5 0 0 0 .4-6.98A5 5 0 0 0 8.4 13.3 3.4 3.4 0 0 0 8.5 20z" style="color: {{t.text}}" stroke="{{t.text}}" fill="{{t.panel}}"></path></svg></span>
+<div style="font-family: 'Atkinson Hyperlegible', Geist, ui-sans-serif, system-ui, sans-serif; font-size: 58px; font-weight: 700; line-height: 1; letter-spacing: -0.03em">{{w.now}}°</div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 14px; font-weight: 500">Partly cloudy</span>
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: {{t.muted}}">H {{w.hi}}° · L {{w.lo}}°</span>
+</div>
+</div>
+<div style="display: flex; gap: 8px; font-size: 12px">
+<span style="flex-grow: 1; padding: 8px 10px; border-radius: 10px; background: {{t.panel2}}; display: flex; flex-direction: column; gap: 2px"><span style="color: {{t.muted}}">Wind</span><span style="font-family: 'Geist Mono', ui-monospace, monospace">{{w.wind}}</span></span>
+<span style="flex-grow: 1; padding: 8px 10px; border-radius: 10px; background: {{t.panel2}}; display: flex; flex-direction: column; gap: 2px"><span style="color: {{t.muted}}">Humidity</span><span style="font-family: 'Geist Mono', ui-monospace, monospace">71%</span></span>
+<span style="flex-grow: 1; padding: 8px 10px; border-radius: 10px; background: {{t.panel2}}; display: flex; flex-direction: column; gap: 2px"><span style="color: {{t.muted}}">Rain</span><span style="font-family: 'Geist Mono', ui-monospace, monospace">10%</span></span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<sc-for list="{{forecast}}" as="fc" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 12px; height: 26px; font-size: 13px">
+<span style="width: 34px; font-weight: 500">{{fc.day}}</span>
+<span style="width: 18px; display: flex; color: {{fc.iconColor}}">
+<sc-if value="{{fc.isSun}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-label="Sunny"><circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"></path></svg></sc-if>
+<sc-if value="{{fc.isCloud}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-label="Cloudy"><path d="M7 18h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.1 11.5 3.3 3.3 0 0 0 7 18z"></path></svg></sc-if>
+<sc-if value="{{fc.isRain}}" hint-placeholder-val="{{false}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Rain"><path d="M7 15h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.1 8.5 3.3 3.3 0 0 0 7 15z"></path><path d="M9 18l-1 3M13 18l-1 3M17 18l-1 3"></path></svg></sc-if>
+</span>
+<span style="width: 30px; text-align: right; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: {{t.muted}}">{{fc.lo}}°</span>
+<span style="flex-grow: 1; height: 6px; border-radius: 6px; background: {{t.panel2}}; position: relative"><span style="position: absolute; top: 0; bottom: 0; left: {{fc.left}}%; width: {{fc.width}}%; border-radius: 6px; background: {{t.accent2}}"></span></span>
+<span style="width: 30px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px">{{fc.hi}}°</span>
+</div>
+</sc-for>
+</div>
+</div>
+
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["midnight","aurora","ember","daylight"],"default":"midnight"},"$preview":{"width":1440,"height":1320}}'>
+class Component extends DCLogic {
+  palette() {
+    return {
+      midnight: { name: 'Midnight', bg: '#0A0C11', side: '#0D1017', panel: '#12161F', panel2: '#1A1F2B', line: 'rgba(255,255,255,0.07)', text: '#ECEEF5', muted: '#969DAF', faint: '#5D6477', accent: '#A092FF', accentInk: '#0A0C11', accentSoft: 'rgba(160,146,255,0.16)', accent2: '#5CE1C6', glow: 'rgba(160,146,255,0.20)', warn: '#FFB36B' },
+      aurora: { name: 'Aurora', bg: '#07110F', side: '#0A1614', panel: '#0F1D1A', panel2: '#162824', line: 'rgba(220,255,245,0.08)', text: '#E8F4F0', muted: '#93ABA4', faint: '#4E6760', accent: '#4FE0B0', accentInk: '#06120F', accentSoft: 'rgba(79,224,176,0.16)', accent2: '#7CB8FF', glow: 'rgba(79,224,176,0.18)', warn: '#FFC37A' },
+      ember: { name: 'Ember', bg: '#110C0A', side: '#16100D', panel: '#1D1512', panel2: '#281E19', line: 'rgba(255,235,220,0.08)', text: '#F6ECE6', muted: '#B5A197', faint: '#6E5A50', accent: '#FF9A5C', accentInk: '#140C08', accentSoft: 'rgba(255,154,92,0.16)', accent2: '#F2CF6A', glow: 'rgba(255,154,92,0.18)', warn: '#FF8A7A' },
+      daylight: { name: 'Daylight', bg: '#F3F2EE', side: '#ECEAE4', panel: '#FFFFFF', panel2: '#F3F2EE', line: 'rgba(20,22,30,0.09)', text: '#15171D', muted: '#5A5F6B', faint: '#A9A69E', accent: '#5A48E0', accentInk: '#FFFFFF', accentSoft: 'rgba(90,72,224,0.12)', accent2: '#0B8A6D', glow: 'rgba(90,72,224,0.10)', warn: '#B4501A' }
+    };
+  }
+  baseTasks() {
+    return [
+      { id: 1, title: 'Renew car registration', due: 'Today', tag: 'Errand', done: false, hot: true },
+      { id: 2, title: 'Reply to sponsor email', due: 'Today', tag: 'Stream & YouTube', done: false, hot: true },
+      { id: 3, title: 'Pick up dry cleaning', due: 'Today', tag: 'Errand', done: true },
+      { id: 4, title: 'Outline onboarding flow', due: 'Tomorrow', tag: 'Checkpoint', done: false },
+      { id: 5, title: 'Book oil change', due: 'Sat', tag: 'Personal', done: false },
+      { id: 6, title: 'Water the plants', due: 'Today', tag: 'Personal', done: true }
+    ];
+  }
+  renderVals() {
+    const P = this.palette();
+    const s = this.state || {};
+    const key = s.theme || this.props.theme || 'midnight';
+    const t = P[key] || P.midnight;
+
+    const order = ['midnight', 'aurora', 'ember', 'daylight'];
+    const swatches = order.map((k) => ({
+      label: P[k].name, bg: P[k].bg, accent: P[k].accent,
+      ring: k === key ? t.accent : 'transparent',
+      aria: 'Switch to ' + P[k].name + ' theme',
+      pick: () => this.setState({ theme: k })
+    }));
+
+    const active = s.nav || 'home';
+    const nav = {};
+    ['home', 'notes', 'calendar', 'tasks', 'habits', 'goals'].forEach((k) => {
+      const on = k === active;
+      nav[k] = { bg: on ? t.accentSoft : 'transparent', fg: on ? t.text : t.muted, ic: on ? t.accent : t.muted, go: () => this.setState({ nav: k }) };
+    });
+
+    const raw = s.tasks || this.baseTasks();
+    const setTasks = (next) => this.setState({ tasks: next });
+    const tasks = raw.map((x) => ({
+      ...x,
+      cb: x.done ? t.accent : t.faint,
+      cbg: x.done ? t.accent : 'transparent',
+      titleColor: x.done ? t.muted : t.text,
+      deco: x.done ? 'line-through' : 'none',
+      dueColor: x.hot && !x.done ? t.warn : t.muted,
+      aria: (x.done ? 'Mark not done: ' : 'Mark done: ') + x.title,
+      toggle: () => setTasks(raw.map((y) => (y.id === x.id ? { ...y, done: !y.done } : y)))
+    }));
+    const doneCount = raw.filter((x) => x.done).length;
+    const total = raw.length;
+    const C = 2 * Math.PI * 54;
+    const pct = total ? doneCount / total : 0;
+
+    const draft = s.draft || '';
+    const addTask = () => {
+      const title = (this.state && this.state.draft || '').trim();
+      if (!title) return;
+      setTasks([{ id: Date.now(), title: title, due: 'Today', tag: 'Inbox', done: false }].concat(raw));
+      this.setState({ draft: '' });
+    };
+
+    const evs = [
+      { time: '9:30 AM', title: 'Morning walk', meta: '30 min · Outside', st: 'past' },
+      { time: '11:00 AM', title: 'Standup', meta: '15 min · Video call', st: 'past' },
+      { time: '2:00 PM', title: 'Deep work: Project Life', meta: '2 hr · Focus mode', st: 'past' },
+      { now: true },
+      { time: '5:00 PM', title: 'Design review', meta: '45 min · Video call', st: 'next' },
+      { time: '7:30 PM', title: 'Dinner + groceries', meta: '1 hr', st: 'later' },
+      { time: '9:00 PM', title: 'Late night stream', meta: '2 hr · Live', st: 'later' }
+    ];
+    const events = evs.map((e) => e.now ? { isNow: true, isEvent: false } : ({
+      ...e, isNow: false, isEvent: true,
+      bg: e.st === 'next' ? t.accentSoft : 'transparent',
+      bar: e.st === 'past' ? t.panel2 : (e.st === 'next' ? t.accent : t.accent2),
+      titleColor: e.st === 'past' ? t.muted : t.text,
+      timeColor: e.st === 'next' ? t.accent : t.muted
+    }));
+
+    const todayIdx = 4;
+    const ht = s.habitToday || { 0: false, 1: true, 2: true };
+    const hb = [
+      { name: 'Drink water', streak: 11, past: [1, 1, 1, 1] },
+      { name: 'Read 20 min', streak: 4, past: [0, 1, 1, 1] },
+      { name: 'Walk', streak: 22, past: [1, 1, 1, 1] }
+    ];
+    const habits = hb.map((h, hi) => {
+      const today = !!ht[hi];
+      const days = [0, 1, 2, 3, 4, 5, 6].map((i) => {
+        if (i < todayIdx) {
+          const ok = h.past[i] === 1;
+          return { isToday: false, notToday: true, bg: ok ? t.accent2 : 'transparent', bc: ok ? t.accent2 : t.faint, bs: 'solid' };
+        }
+        if (i === todayIdx) {
+          return {
+            isToday: true, notToday: false,
+            bg: today ? t.accent : 'transparent', bc: today ? t.accent : t.accent, bs: 'solid',
+            aria: (today ? 'Undo today: ' : 'Mark today done: ') + h.name,
+            toggle: () => this.setState({ habitToday: { ...ht, [hi]: !today } })
+          };
+        }
+        return { isToday: false, notToday: true, bg: 'transparent', bc: t.faint, bs: 'dashed' };
+      });
+      return { name: h.name, streak: h.streak + (today ? 1 : 0), days: days };
+    });
+    const habitsDone = [0, 1, 2].filter((i) => ht[i]).length;
+    const dayLetters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((l, i) => ({ l: l, color: i === todayIdx ? t.accent : t.muted }));
+
+    const notes = [
+      { title: 'Checkpoint: theme ideas', when: '2h ago', snippet: 'Midnight as the base. Aurora, Ember and Daylight as alternates.' },
+      { title: 'Grocery list', when: 'Yesterday', snippet: 'Oat milk, coffee beans, limes, rice, frozen dumplings' },
+      { title: 'Video ideas', when: 'Mon', snippet: 'Desk setup tour, keyboard sound test, stream recap' }
+    ];
+
+    const newsAll = [
+      { topic: 'Gaming', source: 'PC Gamer', when: '12m', title: 'Fall showcase season: every date you need to know' },
+      { topic: 'Tech', source: 'The Verge', when: '38m', title: 'The next Windows 11 update puts widgets front and center' },
+      { topic: 'Gaming', source: 'Eurogamer', when: '1h', title: 'The best co-op games to play this weekend' },
+      { topic: 'Local', source: 'Cape Cod Times', when: '2h', title: 'Clear skies expected for this weekend’s fall festivals' },
+      { topic: 'Tech', source: 'Ars Technica', when: '3h', title: 'Why local-first apps are having a moment' },
+      { topic: 'Gaming', source: 'GameSpot', when: '4h', title: 'October’s biggest game releases, week by week' }
+    ];
+    const topicColor = { Gaming: t.accent, Tech: t.accent2, Local: t.warn };
+    const nsel = s.newsTab || 'All';
+    const newsTabs = ['All', 'Gaming', 'Tech', 'Local'].map((n) => ({
+      label: n, on: String(n === nsel),
+      bg: n === nsel ? t.text : 'transparent', fg: n === nsel ? t.bg : t.muted, bd: n === nsel ? t.text : t.line,
+      pick: () => this.setState({ newsTab: n })
+    }));
+    const news = newsAll.filter((n) => nsel === 'All' || n.topic === nsel).slice(0, 4).map((n) => ({
+      ...n,
+      initials: n.source.split(' ').map((x) => x[0]).join('').slice(0, 2).toUpperCase(),
+      chipBg: t.bg,
+      chipFg: topicColor[n.topic]
+    }));
+
+    const unit = s.unit || 'F';
+    const cv = (f) => unit === 'F' ? f : Math.round((f - 32) * 5 / 9);
+    const w = { now: cv(66), hi: cv(69), lo: cv(57), wind: unit === 'F' ? '9 mph' : '14 km/h' };
+    const fcRaw = [
+      { day: 'Sat', kind: 'sun', hi: 71, lo: 56 },
+      { day: 'Sun', kind: 'cloud', hi: 67, lo: 58 },
+      { day: 'Mon', kind: 'rain', hi: 62, lo: 55 }
+    ];
+    const minT = 55, span = 16;
+    const forecast = fcRaw.map((f) => ({
+      day: f.day, hi: cv(f.hi), lo: cv(f.lo),
+      isSun: f.kind === 'sun', isCloud: f.kind === 'cloud', isRain: f.kind === 'rain',
+      iconColor: f.kind === 'sun' ? t.warn : (f.kind === 'rain' ? t.accent2 : t.muted),
+      left: Math.round((f.lo - minT) / span * 100), width: Math.round((f.hi - f.lo) / span * 100)
+    }));
+
+    return {
+      t: t, themeName: t.name, swatches: swatches, nav: nav,
+      tasks: tasks, doneCount: doneCount, total: total, remaining: total - doneCount,
+      ring: { c: C.toFixed(1), off: (C * (1 - pct)).toFixed(1), pct: Math.round(pct * 100) + '%' },
+      draft: draft,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      onKey: (e) => { if (e.key === 'Enter') addTask(); },
+      addTask: addTask,
+      events: events, habits: habits, habitsDone: habitsDone, dayLetters: dayLetters, notes: notes,
+      newsTabs: newsTabs, news: news, w: w, unit: unit, forecast: forecast,
+      unitAria: unit === 'F' ? 'Show Celsius' : 'Show Fahrenheit',
+      toggleUnit: () => this.setState({ unit: unit === 'F' ? 'C' : 'F' })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Project Life",
+  "version": "0.1.0",
+  "identifier": "com.ultimabass.projectlife",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Project Life",
+        "width": 1440,
+        "height": 1000,
+        "minWidth": 1180,
+        "minHeight": 720,
+        "center": true,
+        "visible": false,
+        "decorations": false,
+        "dragDropEnabled": false,
+        "backgroundColor": "#0A0C11"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

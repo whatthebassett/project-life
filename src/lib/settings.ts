@@ -1,0 +1,52 @@
+import { defaultName, readSettings, writeSettings } from "./api";
+import { themeFor, type ThemeId } from "./themes";
+
+// Settings live in Data\settings.json. Keys are PascalCase, and keys this
+// version doesn't know about are kept: loading spreads the file over the
+// defaults and saving writes the whole object back.
+export type TextSize = "S" | "M" | "L" | "XL";
+
+export interface Settings {
+  Theme: ThemeId;
+  TextSize: TextSize;
+  ReduceMotion: boolean;
+  AlwaysShowFocus: boolean;
+  DisplayName: string;
+  [key: string]: unknown;
+}
+
+export const textSizes: TextSize[] = ["S", "M", "L", "XL"];
+
+export const textScale: Record<TextSize, number> = { S: 0.9, M: 1, L: 1.15, XL: 1.3 };
+
+const defaults: Settings = {
+  Theme: "midnight",
+  TextSize: "M",
+  ReduceMotion: false,
+  AlwaysShowFocus: false,
+  DisplayName: "",
+};
+
+export async function loadSettings(): Promise<Settings> {
+  let saved: Record<string, unknown> = {};
+  try {
+    const text = await readSettings();
+    if (text) saved = JSON.parse(text);
+  } catch {
+    // A damaged file shouldn't stop the app from opening; defaults it is.
+  }
+  const settings: Settings = { ...defaults, ...saved };
+  settings.Theme = themeFor(settings.Theme).id;
+  if (!textSizes.includes(settings.TextSize)) settings.TextSize = "M";
+  if (!settings.DisplayName) settings.DisplayName = await defaultName().catch(() => "");
+  return settings;
+}
+
+// Saves run one after another, so a fast run of changes can't land out of order.
+let queue: Promise<void> = Promise.resolve();
+
+export function saveSettings(settings: Settings): Promise<void> {
+  const text = JSON.stringify(settings, null, 2);
+  queue = queue.then(() => writeSettings(text)).catch((e) => console.error("Couldn't save settings", e));
+  return queue;
+}

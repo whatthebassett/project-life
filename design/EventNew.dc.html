@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project Life · New event</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:"Geist",ui-sans-serif,system-ui,sans-serif;background:#0A0C11;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button{font:inherit;cursor:pointer;background:none;border:0;padding:0;color:inherit}
+input,textarea,select{font:inherit}
+input::placeholder,textarea::placeholder{color:inherit;opacity:.6}
+input:focus,textarea:focus,select:focus{outline:none}
+button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+a{color:inherit;text-decoration:none}
+select{appearance:none;-webkit-appearance:none;cursor:pointer}
+::-webkit-scrollbar{width:12px;height:12px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background-color:var(--sb-thumb,rgba(128,128,128,.4));border-radius:999px;border:3px solid transparent;background-clip:padding-box;min-height:40px}::-webkit-scrollbar-thumb:hover{background-color:var(--sb-hover,rgba(128,128,128,.7))}::-webkit-scrollbar-thumb:active{background-color:var(--sb-active,rgba(128,128,128,.9))}::-webkit-scrollbar-button{display:none;width:0;height:0}
+</style>
+</helmet>
+<div style="--sb-thumb: {{t.faint}}; --sb-hover: {{t.muted}}; --sb-active: {{t.accent}}; width: 1440px; height: 1000px; position: relative; overflow: hidden; background: {{t.bg}}; font-family: Geist, ui-sans-serif, system-ui, sans-serif">
+<div aria-hidden="true" style="position: absolute; inset: 0">
+<dc-import name="Calendar" theme="{{themeKey}}" hint-size="1440px,1000px"></dc-import>
+</div>
+<a href="Calendar.dc.html" aria-label="Close" style="position: absolute; inset: 0; background: {{t.scrim}}; backdrop-filter: blur(6px)"></a>
+
+<div role="dialog" aria-modal="true" aria-labelledby="pl-ev-title" style="position: absolute; left: 190px; top: 40px; width: 1060px; height: 920px; display: flex; flex-direction: column; border-radius: 28px; background: {{t.bg}}; color: {{t.text}}; border: 1px solid {{t.line}}; box-shadow: 0 40px 120px rgba(0,0,0,0.55); overflow: hidden">
+
+<header style="height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px 0 24px; background: {{t.side}}; border-bottom: 1px solid {{t.line}}">
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="display: flex; align-items: center; height: 30px; padding: 0 10px; border-radius: 9px; background: {{t.panel}}; border: 1px solid {{t.line}}; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.08em; color: {{t.muted}}">NEW</span>
+<div role="tablist" aria-label="Item type" style="display: flex; padding: 3px; border-radius: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<sc-for list="{{kinds}}" as="k" hint-placeholder-count="3">
+<button role="tab" aria-selected="{{k.on}}" onClick="{{k.pick}}" style="height: 32px; padding: 0 14px; border-radius: 9px; font-size: 13px; font-weight: 500; background: {{k.bg}}; color: {{k.fg}}">{{k.label}}</button>
+</sc-for>
+</div>
+</div>
+<a href="Calendar.dc.html" aria-label="Close" title="Close (Esc)" style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid {{t.line}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></a>
+</header>
+
+<div style="flex-grow: 1; min-height: 0; display: flex">
+<div class="pl-scroll" style="flex-grow: 1; min-width: 0; overflow-y: auto; padding: 22px 28px 22px; display: flex; flex-direction: column; gap: 18px">
+
+<div style="display: flex; align-items: center; gap: 14px">
+<span style="width: 14px; height: 14px; flex-shrink: 0; border-radius: 5px; background: {{cal.color}}"></span>
+<label for="pl-ev-title" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Event title</label>
+<input id="pl-ev-title" value="{{title}}" onChange="{{onTitle}}" placeholder="Add a title" style="flex-grow: 1; min-width: 0; background: transparent; border: 0; padding: 0; font-family: 'Atkinson Hyperlegible', Geist, ui-sans-serif, system-ui, sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; color: {{t.text}}">
+</div>
+
+<section style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">WHEN</span>
+<button onClick="{{toggleAllDay}}" role="switch" aria-checked="{{allDayStr}}" style="display: flex; align-items: center; gap: 10px; height: 32px; font-size: 13px; color: {{t.muted}}">All day<span style="width: 38px; height: 22px; border-radius: 999px; padding: 3px; background: {{switchBg}}; display: flex; justify-content: {{switchJustify}}"><span style="width: 16px; height: 16px; border-radius: 50%; background: {{switchKnob}}"></span></span></button>
+</div>
+<div role="radiogroup" aria-label="Day" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+<button role="radio" aria-checked="{{d.on}}" onClick="{{d.pick}}" style="height: 48px; border-radius: 13px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: {{d.bg}}; color: {{d.fg}}; border: 1px solid {{d.bd}}">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.08em; opacity: 0.85">{{d.dow}}</span>
+<span style="font-size: 18px; font-weight: 600">{{d.n}}</span>
+</button>
+</sc-for>
+</div>
+<sc-if value="{{timed}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; align-items: flex-end; gap: 10px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: {{t.muted}}; width: 150px">Starts
+<span style="position: relative; display: flex">
+<select value="{{startVal}}" onChange="{{onStart}}" style="width: 100%; height: 44px; padding: 0 34px 0 14px; border-radius: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.text}}; font-size: 14px">
+<sc-for list="{{timeOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}">{{o.label}}</option></sc-for>
+</select>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px; top: 15px; pointer-events: none"><path d="m6 9 6 6 6-6"></path></svg>
+</span>
+</label>
+<span style="height: 44px; display: flex; align-items: center; color: {{t.muted}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: {{t.muted}}; width: 150px">Ends
+<span style="position: relative; display: flex">
+<select value="{{endVal}}" onChange="{{onEnd}}" style="width: 100%; height: 44px; padding: 0 34px 0 14px; border-radius: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.text}}; font-size: 14px">
+<sc-for list="{{endOpts}}" as="o" hint-placeholder-count="4"><option value="{{o.v}}">{{o.label}}</option></sc-for>
+</select>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px; top: 15px; pointer-events: none"><path d="m6 9 6 6 6-6"></path></svg>
+</span>
+</label>
+<div style="display: flex; gap: 4px; margin-left: auto">
+<sc-for list="{{durations}}" as="du" hint-placeholder-count="4">
+<button onClick="{{du.pick}}" aria-pressed="{{du.on}}" style="height: 44px; padding: 0 12px; border-radius: 12px; font-size: 13px; font-weight: 500; background: {{du.bg}}; color: {{du.fg}}; border: 1px solid {{du.bd}}">{{du.label}}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{hasConflict}}" hint-placeholder-val="{{false}}">
+<div role="status" style="display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 14px; border-radius: 14px; background: {{t.warnSoft}}; font-size: 13px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: {{t.warn}}; flex-shrink: 0"><path d="M12 3 2.5 20h19z"></path><path d="M12 10v4M12 17v.01"></path></svg>
+<span style="flex-grow: 1">Overlaps with <b style="font-weight: 600">{{conflictName}}</b></span>
+<sc-if value="{{hasSuggest}}" hint-placeholder-val="{{true}}"><button onClick="{{applySuggest}}" style="height: 34px; padding: 0 12px; border-radius: 10px; background: {{t.bg}}; border: 1px solid {{t.line}}; font-size: 12px; font-weight: 600">Move to {{suggestLabel}}</button></sc-if>
+</div>
+</sc-if>
+<div style="display: flex; gap: 10px">
+<label style="flex-grow: 1; display: flex; flex-direction: column; font-size: 12px; color: {{t.muted}}">
+<span style="position: relative; display: flex">
+<select value="{{repeat}}" onChange="{{onRepeat}}" aria-label="Repeat" style="width: 100%; height: 42px; padding: 0 34px 0 14px; border-radius: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.text}}; font-size: 14px">
+<option value="never">Doesn't repeat</option>
+<option value="daily">Every day</option>
+<option value="weekdays">Every weekday</option>
+<option value="weekly">{{weeklyLabel}}</option>
+<option value="monthly">Every month</option>
+</select>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px; top: 15px; pointer-events: none"><path d="m6 9 6 6 6-6"></path></svg>
+</span>
+</label>
+<button aria-label="Time zone: Eastern Time" style="flex-grow: 1; height: 42px; padding: 0 14px; border-radius: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.text}}; font-size: 14px; display: flex; align-items: center; gap: 10px; text-align: left"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" style="color: {{t.muted}}"><circle cx="12" cy="12" r="8.5"></circle><path d="M3.5 12h17M12 3.5c2.5 2.6 2.5 14.4 0 17M12 3.5c-2.5 2.6-2.5 14.4 0 17"></path></svg>Eastern Time (ET)</button>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">CALENDAR</span>
+<div role="radiogroup" aria-label="Calendar" style="display: flex; gap: 8px">
+<sc-for list="{{cals}}" as="c" hint-placeholder-count="3">
+<button role="radio" aria-checked="{{c.on}}" onClick="{{c.pick}}" style="height: 40px; padding: 0 14px; border-radius: 12px; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; background: {{c.bg}}; border: 1px solid {{c.bd}}; color: {{c.fg}}"><span style="width: 10px; height: 10px; border-radius: 4px; background: {{c.color}}"></span>{{c.name}}</button>
+</sc-for>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">WHERE</span>
+<div style="display: flex; gap: 10px">
+<div role="radiogroup" aria-label="Video call" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; padding: 3px; border-radius: 13px; background: {{t.panel}}; border: 1px solid {{t.line}}; width: 330px; flex-shrink: 0">
+<sc-for list="{{providers}}" as="pv" hint-placeholder-count="4">
+<button role="radio" aria-checked="{{pv.on}}" onClick="{{pv.pick}}" style="height: 36px; border-radius: 10px; font-size: 13px; font-weight: 500; background: {{pv.bg}}; color: {{pv.fg}}">{{pv.label}}</button>
+</sc-for>
+</div>
+<label style="flex-grow: 1; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; border-radius: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.muted}}">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg>
+<input value="{{place}}" onChange="{{onPlace}}" placeholder="Add a place" aria-label="Location" style="flex-grow: 1; min-width: 0; background: transparent; border: 0; color: {{t.text}}; font-size: 14px">
+</label>
+</div>
+<sc-if value="{{hasCall}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 14px; border-radius: 12px; border: 1px dashed {{t.line}}; font-size: 12px; color: {{t.muted}}">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: {{t.accent2}}"><rect x="3" y="6" width="13" height="12" rx="3"></rect><path d="m16 10 5-3v10l-5-3"></path></svg>
+<span style="flex-grow: 1">A {{providerName}} link is created when you save, using your {{providerAccount}} account</span>
+</div>
+</sc-if>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">REMIND ME</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{reminders}}" as="rm" hint-placeholder-count="5">
+<button onClick="{{rm.toggle}}" aria-pressed="{{rm.on}}" style="height: 34px; padding: 0 12px; border-radius: 10px; font-size: 13px; font-weight: 500; background: {{rm.bg}}; color: {{rm.fg}}; border: 1px solid {{rm.bd}}">{{rm.label}}</button>
+</sc-for>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<label for="pl-ev-notes" style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">DESCRIPTION</label>
+<div style="display: flex; gap: 8px">
+<button style="height: 30px; padding: 0 10px; border-radius: 10px; border: 1px dashed {{t.line}}; color: {{t.muted}}; font-size: 12px; display: flex; align-items: center; gap: 8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"></path><path d="M14 3v5h5"></path></svg>Link a note</button>
+<button style="height: 30px; padding: 0 10px; border-radius: 10px; border: 1px dashed {{t.line}}; color: {{t.muted}}; font-size: 12px; display: flex; align-items: center; gap: 8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="m8 12 3 3 5-6"></path></svg>Link a task</button>
+</div>
+</div>
+<textarea id="pl-ev-notes" value="{{desc}}" onChange="{{onDesc}}" rows="2" placeholder="Agenda, links, anything to remember…" style="width: 100%; resize: none; padding: 12px 14px; border-radius: 14px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.text}}; font-size: 14px; line-height: 1.55"></textarea>
+</section>
+</div>
+
+<aside style="width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; padding: 24px 22px; background: {{t.side}}; border-left: 1px solid {{t.line}}">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<span style="font-size: 15px; font-weight: 600">{{dayTitle}}</span>
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}">{{dayCount}}</span>
+</div>
+<sc-if value="{{allDay}}" hint-placeholder-val="{{false}}">
+<div style="height: 30px; padding: 0 10px; border-radius: 9px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; background: {{cal.color}}; color: {{t.accentInk}}">{{titleOrNew}}</div>
+</sc-if>
+<div style="flex-grow: 1; position: relative; display: flex">
+<div style="width: 46px; flex-shrink: 0; position: relative">
+<sc-for list="{{hours}}" as="h" hint-placeholder-count="15">
+<span style="position: absolute; right: 8px; top: {{h.top}}px; transform: translateY(-50%); font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; color: {{t.muted}}">{{h.label}}</span>
+</sc-for>
+</div>
+<div style="flex-grow: 1; position: relative; border-left: 1px solid {{t.line}}; background-image: repeating-linear-gradient(to bottom, {{t.line}} 0 1px, transparent 1px {{hourH}}px)">
+<sc-for list="{{dayEvents}}" as="e" hint-placeholder-count="4">
+<div style="position: absolute; left: 6px; right: 6px; top: {{e.top}}px; height: {{e.h}}px; padding: 4px 8px; border-radius: 8px; background: {{e.bg}}; color: {{t.muted}}; font-size: 11px; font-weight: 500; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">{{e.title}}</div>
+</sc-for>
+<sc-if value="{{timed}}" hint-placeholder-val="{{true}}">
+<div style="position: absolute; left: 22px; right: 2px; top: {{newTop}}px; height: {{newH}}px; padding: 6px 10px; border-radius: 10px; background: {{cal.color}}; color: {{t.accentInk}}; box-shadow: 0 0 0 2px {{t.side}}, 0 12px 30px rgba(0,0,0,0.4); display: flex; flex-direction: column; gap: 2px; overflow: hidden">
+<span style="font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{titleOrNew}}</span>
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px">{{rangeLabel}}</span>
+</div>
+</sc-if>
+<sc-if value="{{isToday}}" hint-placeholder-val="{{false}}">
+<span style="position: absolute; left: 0; right: 0; top: {{nowTop}}px; height: 2px; background: {{t.accent2}}"></span>
+</sc-if>
+</div>
+</div>
+</aside>
+</div>
+
+<footer style="height: 68px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: {{t.side}}; border-top: 1px solid {{t.line}}">
+<span style="font-size: 13px; color: {{t.muted}}">{{summary}}</span>
+<div style="display: flex; align-items: center; gap: 10px">
+<a href="Calendar.dc.html" style="height: 44px; padding: 0 18px; border-radius: 13px; border: 1px solid {{t.line}}; display: flex; align-items: center; font-size: 14px; font-weight: 500">Cancel</a>
+<a href="Calendar.dc.html" style="height: 44px; padding: 0 20px; border-radius: 13px; background: {{t.accent}}; color: {{t.accentInk}}; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600">Save event<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; font-weight: 500; opacity: 0.75">Ctrl Enter</span></a>
+</div>
+</footer>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["midnight","aurora","ember","daylight"],"default":"midnight"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  palette() {
+    return {
+      midnight: { bg: '#0A0C11', side: '#0D1017', panel: '#12161F', panel2: '#1A1F2B', line: 'rgba(255,255,255,0.07)', text: '#ECEEF5', muted: '#969DAF', faint: '#5D6477', accent: '#A092FF', accentInk: '#0A0C11', accentSoft: 'rgba(160,146,255,0.16)', accent2: '#5CE1C6', a2Soft: 'rgba(92,225,198,0.14)', warn: '#FFB36B', warnSoft: 'rgba(255,179,107,0.14)', scrim: 'rgba(4,5,9,0.62)' },
+      aurora: { bg: '#07110F', side: '#0A1614', panel: '#0F1D1A', panel2: '#162824', line: 'rgba(220,255,245,0.08)', text: '#E8F4F0', muted: '#93ABA4', faint: '#4E6760', accent: '#4FE0B0', accentInk: '#06120F', accentSoft: 'rgba(79,224,176,0.16)', accent2: '#7CB8FF', a2Soft: 'rgba(124,184,255,0.14)', warn: '#FFC37A', warnSoft: 'rgba(255,195,122,0.14)', scrim: 'rgba(2,8,7,0.62)' },
+      ember: { bg: '#110C0A', side: '#16100D', panel: '#1D1512', panel2: '#281E19', line: 'rgba(255,235,220,0.08)', text: '#F6ECE6', muted: '#B5A197', faint: '#6E5A50', accent: '#FF9A5C', accentInk: '#140C08', accentSoft: 'rgba(255,154,92,0.16)', accent2: '#F2CF6A', a2Soft: 'rgba(242,207,106,0.14)', warn: '#FF8A7A', warnSoft: 'rgba(255,138,122,0.14)', scrim: 'rgba(8,5,4,0.62)' },
+      daylight: { bg: '#F3F2EE', side: '#ECEAE4', panel: '#FFFFFF', panel2: '#F3F2EE', line: 'rgba(20,22,30,0.09)', text: '#15171D', muted: '#5A5F6B', faint: '#A9A69E', accent: '#5A48E0', accentInk: '#FFFFFF', accentSoft: 'rgba(90,72,224,0.12)', accent2: '#0B8A6D', a2Soft: 'rgba(11,138,109,0.12)', warn: '#B4501A', warnSoft: 'rgba(180,80,26,0.12)', scrim: 'rgba(20,22,30,0.38)' }
+    };
+  }
+  fmt(h) {
+    const hh = Math.floor(h), mm = Math.round((h - hh) * 60);
+    return (((hh + 11) % 12) + 1) + (mm ? ':' + String(mm).padStart(2, '0') : '') + ' ' + (hh >= 12 ? 'PM' : 'AM');
+  }
+  dayEventsFor(i) {
+    // i: 0 = Fri Sep 25 ... 6 = Thu Oct 1
+    const map = {
+      0: [[9.5, 10, 'Morning walk', 'personal'], [11, 11.25, 'Standup', 'checkpoint'], [14, 16, 'Deep work: Project Life', 'checkpoint'], [17, 17.75, 'Design review', 'checkpoint'], [19.5, 20.5, 'Dinner + groceries', 'personal'], [21, 23, 'Late night stream', 'stream']],
+      1: [[10, 11.5, 'Farmers market', 'personal'], [13, 14, 'Oil change', 'personal'], [18, 21, 'Game night', 'personal']],
+      2: [[11, 12.5, 'Brunch', 'personal'], [18, 18.5, 'Plan next week', 'checkpoint']],
+      3: [[11, 11.25, 'Standup', 'checkpoint'], [21, 23, 'Late night stream', 'stream']],
+      4: [[11, 11.25, 'Standup', 'checkpoint']],
+      5: [[11, 11.25, 'Standup', 'checkpoint'], [21, 23, 'Late night stream', 'stream']],
+      6: [[11, 11.25, 'Standup', 'checkpoint']]
+    };
+    return (map[i] || []).map((x) => ({ s: x[0], e: x[1], title: x[2], cal: x[3] }));
+  }
+  renderVals() {
+    const P = this.palette();
+    const s = this.state || {};
+    const key = this.props.theme || 'midnight';
+    const t = P[key] || P.midnight;
+    const START = 8, HOUR = 42, nowH = 16.3;
+
+    const CALS = [
+      { id: 'personal', name: 'Personal', color: t.accent, soft: t.accentSoft },
+      { id: 'stream', name: 'Stream & YouTube', color: t.accent2, soft: t.a2Soft },
+      { id: 'checkpoint', name: 'Checkpoint', color: t.warn, soft: t.warnSoft }
+    ];
+    const calBy = {};
+    CALS.forEach((c) => { calBy[c.id] = c; });
+
+    const kind = s.kind || 'event';
+    const kinds = [['event', 'Event'], ['focus', 'Focus time'], ['reminder', 'Reminder']].map((k) => ({
+      label: k[1], on: String(kind === k[0]),
+      bg: kind === k[0] ? t.panel2 : 'transparent', fg: kind === k[0] ? t.text : t.muted,
+      pick: () => this.setState({ kind: k[0] })
+    }));
+
+    const title = s.title !== undefined ? s.title : 'Call with sponsor';
+    const dayIdx = s.day != null ? s.day : 0;
+    const allDay = !!s.allDay;
+    const start = s.start != null ? s.start : 19;
+    const end = s.end != null ? s.end : 20;
+    const calId = s.cal || 'stream';
+    const cal = calBy[calId];
+    const prov = s.prov || 'meet';
+    const place = s.place || '';
+    const desc = s.desc !== undefined ? s.desc : 'October rates, stream dates, overlay placement';
+    const repeat = s.repeat || 'never';
+    const rem = s.rem || { r10: true };
+
+    const dows = ['FRI', 'SAT', 'SUN', 'MON', 'TUE', 'WED', 'THU'];
+    const longDows = ['Friday', 'Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'];
+    const nums = [25, 26, 27, 28, 29, 30, 1];
+    const monthOf = (i) => (i === 6 ? 'Oct' : 'Sep');
+    const days = dows.map((d, i) => ({
+      dow: i === 0 ? 'TODAY' : d, n: nums[i], on: String(i === dayIdx),
+      bg: i === dayIdx ? t.accent : t.panel, fg: i === dayIdx ? t.accentInk : t.text, bd: i === dayIdx ? t.accent : t.line,
+      pick: () => this.setState({ day: i })
+    }));
+
+    const timeOpts = [];
+    for (let h = 8; h <= 23; h += 0.5) timeOpts.push({ v: String(h), label: this.fmt(h) });
+    const endOpts = [];
+    for (let h = start + 0.25; h <= 24; h += 0.25) {
+      if (h - start > 4 && (h * 2) % 1 !== 0) continue;
+      const mins = Math.round((h - start) * 60);
+      const dur = mins < 60 ? mins + 'm' : (mins % 60 ? (mins / 60).toFixed(1).replace('.0', '') + 'h' : (mins / 60) + 'h');
+      endOpts.push({ v: String(h), label: (h === 24 ? '12 AM' : this.fmt(h)) + '  (' + dur + ')' });
+    }
+    const len = end - start;
+    const durations = [[0.25, '15m'], [0.5, '30m'], [1, '1h'], [2, '2h']].map((d) => ({
+      label: d[1], on: String(Math.abs(len - d[0]) < 0.01),
+      bg: Math.abs(len - d[0]) < 0.01 ? t.panel2 : 'transparent', fg: Math.abs(len - d[0]) < 0.01 ? t.text : t.muted,
+      bd: t.line, pick: () => this.setState({ end: start + d[0] })
+    }));
+
+    const existing = this.dayEventsFor(dayIdx);
+    const clash = allDay ? null : existing.find((e) => start < e.e && end > e.s);
+    let suggest = null;
+    if (clash) {
+      const from = dayIdx === 0 ? Math.ceil(nowH * 2) / 2 : 9;
+      for (let h = from; h + len <= 23.01; h += 0.5) {
+        if (!existing.some((e) => h < e.e && h + len > e.s)) { suggest = h; break; }
+      }
+    }
+
+    const cals = CALS.map((c) => ({
+      name: c.name, color: c.color, on: String(c.id === calId),
+      bg: c.id === calId ? c.soft : 'transparent', bd: c.id === calId ? c.color : t.line, fg: c.id === calId ? t.text : t.muted,
+      pick: () => this.setState({ cal: c.id })
+    }));
+
+    const PROV = { none: ['None', ''], teams: ['Teams', 'Microsoft'], meet: ['Meet', 'Google'], zoom: ['Zoom', 'Zoom'] };
+    const providers = Object.keys(PROV).map((k) => ({
+      label: PROV[k][0], on: String(prov === k),
+      bg: prov === k ? t.panel2 : 'transparent', fg: prov === k ? t.text : t.muted,
+      pick: () => this.setState({ prov: k })
+    }));
+
+    const remDefs = [['r0', 'At start'], ['r10', '10 min before'], ['r30', '30 min before'], ['r60', '1 hr before'], ['r1d', '1 day before']];
+    const reminders = remDefs.map((r) => ({
+      label: r[1], on: String(!!rem[r[0]]),
+      bg: rem[r[0]] ? t.accentSoft : 'transparent', fg: rem[r[0]] ? t.accent : t.muted, bd: rem[r[0]] ? 'transparent' : t.line,
+      toggle: () => this.setState({ rem: { ...rem, [r[0]]: !rem[r[0]] } })
+    }));
+
+    const hours = [];
+    for (let h = START + 1; h < START + 16; h++) hours.push({ top: (h - START) * HOUR, label: this.fmt(h).replace(':00', '').replace(' ', '') });
+    const dayEvents = existing.map((e) => ({
+      title: e.title, top: Math.round((e.s - START) * HOUR) + 1, h: Math.max(18, Math.round((e.e - e.s) * HOUR) - 2), bg: calBy[e.cal].soft
+    }));
+
+    const dateLabel = longDows[dayIdx] + ', ' + monthOf(dayIdx) + ' ' + nums[dayIdx];
+    const rangeLabel = this.fmt(start) + ' – ' + (end >= 24 ? '12 AM' : this.fmt(end));
+    const remCount = Object.keys(rem).filter((k) => rem[k]).length;
+
+    return {
+      t: t, themeKey: key, kinds: kinds, title: title, onTitle: (e) => this.setState({ title: e.target.value }),
+      titleOrNew: title.trim() || 'New event',
+      days: days, allDay: allDay, allDayStr: String(allDay), timed: !allDay,
+      toggleAllDay: () => this.setState({ allDay: !allDay }),
+      switchBg: allDay ? t.accent : t.panel2, switchJustify: allDay ? 'flex-end' : 'flex-start', switchKnob: allDay ? t.accentInk : t.muted,
+      timeOpts: timeOpts, endOpts: endOpts, startVal: String(start), endVal: String(end),
+      onStart: (e) => { const v = parseFloat(e.target.value); this.setState({ start: v, end: v + len }); },
+      onEnd: (e) => this.setState({ end: parseFloat(e.target.value) }),
+      durations: durations,
+      hasConflict: !!clash, conflictName: clash ? clash.title + ' (' + this.fmt(clash.s) + ')' : '',
+      hasSuggest: suggest != null, suggestLabel: suggest != null ? this.fmt(suggest) : '',
+      applySuggest: () => this.setState({ start: suggest, end: suggest + len }),
+      repeat: repeat, onRepeat: (e) => this.setState({ repeat: e.target.value }), weeklyLabel: 'Every ' + longDows[dayIdx],
+      cals: cals, cal: { color: cal.color },
+      providers: providers, hasCall: prov !== 'none', providerName: PROV[prov][0], providerAccount: PROV[prov][1],
+      place: place, onPlace: (e) => this.setState({ place: e.target.value }),
+      reminders: reminders, desc: desc, onDesc: (e) => this.setState({ desc: e.target.value }),
+      dayTitle: dayIdx === 0 ? 'Today' : dateLabel, dayCount: existing.length + ' events',
+      hours: hours, hourH: HOUR, dayEvents: dayEvents,
+      newTop: Math.round((start - START) * HOUR) + 1, newH: Math.max(26, Math.round(len * HOUR) - 2),
+      rangeLabel: rangeLabel, isToday: dayIdx === 0, nowTop: Math.round((nowH - START) * HOUR),
+      summary: (allDay ? dateLabel + ' · All day' : dateLabel + ' · ' + rangeLabel) + ' · ' + cal.name + (prov !== 'none' ? ' · ' + PROV[prov][0] : '') + ' · ' + remCount + (remCount === 1 ? ' reminder' : ' reminders')
+    };
+  }
+}
+</script>
+</body>
+</html>

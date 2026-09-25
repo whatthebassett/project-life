@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project Life · Habits</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:"Geist",ui-sans-serif,system-ui,sans-serif;background:#0A0C11;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button{font:inherit;cursor:pointer;background:none;border:0;padding:0;color:inherit}
+input,textarea,select{font:inherit}
+select{appearance:none;-webkit-appearance:none;cursor:pointer}
+input::placeholder{color:inherit;opacity:.8}
+input:focus{outline:none}
+button:focus-visible,a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:12px;height:12px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background-color:var(--sb-thumb,rgba(128,128,128,.4));border-radius:999px;border:3px solid transparent;background-clip:padding-box;min-height:40px}::-webkit-scrollbar-thumb:hover{background-color:var(--sb-hover,rgba(128,128,128,.7))}::-webkit-scrollbar-thumb:active{background-color:var(--sb-active,rgba(128,128,128,.9))}::-webkit-scrollbar-button{display:none;width:0;height:0}
+</style>
+</helmet>
+
+<div style="--sb-thumb: {{t.faint}}; --sb-hover: {{t.muted}}; --sb-active: {{t.accent}}; width: 1440px; height: 1000px; display: flex; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; font-family: Geist, ui-sans-serif, system-ui, sans-serif">
+<nav aria-label="App" style="width: 72px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 20px 0 18px; background: {{t.side}}; border-right: 1px solid {{t.line}}">
+<div style="width: 36px; height: 36px; border-radius: 11px; background: {{t.accent}}; color: {{t.accentInk}}; display: flex; align-items: center; justify-content: center; margin-bottom: 14px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7.5"></circle><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"></circle><path d="M12 1.8v3M12 19.2v3"></path></svg>
+</div>
+<a href="Main.dc.html" aria-label="Home" title="Home" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg></a>
+<a href="Notes.dc.html" aria-label="Notes" title="Notes" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"></path><path d="M14 3v5h5"></path><path d="M9 13h7M9 17h5"></path></svg></a>
+<a href="Calendar.dc.html" aria-label="Schedule" title="Schedule" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg></a>
+<a href="Tasks.dc.html" aria-label="Tasks" title="Tasks" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="m8 12 3 3 5-6"></path></svg></a>
+<button aria-label="Habits" aria-current="page" title="Habits" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: {{t.accentSoft}}; color: {{t.accent}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3L20 9"></path><path d="M20 4v5h-5"></path><path d="M20 12a8 8 0 0 1-14 5.3L4 15"></path><path d="M4 20v-5h5"></path></svg></button>
+<a href="Goals.dc.html" aria-label="Goals" title="Goals" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"></circle><circle cx="12" cy="12" r="4.5"></circle><circle cx="12" cy="12" r="1"></circle></svg></a>
+<div style="flex-grow: 1"></div>
+<a href="Settings.dc.html" aria-label="Settings" title="Settings" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path><circle cx="16" cy="7" r="2"></circle><circle cx="10" cy="17" r="2"></circle></svg></a>
+<div style="width: 36px; height: 36px; border-radius: 50%; background: {{t.panel2}}; border: 1px solid {{t.line}}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: {{t.accent}}">U</div>
+</nav>
+
+<aside style="width: 256px; flex-shrink: 0; display: flex; flex-direction: column; gap: 22px; padding: 22px 16px 18px; background: {{t.side}}; border-right: 1px solid {{t.line}}">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 0 6px">
+<h1 style="margin: 0; font-family: 'Atkinson Hyperlegible', Geist, ui-sans-serif, system-ui, sans-serif; font-size: 24px; font-weight: 700; letter-spacing: -0.01em">Habits</h1>
+<a href="HabitEdit.dc.html" aria-label="New habit" title="New habit" style="width: 40px; height: 40px; border-radius: 12px; background: {{t.accent}}; color: {{t.accentInk}}; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{views}}" as="v" hint-placeholder-count="3">
+<button onClick="{{v.pick}}" aria-current="{{v.cur}}" style="display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 12px; border-radius: 12px; font-size: 14px; font-weight: 500; text-align: left; background: {{v.bg}}; color: {{v.fg}}"><span style="flex-grow: 1">{{v.label}}</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; color: {{t.muted}}">{{v.count}}</span></button>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="padding: 0 10px"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">THIS WEEK</span></div>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 18px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<div style="display: flex; align-items: baseline; gap: 8px"><span style="font-family: 'Atkinson Hyperlegible', Geist, sans-serif; font-size: 36px; font-weight: 700; letter-spacing: -0.02em">{{weekPct}}%</span><span style="font-size: 13px; color: {{t.muted}}">of check-ins done</span></div>
+<div style="display: flex; align-items: flex-end; gap: 6px; height: 64px">
+<sc-for list="{{weekBars}}" as="wb" hint-placeholder-count="7">
+<div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end">
+<span style="width: 100%; height: {{wb.h}}px; border-radius: 6px; background: {{wb.bg}}; border: 1px {{wb.bs}} {{wb.bd}}"></span>
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; color: {{wb.fg}}">{{wb.l}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="padding: 0 10px"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">RECORDS</span></div>
+<div style="display: flex; flex-direction: column; border-radius: 16px; border: 1px solid {{t.line}}; overflow: hidden; font-size: 13px">
+<div style="display: flex; justify-content: space-between; align-items: center; height: 44px; padding: 0 14px; border-bottom: 1px solid {{t.line}}"><span style="color: {{t.muted}}">Longest streak</span><span style="font-weight: 500">{{record.best}}</span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; height: 44px; padding: 0 14px; border-bottom: 1px solid {{t.line}}"><span style="color: {{t.muted}}">Most consistent</span><span style="font-weight: 500">{{record.consistent}}</span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; height: 44px; padding: 0 14px"><span style="color: {{t.muted}}">Needs love</span><span style="font-weight: 500; color: {{t.warn}}">{{record.low}}</span></div>
+</div>
+</div>
+</aside>
+
+<section style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 20px; padding: 26px 32px 0">
+<header style="display: flex; justify-content: space-between; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.14em; color: {{t.muted}}">FRIDAY, SEPTEMBER 25</span>
+<h2 style="margin: 0; font-family: 'Atkinson Hyperlegible', Geist, ui-sans-serif, system-ui, sans-serif; font-size: 40px; font-weight: 700; line-height: 1; letter-spacing: -0.02em">{{heading}}</h2>
+</div>
+<div style="display: flex; align-items: center; gap: 14px">
+<svg width="54" height="54" viewBox="0 0 54 54" aria-hidden="true"><circle cx="27" cy="27" r="22" fill="none" stroke="{{t.panel2}}" stroke-width="6"></circle><circle cx="27" cy="27" r="22" fill="none" stroke="{{t.accent2}}" stroke-width="6" stroke-linecap="round" stroke-dasharray="{{ring.c}}" stroke-dashoffset="{{ring.off}}" transform="rotate(-90 27 27)"></circle></svg>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">{{ring.label}}</span><span style="font-size: 12px; color: {{t.muted}}">{{ring.sub}}</span></div>
+</div>
+</header>
+
+<div class="pl-scroll" style="flex-grow: 1; min-height: 0; overflow-y: auto; padding-bottom: 40px; display: flex; flex-direction: column; gap: 20px">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: center; gap: 10px; height: 24px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}"><span>{{g.label}}</span><span>{{g.doneLabel}}</span><span style="flex-grow: 1; height: 1px; background: {{t.line}}"></span></div>
+<sc-for list="{{g.items}}" as="h" hint-placeholder-count="2">
+<div style="display: flex; align-items: center; gap: 16px; min-height: 80px; padding: 12px 14px 12px 12px; border-radius: 18px; background: {{h.bg}}; border: 1px solid {{h.bd}}">
+<button onClick="{{h.pick}}" style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 14px; text-align: left">
+<span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: {{h.soft}}; color: {{h.color}}; display: flex; align-items: center; justify-content: center"><sc-if value="{{h.ic.drop}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"></path></svg></sc-if><sc-if value="{{h.ic.book}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 21V5M19 19v2H6"></path></svg></sc-if><sc-if value="{{h.ic.route}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"></circle><circle cx="18" cy="5" r="2"></circle><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"></path></svg></sc-if><sc-if value="{{h.ic.heart}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg></sc-if><sc-if value="{{h.ic.pen}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="m13.5 6.5 4 4"></path></svg></sc-if><sc-if value="{{h.ic.moon}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg></sc-if><sc-if value="{{h.ic.dumbbell}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"></path></svg></sc-if><sc-if value="{{h.ic.music}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"></path><circle cx="6.5" cy="18" r="2.5"></circle><circle cx="17.5" cy="16" r="2.5"></circle></svg></sc-if><sc-if value="{{h.ic.leaf}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20c0-9 6-15 15-15 0 9-6 15-15 15z"></path><path d="M5 20 13 12"></path></svg></sc-if><sc-if value="{{h.ic.code}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 8-4 4 4 4M15 8l4 4-4 4"></path></svg></sc-if></span>
+<span style="display: flex; flex-direction: column; gap: 5px; min-width: 0">
+<span style="font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{h.name}}</span>
+<span style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: {{t.muted}}"><span>{{h.goal}}</span><span style="display: flex; align-items: center; gap: 4px; color: {{h.streakFg}}"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 4 5 5.5 5 11a5 5 0 0 1-10 0c0-2.5 1.2-4 2.5-5 .2 2 1.2 3 2.2 3C11 8 11.5 5 12 2z"></path></svg>{{h.streak}} day streak</span></span>
+</span>
+</button>
+<div aria-label="{{h.weekAria}}" style="display: flex; gap: 5px">
+<sc-for list="{{h.week}}" as="d" hint-placeholder-count="7">
+<span title="{{d.title}}" style="width: 14px; height: 30px; border-radius: 5px; background: {{d.bg}}; border: 1.5px {{d.bs}} {{d.bd}}"></span>
+</sc-for>
+</div>
+<sc-if value="{{h.isCount}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; align-items: center; gap: 4px; padding: 3px; border-radius: 14px; background: {{t.panel2}}">
+<button onClick="{{h.dec}}" aria-label="{{h.decAria}}" style="width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+<span style="min-width: 54px; text-align: center; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 14px; font-weight: 500"><span style="color: {{h.color}}">{{h.count}}</span>/{{h.target}}</span>
+<button onClick="{{h.inc}}" aria-label="{{h.incAria}}" style="width: 38px; height: 38px; border-radius: 11px; display: flex; align-items: center; justify-content: center; background: {{h.color}}; color: {{t.accentInk}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+</div>
+</sc-if>
+<sc-if value="{{h.isCheck}}" hint-placeholder-val="{{true}}">
+<button onClick="{{h.toggle}}" aria-pressed="{{h.doneStr}}" aria-label="{{h.aria}}" style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 16px; display: flex; align-items: center; justify-content: center; background: {{h.btnBg}}; border: 1.5px solid {{h.btnBd}}; color: {{h.btnFg}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 12.5 4 4 8-9"></path></svg></button>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</section>
+
+<aside style="width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 20px; padding: 24px 22px; background: {{t.side}}; border-left: 1px solid {{t.line}}">
+<div style="display: flex; align-items: center; gap: 14px">
+<span style="width: 52px; height: 52px; flex-shrink: 0; border-radius: 16px; background: {{sel.soft}}; color: {{sel.color}}; display: flex; align-items: center; justify-content: center"><sc-if value="{{sel.ic.drop}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"></path></svg></sc-if><sc-if value="{{sel.ic.book}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 21V5M19 19v2H6"></path></svg></sc-if><sc-if value="{{sel.ic.route}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"></circle><circle cx="18" cy="5" r="2"></circle><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"></path></svg></sc-if><sc-if value="{{sel.ic.heart}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg></sc-if><sc-if value="{{sel.ic.pen}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="m13.5 6.5 4 4"></path></svg></sc-if><sc-if value="{{sel.ic.moon}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg></sc-if><sc-if value="{{sel.ic.dumbbell}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"></path></svg></sc-if><sc-if value="{{sel.ic.music}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"></path><circle cx="6.5" cy="18" r="2.5"></circle><circle cx="17.5" cy="16" r="2.5"></circle></svg></sc-if><sc-if value="{{sel.ic.leaf}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20c0-9 6-15 15-15 0 9-6 15-15 15z"></path><path d="M5 20 13 12"></path></svg></sc-if><sc-if value="{{sel.ic.code}}" hint-placeholder-val="{{false}}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 8-4 4 4 4M15 8l4 4-4 4"></path></svg></sc-if></span>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+<h3 style="margin: 0; font-family: 'Atkinson Hyperlegible', Geist, ui-sans-serif, system-ui, sans-serif; font-size: 22px; font-weight: 700; line-height: 1.15">{{sel.name}}</h3>
+<span style="font-size: 12px; color: {{t.muted}}">{{sel.goal}} · {{sel.freq}}</span>
+</div>
+<a href="HabitEdit.dc.html" style="height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid {{t.line}}; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Edit</a>
+</div>
+
+<div style="display: flex; align-items: flex-end; gap: 12px; padding: 18px; border-radius: 20px; background: {{sel.soft}}">
+<span style="font-family: 'Atkinson Hyperlegible', Geist, sans-serif; font-size: 64px; font-weight: 700; line-height: 0.9; letter-spacing: -0.03em; color: {{sel.color}}">{{sel.streak}}</span>
+<span style="display: flex; flex-direction: column; gap: 2px; padding-bottom: 4px"><span style="font-size: 14px; font-weight: 600">day streak</span><span style="font-size: 12px; color: {{t.muted}}">{{sel.streakNote}}</span></span>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 14px; background: {{t.panel}}; border: 1px solid {{t.line}}"><span style="font-size: 11px; color: {{t.muted}}">Best</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 17px">{{sel.best}}d</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 14px; background: {{t.panel}}; border: 1px solid {{t.line}}"><span style="font-size: 11px; color: {{t.muted}}">30 days</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 17px">{{sel.rate}}%</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 14px; background: {{t.panel}}; border: 1px solid {{t.line}}"><span style="font-size: 11px; color: {{t.muted}}">Total</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 17px">{{sel.total}}</span></div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">LAST 12 WEEKS</span><span style="font-size: 11px; color: {{t.muted}}">Jul – Sep</span></div>
+<div style="display: flex; gap: 6px">
+<div style="display: flex; flex-direction: column; gap: 4px; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 9px; color: {{t.muted}}">
+<span style="height: 17px; display: flex; align-items: center">M</span><span style="height: 17px"></span><span style="height: 17px; display: flex; align-items: center">W</span><span style="height: 17px"></span><span style="height: 17px; display: flex; align-items: center">F</span><span style="height: 17px"></span><span style="height: 17px; display: flex; align-items: center">S</span>
+</div>
+<div role="img" aria-label="{{sel.heatAria}}" style="flex-grow: 1; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-auto-flow: column; grid-template-rows: repeat(7, 17px); gap: 4px">
+<sc-for list="{{sel.heat}}" as="c" hint-placeholder-count="84">
+<span style="border-radius: 4px; background: {{c.bg}}; opacity: {{c.op}}; border: 1px {{c.bs}} {{c.bd}}"></span>
+</sc-for>
+</div>
+</div>
+<div style="display: flex; justify-content: flex-end; align-items: center; gap: 4px; font-size: 10px; color: {{t.muted}}">Less<span style="width: 12px; height: 12px; border-radius: 3px; background: {{t.panel2}}"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: {{sel.color}}; opacity: 0.35"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: {{sel.color}}; opacity: 0.65"></span><span style="width: 12px; height: 12px; border-radius: 3px; background: {{sel.color}}"></span>More</div>
+</div>
+
+<div style="display: flex; flex-direction: column; border-radius: 14px; border: 1px solid {{t.line}}; overflow: hidden; font-size: 13px">
+<div style="display: flex; justify-content: space-between; align-items: center; height: 44px; padding: 0 14px; border-bottom: 1px solid {{t.line}}"><span style="color: {{t.muted}}">Reminder</span><span style="font-weight: 500">{{sel.reminder}}</span></div>
+<div style="display: flex; justify-content: space-between; align-items: center; height: 44px; padding: 0 14px"><span style="color: {{t.muted}}">Time of day</span><span style="font-weight: 500">{{sel.tod}}</span></div>
+</div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["midnight","aurora","ember","daylight"],"default":"midnight"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  palette() {
+    return {
+      midnight: { bg: '#0A0C11', side: '#0D1017', panel: '#12161F', panel2: '#1A1F2B', line: 'rgba(255,255,255,0.07)', text: '#ECEEF5', muted: '#969DAF', faint: '#5D6477', accent: '#A092FF', accentInk: '#0A0C11', accentSoft: 'rgba(160,146,255,0.16)', accent2: '#5CE1C6', warn: '#FFB36B', danger: '#FF7A85', scrim: 'rgba(4,5,9,0.62)', hues: ['#A092FF', '#5CE1C6', '#FFB36B', '#FF7A85', '#6FA8FF', '#F28DC4'] },
+      aurora: { bg: '#07110F', side: '#0A1614', panel: '#0F1D1A', panel2: '#162824', line: 'rgba(220,255,245,0.08)', text: '#E8F4F0', muted: '#93ABA4', faint: '#4E6760', accent: '#4FE0B0', accentInk: '#06120F', accentSoft: 'rgba(79,224,176,0.16)', accent2: '#7CB8FF', warn: '#FFC37A', danger: '#FF8590', scrim: 'rgba(2,8,7,0.62)', hues: ['#4FE0B0', '#7CB8FF', '#FFC37A', '#FF8590', '#B69CFF', '#F59BC9'] },
+      ember: { bg: '#110C0A', side: '#16100D', panel: '#1D1512', panel2: '#281E19', line: 'rgba(255,235,220,0.08)', text: '#F6ECE6', muted: '#B5A197', faint: '#6E5A50', accent: '#FF9A5C', accentInk: '#140C08', accentSoft: 'rgba(255,154,92,0.16)', accent2: '#F2CF6A', warn: '#FFC37A', danger: '#FF7A7A', scrim: 'rgba(8,5,4,0.62)', hues: ['#FF9A5C', '#F2CF6A', '#8FD9A8', '#FF7A7A', '#7FB6FF', '#E79AD0'] },
+      daylight: { bg: '#F3F2EE', side: '#ECEAE4', panel: '#FFFFFF', panel2: '#F3F2EE', line: 'rgba(20,22,30,0.09)', text: '#15171D', muted: '#5A5F6B', faint: '#A9A69E', accent: '#5A48E0', accentInk: '#FFFFFF', accentSoft: 'rgba(90,72,224,0.12)', accent2: '#0B8A6D', warn: '#B4501A', danger: '#C62F3D', scrim: 'rgba(20,22,30,0.38)', hues: ['#5A48E0', '#0B8A6D', '#B4501A', '#C62F3D', '#2F6FD6', '#B23A7C'] }
+    };
+  }
+  soft(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+  icFlags(key) {
+    const o = {};
+    ['drop', 'book', 'route', 'heart', 'pen', 'moon', 'dumbbell', 'music', 'leaf', 'code'].forEach((k) => { o[k] = k === key; });
+    return o;
+  }
+
+  habitsData() {
+    return [
+      { id: 'walk', name: 'Morning walk', icon: 'route', hue: 1, tod: 'morning', type: 'check', goal: '20 min', streak: 22, best: 31, rate: 93, total: 214, reminder: '8:30 AM', freq: 'Every day', past: [1, 1, 1, 1] },
+      { id: 'stretch', name: 'Stretch', icon: 'heart', hue: 5, tod: 'morning', type: 'check', goal: '10 min', streak: 3, best: 14, rate: 61, total: 96, reminder: '9:00 AM', freq: 'Every day', past: [0, 1, 1, 1] },
+      { id: 'water', name: 'Drink water', icon: 'drop', hue: 4, tod: 'anytime', type: 'count', target: 8, unit: 'glasses', goal: '8 glasses', streak: 11, best: 19, rate: 84, total: 172, reminder: 'Every 2 hours', freq: 'Every day', past: [1, 1, 1, 1] },
+      { id: 'read', name: 'Read 20 minutes', icon: 'book', hue: 0, tod: 'anytime', type: 'check', goal: '20 min', streak: 4, best: 12, rate: 70, total: 118, reminder: '7:00 PM', freq: 'Every day', past: [0, 1, 1, 1] },
+      { id: 'journal', name: 'Journal', icon: 'pen', hue: 2, tod: 'evening', type: 'check', goal: '3 lines', streak: 8, best: 20, rate: 77, total: 133, reminder: '10:30 PM', freq: 'Every day', past: [1, 1, 1, 1] },
+      { id: 'sleep', name: 'Lights out by 1 AM', icon: 'moon', hue: 3, tod: 'evening', type: 'check', goal: 'Screens off', streak: 0, best: 6, rate: 42, total: 51, reminder: '12:30 AM', freq: 'Weeknights', past: [0, 1, 0, 0] }
+    ];
+  }
+
+  renderVals() {
+    const P = this.palette();
+    const s = this.state || {};
+    const t = P[this.props.theme] || P.midnight;
+    const data = this.habitsData();
+    const done = s.done || { walk: true, read: true };
+    const counts = s.counts || { water: 5 };
+    const isDone = (h) => (h.type === 'count' ? (counts[h.id] || 0) >= h.target : !!done[h.id]);
+    const selId = s.sel || 'water';
+    const view = s.view || 'today';
+
+    const TOD = { morning: 'MORNING', anytime: 'ANYTIME', evening: 'EVENING' };
+    const todLabel = { morning: 'Morning', anytime: 'Anytime', evening: 'Evening' };
+    const dayL = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    const card = (h) => {
+      const c = t.hues[h.hue];
+      const d = isDone(h);
+      const sel = h.id === selId;
+      const cnt = counts[h.id] || 0;
+      const week = [0, 1, 2, 3, 4, 5, 6].map((i) => {
+        if (i < 4) { const ok = h.past[i] === 1; return { bg: ok ? c : 'transparent', bd: ok ? c : t.faint, bs: 'solid', title: dayNames[i] + (ok ? ': done' : ': missed') }; }
+        if (i === 4) {
+          if (h.type === 'count' && !d && cnt > 0) return { bg: this.soft(c, 0.45), bd: c, bs: 'solid', title: 'Today: ' + cnt + ' of ' + h.target };
+          return { bg: d ? c : 'transparent', bd: c, bs: 'solid', title: 'Today' + (d ? ': done' : '') };
+        }
+        return { bg: 'transparent', bd: t.faint, bs: 'dashed', title: dayNames[i] };
+      });
+      return {
+        name: h.name, goal: h.goal, color: c, soft: this.soft(c, 0.16), ic: this.icFlags(h.icon),
+        streak: h.streak + (d ? 1 : 0), streakFg: d ? c : t.muted,
+        week: week, weekAria: 'This week: ' + h.past.filter((x) => x).length + ' of 4 past days done',
+        isCount: h.type === 'count', isCheck: h.type !== 'count',
+        count: cnt, target: h.target,
+        inc: () => this.setState({ counts: { ...counts, [h.id]: Math.min(h.target + 4, cnt + 1) } }),
+        dec: () => this.setState({ counts: { ...counts, [h.id]: Math.max(0, cnt - 1) } }),
+        incAria: 'Add one to ' + h.name, decAria: 'Remove one from ' + h.name,
+        toggle: () => this.setState({ done: { ...done, [h.id]: !done[h.id] } }),
+        doneStr: String(d), aria: (d ? 'Undo today: ' : 'Mark done today: ') + h.name,
+        btnBg: d ? c : 'transparent', btnBd: d ? c : t.faint, btnFg: d ? t.accentInk : t.muted,
+        bg: sel ? t.panel : 'transparent', bd: sel ? t.line : 'transparent',
+        pick: () => this.setState({ sel: h.id })
+      };
+    };
+
+    const shown = data.filter((h) => (view === 'todo' ? !isDone(h) : (view === 'done' ? isDone(h) : true)));
+    const groups = ['morning', 'anytime', 'evening'].map((k) => {
+      const items = shown.filter((h) => h.tod === k);
+      const all = data.filter((h) => h.tod === k);
+      return { label: TOD[k], doneLabel: all.filter(isDone).length + '/' + all.length, items: items.map(card), n: items.length };
+    }).filter((g) => g.n > 0);
+
+    const doneCount = data.filter(isDone).length;
+    const C = 2 * Math.PI * 22;
+    const ring = { c: C.toFixed(1), off: (C * (1 - doneCount / data.length)).toFixed(1), label: doneCount + ' of ' + data.length + ' done', sub: doneCount === data.length ? 'Perfect day' : (data.length - doneCount) + ' to go today' };
+
+    const views = [['today', 'All for today', data.length], ['todo', 'Still to do', data.length - doneCount], ['done', 'Done today', doneCount]].map((v) => ({
+      label: v[1], count: v[2], cur: v[0] === view ? 'page' : 'false',
+      bg: v[0] === view ? t.panel : 'transparent', fg: v[0] === view ? t.text : t.muted,
+      pick: () => this.setState({ view: v[0] })
+    }));
+
+    const pastPct = [0, 1, 2, 3].map((i) => data.filter((h) => h.past[i] === 1).length / data.length);
+    const todayPct = doneCount / data.length;
+    const weekBars = dayL.map((l, i) => {
+      if (i < 4) return { l: l, h: Math.max(6, Math.round(pastPct[i] * 44)), bg: this.soft(t.accent2, 0.55), bd: 'transparent', bs: 'solid', fg: t.muted };
+      if (i === 4) return { l: l, h: Math.max(6, Math.round(todayPct * 44)), bg: t.accent2, bd: 'transparent', bs: 'solid', fg: t.accent2 };
+      return { l: l, h: 44, bg: 'transparent', bd: t.faint, bs: 'dashed', fg: t.muted };
+    });
+    const weekTotal = data.reduce((a, h) => a + h.past.filter((x) => x).length, 0) + doneCount;
+    const weekPct = Math.round(weekTotal / (data.length * 5) * 100);
+
+    const sh = data.find((h) => h.id === selId) || data[0];
+    const sc = t.hues[sh.hue];
+    const sd = isDone(sh);
+    let seed = sh.rate * 7 + sh.name.length;
+    const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    const heat = [];
+    for (let i = 0; i < 84; i++) {
+      const week = Math.floor(i / 7), dow = i % 7;
+      const isFuture = week === 11 && dow > 4;
+      const isToday = week === 11 && dow === 4;
+      let lvl = 0;
+      if (isToday) lvl = sd ? 3 : (sh.type === 'count' && (counts[sh.id] || 0) > 0 ? 1 : 0);
+      else if (!isFuture) { const r = rnd(); lvl = r < sh.rate / 100 ? (sh.type === 'count' ? (r < sh.rate / 250 ? 2 : 3) : 3) : (sh.type === 'count' && r < 0.95 ? 1 : 0); }
+      heat.push({
+        bg: isFuture ? 'transparent' : (lvl === 0 ? t.panel2 : sc),
+        op: lvl === 0 || isFuture ? 1 : (lvl === 1 ? 0.35 : (lvl === 2 ? 0.65 : 1)),
+        bd: isToday ? t.text : (isFuture ? t.line : 'transparent'), bs: isFuture ? 'dashed' : 'solid'
+      });
+    }
+    const bestHabit = data.slice().sort((a, b) => b.best - a.best)[0];
+    const consistent = data.slice().sort((a, b) => b.rate - a.rate)[0];
+    const low = data.slice().sort((a, b) => a.rate - b.rate)[0];
+
+    return {
+      t: t, views: views, groups: groups, ring: ring, weekBars: weekBars, weekPct: weekPct,
+      heading: view === 'todo' ? 'Still to do' : (view === 'done' ? 'Done today' : 'Today'),
+      record: { best: bestHabit.name + ' · ' + bestHabit.best + 'd', consistent: consistent.name + ' · ' + consistent.rate + '%', low: low.name },
+      sel: {
+        name: sh.name, goal: sh.goal, freq: sh.freq, color: sc, soft: this.soft(sc, 0.16), ic: this.icFlags(sh.icon),
+        streak: sh.streak + (sd ? 1 : 0), streakNote: sd ? 'Done today, nice.' : 'Check in today to keep it going',
+        best: sh.best, rate: sh.rate, total: sh.total + (sd ? 1 : 0), heat: heat,
+        heatAria: 'Last 12 weeks: done on about ' + sh.rate + ' percent of days',
+        reminder: sh.reminder, tod: todLabel[sh.tod]
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

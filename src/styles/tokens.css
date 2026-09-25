@@ -1,0 +1,124 @@
+/* The four themes. Every theme uses the same layout and only swaps these
+   tokens (DESIGN.md §2). Midnight is the base. The html element carries
+   data-theme; switching it reskins everything at once.
+
+   hue-0 … hue-5 are the six colors people pick for habits and goal areas, in
+   the order the mockups refer to them: Violet, Mint, Amber, Coral, Sky, Pink. */
+
+:root,
+:root[data-theme="midnight"] {
+  color-scheme: dark;
+  --bg: #0a0c11;
+  --side: #0d1017;
+  --panel: #12161f;
+  --panel2: #1a1f2b;
+  --line: rgba(255, 255, 255, 0.07);
+  --text: #eceef5;
+  --muted: #969daf;
+  --faint: #5d6477;
+  --accent: #a092ff;
+  --accent-ink: #0a0c11;
+  --accent-soft: rgba(160, 146, 255, 0.16);
+  --accent2: #5ce1c6;
+  --accent2-soft: rgba(92, 225, 198, 0.14);
+  --warn: #ffb36b;
+  --warn-soft: rgba(255, 179, 107, 0.14);
+  --danger: #ff7a85;
+  --glow: rgba(160, 146, 255, 0.2);
+  --scrim: rgba(4, 5, 9, 0.62);
+  --today-tint: rgba(160, 146, 255, 0.05);
+  --hue-0: #a092ff;
+  --hue-1: #5ce1c6;
+  --hue-2: #ffb36b;
+  --hue-3: #ff7a85;
+  --hue-4: #6fa8ff;
+  --hue-5: #f28dc4;
+}
+
+:root[data-theme="aurora"] {
+  color-scheme: dark;
+  --bg: #07110f;
+  --side: #0a1614;
+  --panel: #0f1d1a;
+  --panel2: #162824;
+  --line: rgba(220, 255, 245, 0.08);
+  --text: #e8f4f0;
+  --muted: #93aba4;
+  --faint: #4e6760;
+  --accent: #4fe0b0;
+  --accent-ink: #06120f;
+  --accent-soft: rgba(79, 224, 176, 0.16);
+  --accent2: #7cb8ff;
+  --accent2-soft: rgba(124, 184, 255, 0.14);
+  --warn: #ffc37a;
+  --warn-soft: rgba(255, 195, 122, 0.14);
+  --danger: #ff8590;
+  --glow: rgba(79, 224, 176, 0.18);
+  --scrim: rgba(2, 8, 7, 0.62);
+  --today-tint: rgba(79, 224, 176, 0.05);
+  --hue-0: #4fe0b0;
+  --hue-1: #7cb8ff;
+  --hue-2: #ffc37a;
+  --hue-3: #ff8590;
+  --hue-4: #b69cff;
+  --hue-5: #f59bc9;
+}
+
+/* Some mockups give Ember's warn as #FF8A7A. DESIGN.md settles it: #FFC37A. */
+:root[data-theme="ember"] {
+  color-scheme: dark;
+  --bg: #110c0a;
+  --side: #16100d;
+  --panel: #1d1512;
+  --panel2: #281e19;
+  --line: rgba(255, 235, 220, 0.08);
+  --text: #f6ece6;
+  --muted: #b5a197;
+  --faint: #6e5a50;
+  --accent: #ff9a5c;
+  --accent-ink: #140c08;
+  --accent-soft: rgba(255, 154, 92, 0.16);
+  --accent2: #f2cf6a;
+  --accent2-soft: rgba(242, 207, 106, 0.14);
+  --warn: #ffc37a;
+  --warn-soft: rgba(255, 195, 122, 0.14);
+  --danger: #ff7a7a;
+  --glow: rgba(255, 154, 92, 0.18);
+  --scrim: rgba(8, 5, 4, 0.62);
+  --today-tint: rgba(255, 154, 92, 0.05);
+  --hue-0: #ff9a5c;
+  --hue-1: #f2cf6a;
+  --hue-2: #8fd9a8;
+  --hue-3: #ff7a7a;
+  --hue-4: #7fb6ff;
+  --hue-5: #e79ad0;
+}
+
+:root[data-theme="daylight"] {
+  color-scheme: light;
+  --bg: #f3f2ee;
+  --side: #eceae4;
+  --panel: #ffffff;
+  --panel2: #f3f2ee;
+  --line: rgba(20, 22, 30, 0.09);
+  --text: #15171d;
+  --muted: #5a5f6b;
+  --faint: #a9a69e;
+  --accent: #5a48e0;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(90, 72, 224, 0.12);
+  --accent2: #0b8a6d;
+  --accent2-soft: rgba(11, 138, 109, 0.12);
+  --warn: #b4501a;
+  --warn-soft: rgba(180, 80, 26, 0.12);
+  --danger: #c62f3d;
+  --glow: rgba(90, 72, 224, 0.1);
+  --scrim: rgba(20, 22, 30, 0.38);
+  --today-tint: rgba(90, 72, 224, 0.04);
+  --hue-0: #5a48e0;
+  --hue-1: #0b8a6d;
+  --hue-2: #b4501a;
+  --hue-3: #c62f3d;
+  --hue-4: #2f6fd6;
+  --hue-5: #b23a7c;
+}

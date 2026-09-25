@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project Life · Notes</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:"Geist",ui-sans-serif,system-ui,sans-serif;background:#0A0C11;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button{font:inherit;cursor:pointer;background:none;border:0;padding:0;color:inherit}
+input{font:inherit}
+input::placeholder{color:inherit;opacity:.8}
+input:focus{outline:none}
+button:focus-visible,a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:12px;height:12px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background-color:var(--sb-thumb,rgba(128,128,128,.4));border-radius:999px;border:3px solid transparent;background-clip:padding-box;min-height:40px}::-webkit-scrollbar-thumb:hover{background-color:var(--sb-hover,rgba(128,128,128,.7))}::-webkit-scrollbar-thumb:active{background-color:var(--sb-active,rgba(128,128,128,.9))}::-webkit-scrollbar-button{display:none;width:0;height:0}
+</style>
+</helmet>
+<div style="--sb-thumb: {{t.faint}}; --sb-hover: {{t.muted}}; --sb-active: {{t.accent}}; width: 1440px; height: 1000px; display: flex; background: {{t.bg}}; color: {{t.text}}; overflow: hidden; font-family: Geist, ui-sans-serif, system-ui, sans-serif">
+
+<nav aria-label="App" style="width: 72px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 20px 0 18px; background: {{t.side}}; border-right: 1px solid {{t.line}}">
+<div style="width: 36px; height: 36px; border-radius: 11px; background: {{t.accent}}; color: {{t.accentInk}}; display: flex; align-items: center; justify-content: center; margin-bottom: 14px">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7.5"></circle><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"></circle><path d="M12 1.8v3M12 19.2v3"></path></svg>
+</div>
+<a href="Main.dc.html" aria-label="Home" title="Home" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg></a>
+<button aria-label="Notes" title="Notes" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: {{t.accentSoft}}; color: {{t.accent}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"></path><path d="M14 3v5h5"></path><path d="M9 13h7M9 17h5"></path></svg></button>
+<button aria-label="Schedule" title="Schedule" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg></button>
+<button aria-label="Tasks" title="Tasks" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="m8 12 3 3 5-6"></path></svg></button>
+<a href="Habits.dc.html" aria-label="Habits" title="Habits" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3L20 9"></path><path d="M20 4v5h-5"></path><path d="M20 12a8 8 0 0 1-14 5.3L4 15"></path><path d="M4 20v-5h5"></path></svg></a>
+<a href="Goals.dc.html" aria-label="Goals" title="Goals" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"></circle><circle cx="12" cy="12" r="4.5"></circle><circle cx="12" cy="12" r="1"></circle></svg></a>
+<div style="flex-grow: 1"></div>
+<a href="Settings.dc.html" aria-label="Settings" title="Settings" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"></path><circle cx="16" cy="7" r="2"></circle><circle cx="10" cy="17" r="2"></circle></svg></a>
+<div style="width: 36px; height: 36px; border-radius: 50%; background: {{t.panel2}}; border: 1px solid {{t.line}}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: {{t.accent}}">U</div>
+</nav>
+
+<aside style="width: 284px; flex-shrink: 0; display: flex; flex-direction: column; gap: 18px; padding: 22px 16px 16px; background: {{t.side}}; border-right: 1px solid {{t.line}}">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 0 6px">
+<h1 style="margin: 0; font-family: 'Atkinson Hyperlegible', Geist, ui-sans-serif, system-ui, sans-serif; font-size: 24px; font-weight: 700; letter-spacing: -0.01em">Notes</h1>
+<button aria-label="New note" title="New note (Ctrl+N)" style="width: 40px; height: 40px; border-radius: 12px; background: {{t.accent}}; color: {{t.accentInk}}; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+</div>
+<label for="pl-find" style="display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 10px 0 12px; border-radius: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.muted}}">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+<input id="pl-find" placeholder="Find a note" aria-label="Find a note" style="flex-grow: 1; min-width: 0; background: transparent; border: 0; color: {{t.text}}; font-size: 13px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; padding: 3px 6px; border-radius: 6px; border: 1px solid {{t.line}}">Ctrl P</span>
+</label>
+<div style="display: flex; gap: 6px">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+<button onClick="{{f.pick}}" style="height: 30px; padding: 0 12px; border-radius: 999px; font-size: 12px; font-weight: 500; background: {{f.bg}}; color: {{f.fg}}; border: 1px solid {{f.bd}}">{{f.label}}</button>
+</sc-for>
+</div>
+
+<div class="pl-scroll" style="flex-grow: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<div style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}; padding: 0 8px 6px">PINNED</div>
+<sc-for list="{{pinned}}" as="p" hint-placeholder-count="2">
+<button onClick="{{p.open}}" style="display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 8px; border-radius: 10px; font-size: 13px; text-align: left; color: {{p.fg}}; background: {{p.bg}}">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color: {{t.accent}}"><path d="M12 17v5"></path><path d="M9 3h6l-1 5 4 4H6l4-4z"></path></svg>
+<span style="flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{p.title}}</span>
+</button>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 2px">
+<div style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}; padding: 0 8px 6px">NOTEBOOKS</div>
+<sc-for list="{{tree}}" as="r" hint-placeholder-count="9">
+<button onClick="{{r.click}}" aria-expanded="{{r.expanded}}" style="display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 8px 0 {{r.pad}}; border-radius: 10px; font-size: 13px; text-align: left; color: {{r.fg}}; background: {{r.bg}}; font-weight: {{r.weight}}">
+<span style="width: 14px; display: flex; justify-content: center; color: {{t.muted}}">
+<sc-if value="{{r.kids}}" hint-placeholder-val="{{false}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate({{r.rot}}deg)"><path d="m9 6 6 6-6 6"></path></svg></sc-if>
+</span>
+<span style="flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.title}}</span>
+<sc-if value="{{r.hasPri}}" hint-placeholder-val="{{false}}"><span title="{{r.priLabel}}" style="width: 7px; height: 7px; border-radius: 50%; background: {{r.pri}}"></span></sc-if>
+<sc-if value="{{r.showCount}}" hint-placeholder-val="{{false}}"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}">{{r.count}}</span></sc-if>
+</button>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}; padding: 0 8px">TAGS</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 0 4px">
+<button style="height: 28px; padding: 0 10px; border-radius: 8px; font-size: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.muted}}">#design</button>
+<button style="height: 28px; padding: 0 10px; border-radius: 8px; font-size: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.muted}}">#themes</button>
+<button style="height: 28px; padding: 0 10px; border-radius: 8px; font-size: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.muted}}">#stream</button>
+<button style="height: 28px; padding: 0 10px; border-radius: 8px; font-size: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.muted}}">#work</button>
+<button style="height: 28px; padding: 0 10px; border-radius: 8px; font-size: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.muted}}">#ideas</button>
+</div>
+</div>
+</div>
+
+<button style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; border-radius: 10px; font-size: 13px; color: {{t.muted}}; border-top: 1px solid {{t.line}}">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6"></path><path d="M6 7l1 13h10l1-13"></path><path d="M9 7V4h6v3"></path></svg>
+<span style="flex-grow: 1; text-align: left">Recycle Bin</span>
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px">2</span>
+</button>
+</aside>
+
+<section style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; background: {{t.bg}}">
+<div role="tablist" aria-label="Open notes" style="height: 50px; flex-shrink: 0; display: flex; align-items: flex-end; gap: 4px; padding: 0 14px; background: {{t.side}}; border-bottom: 1px solid {{t.line}}">
+<sc-for list="{{tabs}}" as="tb" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 4px; height: 40px; max-width: 220px; padding: 0 6px 0 14px; border-radius: 12px 12px 0 0; background: {{tb.bg}}; color: {{tb.fg}}; border: 1px solid {{tb.bd}}; border-bottom: 0; margin-bottom: -1px">
+<button role="tab" aria-selected="{{tb.on}}" onClick="{{tb.pick}}" style="font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 100%">{{tb.title}}</button>
+<button aria-label="{{tb.closeLabel}}" style="width: 28px; height: 28px; flex-shrink: 0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+</div>
+</sc-for>
+<button aria-label="New tab (Ctrl+T)" style="width: 36px; height: 36px; margin-bottom: 2px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+</div>
+
+<div style="height: 58px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 24px; border-bottom: 1px solid {{t.line}}">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: {{t.muted}}; min-width: 0">
+<a href="#" style="color: {{t.muted}}">Checkpoint</a>
+<span aria-hidden="true">/</span>
+<a href="#" style="color: {{t.muted}}">Design</a>
+<span aria-hidden="true">/</span>
+<span style="color: {{t.text}}; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Checkpoint: theme ideas</span>
+</div>
+<div style="display: flex; align-items: center; gap: 8px">
+<div role="group" aria-label="Editor mode" style="display: flex; padding: 3px; border-radius: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<button onClick="{{toVisual}}" aria-pressed="{{isVisual}}" style="height: 32px; padding: 0 14px; border-radius: 9px; font-size: 13px; font-weight: 500; background: {{modeVisBg}}; color: {{modeVisFg}}">Visual</button>
+<button onClick="{{toMd}}" aria-pressed="{{isMd}}" style="height: 32px; padding: 0 14px; border-radius: 9px; font-size: 13px; font-weight: 500; background: {{modeMdBg}}; color: {{modeMdFg}}">Markdown</button>
+</div>
+<button onClick="{{togglePin}}" aria-label="{{pinLabel}}" title="Pin (Ctrl+Alt+P)" style="width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: {{pinColor}}; border: 1px solid {{t.line}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"></path><path d="M9 3h6l-1 5 4 4H6l4-4z"></path></svg></button>
+<button aria-label="Export" title="Export" style="width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}; border: 1px solid {{t.line}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 9l5-5 5 5"></path><path d="M5 15v4h14v-4"></path></svg></button>
+<button aria-label="More" style="width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}; border: 1px solid {{t.line}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg></button>
+</div>
+</div>
+
+<div class="pl-scroll" style="flex-grow: 1; min-height: 0; overflow-y: auto">
+<div style="width: 660px; margin: 0 auto; padding: 28px 0 120px; display: flex; flex-direction: column; gap: 18px">
+
+<sc-if value="{{isVisual}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-direction: column; gap: 18px">
+<div style="position: relative; height: 136px; border-radius: 20px; overflow: hidden; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<svg width="660" height="136" viewBox="0 0 660 136" aria-hidden="true" style="display: block">
+<defs><pattern id="pl-dots" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="{{t.line}}"></circle></pattern></defs>
+<rect width="660" height="136" fill="url(#pl-dots)"></rect>
+<circle cx="520" cy="40" r="120" fill="{{t.accentSoft}}"></circle>
+<circle cx="600" cy="120" r="70" fill="{{t.accent}}" opacity="0.85"></circle>
+<circle cx="470" cy="96" r="26" fill="{{t.accent2}}"></circle>
+<path d="M330 136 L400 36 L440 136 Z" fill="{{t.panel2}}"></path>
+<path d="M400 36 L440 136" stroke="{{t.accent2}}" stroke-width="2"></path>
+</svg>
+<button style="position: absolute; right: 14px; top: 14px; height: 32px; padding: 0 12px; border-radius: 10px; font-size: 12px; font-weight: 500; background: {{t.bg}}; color: {{t.text}}; border: 1px solid {{t.line}}">Change cover</button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-family: 'Atkinson Hyperlegible', Geist, ui-sans-serif, system-ui, sans-serif; font-size: 40px; font-weight: 700; line-height: 1.1; letter-spacing: -0.015em">Checkpoint: theme ideas</h2>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px">
+<span style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 8px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.muted}}">Checkpoint / Design</span>
+<span style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 8px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.warn}}; font-weight: 500"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{t.warn}}"></span>High priority</span>
+<span style="display: flex; align-items: center; height: 28px; padding: 0 10px; border-radius: 8px; background: {{t.accentSoft}}; color: {{t.accent}}; font-weight: 500">#design</span>
+<span style="display: flex; align-items: center; height: 28px; padding: 0 10px; border-radius: 8px; background: {{t.accentSoft}}; color: {{t.accent}}; font-weight: 500">#themes</span>
+<span style="color: {{t.muted}}; margin-left: 4px">Edited 2h ago</span>
+</div>
+</div>
+
+<h3 style="margin: 10px 0 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Direction</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.65; color: {{t.text}}; text-wrap: pretty">Midnight is the base. Deep ink backgrounds, one violet accent, and mint for anything live. Every other theme keeps the same layout and only swaps the palette.</p>
+
+<div style="position: relative">
+<div style="position: absolute; left: -56px; top: 12px; display: flex; gap: 2px; color: {{t.muted}}">
+<button aria-label="Add block" style="width: 24px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+<button aria-label="Drag or change block" style="width: 24px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: {{t.panel2}}"><svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor"><circle cx="3.5" cy="2.5" r="1.3"></circle><circle cx="8.5" cy="2.5" r="1.3"></circle><circle cx="3.5" cy="7" r="1.3"></circle><circle cx="8.5" cy="7" r="1.3"></circle><circle cx="3.5" cy="11.5" r="1.3"></circle><circle cx="8.5" cy="11.5" r="1.3"></circle></svg></button>
+</div>
+<div style="display: flex; gap: 14px; padding: 16px 18px; border-radius: 16px; background: {{t.accentSoft}}; border: 1px solid {{t.line}}">
+<span style="width: 28px; height: 28px; flex-shrink: 0; border-radius: 9px; background: {{t.accent}}; color: {{t.accentInk}}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 11v6M12 7.5v.01"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 14px; font-weight: 600">Contrast rule</div>
+<div style="font-size: 15px; line-height: 1.55">Accents never carry white text. Use the theme's ink color on top instead.</div>
+</div>
+</div>
+</div>
+
+<a href="#" style="display: flex; gap: 16px; padding: 12px; border-radius: 16px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<span style="width: 96px; height: 72px; flex-shrink: 0; border-radius: 10px; background: {{t.panel2}}; display: flex; align-items: center; justify-content: center; font-family: 'Atkinson Hyperlegible', Geist, sans-serif; font-weight: 700; font-size: 30px; color: {{t.accent}}">Aa</span>
+<span style="display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0">
+<span style="font-size: 14px; font-weight: 600">Atkinson Hyperlegible</span>
+<span style="font-size: 13px; color: {{t.muted}}">A typeface built for readability, by the Braille Institute.</span>
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}">fonts.google.com</span>
+</span>
+</a>
+
+<h3 style="margin: 10px 0 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Theme lineup</h3>
+<table style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; border: 1px solid {{t.line}}; border-radius: 14px; overflow: hidden">
+<thead>
+<tr style="background: {{t.panel}}">
+<th scope="col" style="text-align: left; padding: 11px 16px; font-weight: 600; font-size: 12px; color: {{t.muted}}; border-bottom: 1px solid {{t.line}}">Theme</th>
+<th scope="col" style="text-align: left; padding: 11px 16px; font-weight: 600; font-size: 12px; color: {{t.muted}}; border-bottom: 1px solid {{t.line}}">Mood</th>
+<th scope="col" style="text-align: left; padding: 11px 16px; font-weight: 600; font-size: 12px; color: {{t.muted}}; border-bottom: 1px solid {{t.line}}">Accent</th>
+</tr>
+</thead>
+<tbody>
+<tr><td style="padding: 11px 16px; border-bottom: 1px solid {{t.line}}; font-weight: 500">Midnight</td><td style="padding: 11px 16px; border-bottom: 1px solid {{t.line}}; color: {{t.muted}}">Calm, focused</td><td style="padding: 11px 16px; border-bottom: 1px solid {{t.line}}"><span style="display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #A092FF"></span>Violet</span></td></tr>
+<tr><td style="padding: 11px 16px; border-bottom: 1px solid {{t.line}}; font-weight: 500">Aurora</td><td style="padding: 11px 16px; border-bottom: 1px solid {{t.line}}; color: {{t.muted}}">Fresh, airy</td><td style="padding: 11px 16px; border-bottom: 1px solid {{t.line}}"><span style="display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #4FE0B0"></span>Mint</span></td></tr>
+<tr><td style="padding: 11px 16px; border-bottom: 1px solid {{t.line}}; font-weight: 500">Ember</td><td style="padding: 11px 16px; border-bottom: 1px solid {{t.line}}; color: {{t.muted}}">Warm, cozy</td><td style="padding: 11px 16px; border-bottom: 1px solid {{t.line}}"><span style="display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #FF9A5C"></span>Orange</span></td></tr>
+<tr><td style="padding: 11px 16px; font-weight: 500">Daylight</td><td style="padding: 11px 16px; color: {{t.muted}}">Bright, clean</td><td style="padding: 11px 16px"><span style="display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 4px; background: #5A48E0"></span>Indigo</span></td></tr>
+</tbody>
+</table>
+
+<h3 style="margin: 10px 0 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em">Before the review</h3>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{todos}}" as="td" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 10px; min-height: 44px">
+<button onClick="{{td.toggle}}" aria-label="{{td.aria}}" style="width: 44px; height: 44px; margin: 0 -10px 0 -12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center">
+<span style="width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid {{td.cb}}; background: {{td.cbg}}; color: {{t.accentInk}}; display: flex; align-items: center; justify-content: center">
+<sc-if value="{{td.done}}" hint-placeholder-val="{{false}}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 12.5 4 4 8-9"></path></svg></sc-if>
+</span>
+</button>
+<span style="flex-grow: 1; font-size: 16px; color: {{td.fg}}; text-decoration: {{td.deco}}">{{td.text}}</span>
+<sc-if value="{{td.hasDue}}" hint-placeholder-val="{{false}}"><span style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 500; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{td.dueFg}}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>{{td.due}}</span></sc-if>
+</div>
+</sc-for>
+</div>
+
+<div style="position: relative; display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 16px; line-height: 1.65; display: flex; align-items: center"><span style="color: {{t.text}}">/</span><span style="width: 2px; height: 20px; margin-left: 1px; background: {{t.accent}}"></span><sc-if value="{{slashClosed}}" hint-placeholder-val="{{false}}"><span style="color: {{t.muted}}; margin-left: 8px">Type / for blocks</span></sc-if></div>
+<sc-if value="{{slashOpen}}" hint-placeholder-val="{{true}}">
+<div role="menu" aria-label="Insert block" style="width: 340px; padding: 8px; border-radius: 16px; background: {{t.panel}}; border: 1px solid {{t.line}}; box-shadow: 0 24px 60px rgba(0,0,0,0.45); display: flex; flex-direction: column; gap: 2px">
+<div style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}; padding: 6px 10px 8px">BLOCKS</div>
+<button role="menuitem" onClick="{{closeSlash}}" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 10px; border-radius: 10px; text-align: left; background: {{t.accentSoft}}"><span style="width: 30px; height: 30px; border-radius: 8px; background: {{t.panel2}}; color: {{t.accent}}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 5v14M18 5v14M6 12h12"></path></svg></span><span style="flex-grow: 1; font-size: 14px; font-weight: 500">Heading</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}">#</span></button>
+<button role="menuitem" onClick="{{closeSlash}}" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 10px; border-radius: 10px; text-align: left"><span style="width: 30px; height: 30px; border-radius: 8px; background: {{t.panel2}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"></rect><path d="m8.5 12 2.5 2.5 4.5-5"></path></svg></span><span style="flex-grow: 1; font-size: 14px; font-weight: 500">To-do list</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}">[]</span></button>
+<button role="menuitem" onClick="{{closeSlash}}" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 10px; border-radius: 10px; text-align: left"><span style="width: 30px; height: 30px; border-radius: 8px; background: {{t.panel2}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"></path><path d="M12 8.5v3M12 13.5v.01"></path></svg></span><span style="flex-grow: 1; font-size: 14px; font-weight: 500">Callout</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}">&gt; [!info]</span></button>
+<button role="menuitem" onClick="{{closeSlash}}" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 10px; border-radius: 10px; text-align: left"><span style="width: 30px; height: 30px; border-radius: 8px; background: {{t.panel2}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 10h17M10 10v9.5"></path></svg></span><span style="flex-grow: 1; font-size: 14px; font-weight: 500">Table</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}">| |</span></button>
+<button role="menuitem" onClick="{{closeSlash}}" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 10px; border-radius: 10px; text-align: left"><span style="width: 30px; height: 30px; border-radius: 8px; background: {{t.panel2}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 8-4 4 4 4M15 8l4 4-4 4"></path></svg></span><span style="flex-grow: 1; font-size: 14px; font-weight: 500">Code block</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}">```</span></button>
+<button role="menuitem" onClick="{{closeSlash}}" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 10px; border-radius: 10px; text-align: left"><span style="width: 30px; height: 30px; border-radius: 8px; background: {{t.panel2}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg></span><span style="flex-grow: 1; font-size: 14px; font-weight: 500">Date and time</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}">/date</span></button>
+<button role="menuitem" onClick="{{closeSlash}}" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 10px; border-radius: 10px; text-align: left"><span style="width: 30px; height: 30px; border-radius: 8px; background: {{t.panel2}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"></path></svg></span><span style="flex-grow: 1; font-size: 14px; font-weight: 500">Table of contents</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}">/toc</span></button>
+<button role="menuitem" onClick="{{closeSlash}}" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 10px; border-radius: 10px; text-align: left"><span style="width: 30px; height: 30px; border-radius: 8px; background: {{t.panel2}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect><circle cx="9" cy="10" r="1.8"></circle><path d="m20.5 16-5-5-9 8.5"></path></svg></span><span style="flex-grow: 1; font-size: 14px; font-weight: 500">Image</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}">/img</span></button>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isMd}}" hint-placeholder-val="{{false}}">
+<pre style="margin: 0; padding: 24px 26px; border-radius: 18px; background: {{t.panel}}; border: 1px solid {{t.line}}; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 13.5px; line-height: 1.75; color: {{t.text}}; white-space: pre-wrap">{{md}}</pre>
+</sc-if>
+
+</div>
+</div>
+
+<div style="height: 38px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-top: 1px solid {{t.line}}; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}">
+<div style="display: flex; gap: 18px; align-items: center">
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{t.accent2}}"></span>Saved · theme-ideas.md</span>
+<span>{{words}} words</span>
+</div>
+<span>{{modeLabel}} · Ctrl /</span>
+</div>
+</section>
+
+<aside style="width: 284px; flex-shrink: 0; display: flex; flex-direction: column; gap: 22px; padding: 22px 20px; background: {{t.side}}; border-left: 1px solid {{t.line}}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}; padding-bottom: 6px">ON THIS PAGE</div>
+<a href="#" style="display: flex; align-items: center; height: 34px; padding: 0 12px; border-radius: 10px; font-size: 13px; color: {{t.muted}}">Direction</a>
+<a href="#" style="display: flex; align-items: center; height: 34px; padding: 0 12px; border-radius: 10px; font-size: 13px; color: {{t.muted}}">Theme lineup</a>
+<a href="#" style="display: flex; align-items: center; height: 34px; padding: 0 12px; border-radius: 10px; font-size: 13px; color: {{t.text}}; background: {{t.panel}}; font-weight: 500">Before the review</a>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">LINKED IN PROJECT LIFE</div>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 16px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<div style="display: flex; gap: 12px; align-items: center">
+<span style="width: 34px; height: 34px; border-radius: 10px; background: {{t.accentSoft}}; color: {{t.accent}}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 13px; font-weight: 500">Design review</span>
+<span style="font-size: 12px; color: {{t.muted}}">Today · 5:00 PM</span>
+</div>
+</div>
+<div style="height: 1px; background: {{t.line}}"></div>
+<div style="display: flex; gap: 12px; align-items: center">
+<span style="width: 34px; height: 34px; border-radius: 10px; background: {{t.panel2}}; color: {{t.accent2}}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="4"></rect><path d="m8 12 3 3 5-6"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 13px; font-weight: 500">{{openTodos}} to-dos sent to Tasks</span>
+<span style="font-size: 12px; color: {{t.muted}}">Due dates read from the text</span>
+</div>
+</div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">DETAILS</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 14px; background: {{t.panel}}; border: 1px solid {{t.line}}"><span style="font-size: 11px; color: {{t.muted}}">Words</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 18px">{{words}}</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 14px; background: {{t.panel}}; border: 1px solid {{t.line}}"><span style="font-size: 11px; color: {{t.muted}}">To-dos</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 18px">{{doneTodos}}/{{totalTodos}}</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; padding: 4px 2px">
+<div style="display: flex; justify-content: space-between"><span style="color: {{t.muted}}">Created</span><span>Sep 18</span></div>
+<div style="display: flex; justify-content: space-between"><span style="color: {{t.muted}}">Modified</span><span>Today, 2:04 PM</span></div>
+<div style="display: flex; justify-content: space-between"><span style="color: {{t.muted}}">Format</span><span>Plain Markdown</span></div>
+</div>
+<div style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; line-height: 1.5; color: {{t.muted}}; padding: 10px 12px; border-radius: 12px; border: 1px dashed {{t.line}}; word-break: break-all">Data\Notes\Checkpoint\Design\theme-ideas.md</div>
+</div>
+</aside>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["midnight","aurora","ember","daylight"],"default":"midnight"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  palette() {
+    return {
+      midnight: { name: 'Midnight', bg: '#0A0C11', side: '#0D1017', panel: '#12161F', panel2: '#1A1F2B', line: 'rgba(255,255,255,0.07)', text: '#ECEEF5', muted: '#969DAF', faint: '#5D6477', accent: '#A092FF', accentInk: '#0A0C11', accentSoft: 'rgba(160,146,255,0.16)', accent2: '#5CE1C6', glow: 'rgba(160,146,255,0.20)', warn: '#FFB36B' },
+      aurora: { name: 'Aurora', bg: '#07110F', side: '#0A1614', panel: '#0F1D1A', panel2: '#162824', line: 'rgba(220,255,245,0.08)', text: '#E8F4F0', muted: '#93ABA4', faint: '#4E6760', accent: '#4FE0B0', accentInk: '#06120F', accentSoft: 'rgba(79,224,176,0.16)', accent2: '#7CB8FF', glow: 'rgba(79,224,176,0.18)', warn: '#FFC37A' },
+      ember: { name: 'Ember', bg: '#110C0A', side: '#16100D', panel: '#1D1512', panel2: '#281E19', line: 'rgba(255,235,220,0.08)', text: '#F6ECE6', muted: '#B5A197', faint: '#6E5A50', accent: '#FF9A5C', accentInk: '#140C08', accentSoft: 'rgba(255,154,92,0.16)', accent2: '#F2CF6A', glow: 'rgba(255,154,92,0.18)', warn: '#FF8A7A' },
+      daylight: { name: 'Daylight', bg: '#F3F2EE', side: '#ECEAE4', panel: '#FFFFFF', panel2: '#F3F2EE', line: 'rgba(20,22,30,0.09)', text: '#15171D', muted: '#5A5F6B', faint: '#A9A69E', accent: '#5A48E0', accentInk: '#FFFFFF', accentSoft: 'rgba(90,72,224,0.12)', accent2: '#0B8A6D', glow: 'rgba(90,72,224,0.10)', warn: '#B4501A' }
+    };
+  }
+  renderVals() {
+    const P = this.palette();
+    const s = this.state || {};
+    const key = this.props.theme || 'midnight';
+    const t = P[key] || P.midnight;
+
+    const filterNames = ['All', 'Recent', 'High priority', 'Untagged'];
+    const fsel = s.filter || 'All';
+    const filters = filterNames.map((n) => ({
+      label: n,
+      bg: n === fsel ? t.text : 'transparent',
+      fg: n === fsel ? t.bg : t.muted,
+      bd: n === fsel ? t.text : t.line,
+      pick: () => this.setState({ filter: n })
+    }));
+
+    const active = s.active || 'theme';
+    const open = (id) => () => this.setState({ active: id });
+    const pinnedOn = s.pinned !== false;
+    const pinnedRaw = (pinnedOn ? [{ id: 'theme', title: 'Checkpoint: theme ideas' }] : []).concat([{ id: 'grocery', title: 'Grocery list' }]);
+    const pinned = pinnedRaw.map((p) => ({ ...p, open: open(p.id), bg: p.id === active ? t.panel : 'transparent', fg: p.id === active ? t.text : t.muted }));
+
+    const folded = s.folded || { stream: true, it: true, personal: true };
+    const nodes = [
+      { id: 'checkpoint', title: 'Checkpoint', depth: 0, kids: ['roadmap', 'design', 'release'], count: 7 },
+      { id: 'roadmap', title: 'Roadmap', depth: 1, parent: 'checkpoint', pri: 2 },
+      { id: 'design', title: 'Design', depth: 1, parent: 'checkpoint', kids: ['theme', 'icon'], count: 2 },
+      { id: 'theme', title: 'Checkpoint: theme ideas', depth: 2, parent: 'design', pri: 3 },
+      { id: 'icon', title: 'App icon: crystal pole', depth: 2, parent: 'design', pri: 1 },
+      { id: 'release', title: 'Release notes 1.1.2', depth: 1, parent: 'checkpoint' },
+      { id: 'stream', title: 'Stream & YouTube', depth: 0, kids: ['a'], count: 6 },
+      { id: 'it', title: 'Work', depth: 0, kids: ['b'], count: 4 },
+      { id: 'personal', title: 'Personal', depth: 0, kids: ['c'], count: 9 }
+    ];
+    const byId = {};
+    nodes.forEach((n) => { byId[n.id] = n; });
+    const hidden = (n) => { let p = n.parent; while (p) { if (folded[p]) return true; p = byId[p].parent; } return false; };
+    const priColor = { 1: t.muted, 2: t.accent2, 3: t.warn };
+    const priLabel = { 1: 'Low priority', 2: 'Medium priority', 3: 'High priority' };
+    const tree = nodes.filter((n) => !hidden(n)).map((n) => {
+      const hasKids = !!n.kids;
+      const isFolded = !!folded[n.id];
+      const on = n.id === active;
+      return {
+        title: n.title,
+        pad: (8 + n.depth * 18) + 'px',
+        kids: hasKids,
+        rot: isFolded ? 0 : 90,
+        expanded: hasKids ? String(!isFolded) : undefined,
+        showCount: hasKids && isFolded,
+        count: n.count,
+        hasPri: !!n.pri,
+        pri: priColor[n.pri] || 'transparent',
+        priLabel: priLabel[n.pri] || '',
+        bg: on ? t.accentSoft : 'transparent',
+        fg: on ? t.text : (n.depth === 0 ? t.text : t.muted),
+        weight: on || n.depth === 0 ? 500 : 400,
+        click: hasKids ? () => this.setState({ folded: { ...folded, [n.id]: !isFolded } }) : open(n.id)
+      };
+    });
+
+    const tabNames = ['Checkpoint: theme ideas', 'Grocery list', 'IT stand up notes'];
+    const tsel = s.tab || 0;
+    const tabs = tabNames.map((n, i) => ({
+      title: n, on: String(i === tsel),
+      bg: i === tsel ? t.bg : 'transparent',
+      fg: i === tsel ? t.text : t.muted,
+      bd: i === tsel ? t.line : 'transparent',
+      closeLabel: 'Close ' + n,
+      pick: () => this.setState({ tab: i })
+    }));
+
+    const mode = s.mode || 'visual';
+    const isVisual = mode === 'visual';
+
+    const done = s.todos || [true, false, false];
+    const todoBase = [
+      { text: 'Pick the headline font', due: '' },
+      { text: 'Contrast check on Daylight', due: 'Today' },
+      { text: 'Export swatches for the stream overlay', due: 'Sat' }
+    ];
+    const todos = todoBase.map((x, i) => ({
+      text: x.text, done: done[i], hasDue: !!x.due, due: x.due,
+      dueFg: x.due === 'Today' && !done[i] ? t.warn : t.muted,
+      cb: done[i] ? t.accent : t.faint,
+      cbg: done[i] ? t.accent : 'transparent',
+      fg: done[i] ? t.muted : t.text,
+      deco: done[i] ? 'line-through' : 'none',
+      aria: (done[i] ? 'Mark not done: ' : 'Mark done: ') + x.text,
+      toggle: () => this.setState({ todos: done.map((d, j) => (j === i ? !d : d)) })
+    }));
+    const doneTodos = done.filter(Boolean).length;
+
+    const md = [
+      '---',
+      'tags: [design, themes]',
+      'priority: high',
+      '---',
+      '# Checkpoint: theme ideas',
+      '',
+      '## Direction',
+      'Midnight is the base. Deep ink backgrounds, one violet accent, and mint for anything live. Every other theme keeps the same layout and only swaps the palette.',
+      '',
+      '> [!info] Contrast rule',
+      '> Accents never carry white text. Use the theme’s ink color on top instead.',
+      '',
+      'https://fonts.google.com/specimen/Atkinson+Hyperlegible',
+      '',
+      '## Theme lineup',
+      '| Theme | Mood | Accent |',
+      '| --- | --- | --- |',
+      '| Midnight | Calm, focused | Violet |',
+      '| Aurora | Fresh, airy | Mint |',
+      '| Ember | Warm, cozy | Orange |',
+      '| Daylight | Bright, clean | Indigo |',
+      '',
+      '## Before the review',
+      '- [' + (done[0] ? 'x' : ' ') + '] Pick the headline font',
+      '- [' + (done[1] ? 'x' : ' ') + '] Contrast check on Daylight today',
+      '- [' + (done[2] ? 'x' : ' ') + '] Export swatches for the stream overlay sat'
+    ].join('\n');
+    const body = md.split('\n').filter((l) => !/^(---|tags:|priority:|\| ---)/.test(l)).join(' ');
+    const words = body.replace(/[#>|\-\[\]]/g, ' ').split(/\s+/).filter((w) => /[A-Za-z0-9]/.test(w)).length;
+
+    const slashOpen = s.slash !== false;
+
+    return {
+      t: t, filters: filters, pinned: pinned, tree: tree, tabs: tabs,
+      isVisual: isVisual, isMd: !isVisual, modeLabel: isVisual ? 'Visual' : 'Markdown',
+      modeVisBg: isVisual ? t.panel2 : 'transparent', modeVisFg: isVisual ? t.text : t.muted,
+      modeMdBg: !isVisual ? t.panel2 : 'transparent', modeMdFg: !isVisual ? t.text : t.muted,
+      toVisual: () => this.setState({ mode: 'visual' }),
+      toMd: () => this.setState({ mode: 'md' }),
+      togglePin: () => this.setState({ pinned: !pinnedOn }),
+      pinLabel: pinnedOn ? 'Unpin note' : 'Pin note',
+      pinColor: pinnedOn ? t.accent : t.muted,
+      todos: todos, doneTodos: doneTodos, totalTodos: todoBase.length, openTodos: todoBase.length - doneTodos,
+      md: md, words: words,
+      slashOpen: slashOpen, slashClosed: !slashOpen,
+      closeSlash: () => this.setState({ slash: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project Life · Edit habit</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:"Geist",ui-sans-serif,system-ui,sans-serif;background:#0A0C11;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button{font:inherit;cursor:pointer;background:none;border:0;padding:0;color:inherit}
+input,textarea,select{font:inherit}
+select{appearance:none;-webkit-appearance:none;cursor:pointer}
+input::placeholder{color:inherit;opacity:.8}
+input:focus{outline:none}
+button:focus-visible,a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:12px;height:12px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background-color:var(--sb-thumb,rgba(128,128,128,.4));border-radius:999px;border:3px solid transparent;background-clip:padding-box;min-height:40px}::-webkit-scrollbar-thumb:hover{background-color:var(--sb-hover,rgba(128,128,128,.7))}::-webkit-scrollbar-thumb:active{background-color:var(--sb-active,rgba(128,128,128,.9))}::-webkit-scrollbar-button{display:none;width:0;height:0}
+</style>
+</helmet>
+
+<div style="--sb-thumb: {{t.faint}}; --sb-hover: {{t.muted}}; --sb-active: {{t.accent}}; width: 1440px; height: 1000px; position: relative; overflow: hidden; background: {{t.bg}}; font-family: Geist, ui-sans-serif, system-ui, sans-serif">
+<div aria-hidden="true" style="position: absolute; inset: 0">
+<dc-import name="Habits" theme="{{themeKey}}" hint-size="1440px,1000px"></dc-import>
+</div>
+<a href="Habits.dc.html" aria-label="Close" style="position: absolute; inset: 0; background: {{t.scrim}}; backdrop-filter: blur(6px)"></a>
+
+<div role="dialog" aria-modal="true" aria-labelledby="pl-hb-name" style="position: absolute; left: 190px; top: 40px; width: 1060px; height: 920px; display: flex; flex-direction: column; border-radius: 28px; background: {{t.bg}}; color: {{t.text}}; border: 1px solid {{t.line}}; box-shadow: 0 40px 120px rgba(0,0,0,0.55); overflow: hidden">
+<header style="height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px 0 24px; background: {{t.side}}; border-bottom: 1px solid {{t.line}}">
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="display: flex; align-items: center; height: 30px; padding: 0 10px; border-radius: 9px; background: {{t.panel}}; border: 1px solid {{t.line}}; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.08em; color: {{t.muted}}">EDIT HABIT</span>
+<span style="font-size: 13px; color: {{t.muted}}">Changes apply from today. Your streak and history stay.</span>
+</div>
+<a href="Habits.dc.html" aria-label="Close" title="Close (Esc)" style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid {{t.line}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></a>
+</header>
+
+<div style="flex-grow: 1; min-height: 0; display: flex">
+<div class="pl-scroll" style="flex-grow: 1; min-width: 0; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px">
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="pl-hb-name"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">NAME</span></label>
+<input id="pl-hb-name" value="{{name}}" onChange="{{onName}}" placeholder="What do you want to do?" style="height: 54px; padding: 0 16px; border-radius: 14px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.text}}; font-family: 'Atkinson Hyperlegible', Geist, sans-serif; font-size: 22px; font-weight: 700">
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">ICON AND COLOR</span>
+<div role="radiogroup" aria-label="Icon" style="display: flex; gap: 6px">
+<sc-for list="{{icons}}" as="ico" hint-placeholder-count="10">
+<button role="radio" aria-checked="{{ico.on}}" aria-label="{{ico.label}}" onClick="{{ico.pick}}" style="width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: {{ico.bg}}; color: {{ico.fg}}; border: 1.5px solid {{ico.bd}}"><sc-if value="{{ico.ic.drop}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"></path></svg></sc-if><sc-if value="{{ico.ic.book}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 21V5M19 19v2H6"></path></svg></sc-if><sc-if value="{{ico.ic.route}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"></circle><circle cx="18" cy="5" r="2"></circle><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"></path></svg></sc-if><sc-if value="{{ico.ic.heart}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg></sc-if><sc-if value="{{ico.ic.pen}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="m13.5 6.5 4 4"></path></svg></sc-if><sc-if value="{{ico.ic.moon}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg></sc-if><sc-if value="{{ico.ic.dumbbell}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"></path></svg></sc-if><sc-if value="{{ico.ic.music}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"></path><circle cx="6.5" cy="18" r="2.5"></circle><circle cx="17.5" cy="16" r="2.5"></circle></svg></sc-if><sc-if value="{{ico.ic.leaf}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20c0-9 6-15 15-15 0 9-6 15-15 15z"></path><path d="M5 20 13 12"></path></svg></sc-if><sc-if value="{{ico.ic.code}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 8-4 4 4 4M15 8l4 4-4 4"></path></svg></sc-if></button>
+</sc-for>
+</div>
+<div role="radiogroup" aria-label="Color" style="display: flex; gap: 10px; align-items: center">
+<sc-for list="{{colors}}" as="co" hint-placeholder-count="6">
+<button role="radio" aria-checked="{{co.on}}" aria-label="{{co.label}}" onClick="{{co.pick}}" style="width: 34px; height: 34px; border-radius: 50%; background: {{co.c}}; box-shadow: 0 0 0 3px {{t.bg}}, 0 0 0 5px {{co.ring}}"></button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">GOAL</span>
+<div role="radiogroup" aria-label="Goal type" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 13px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<sc-for list="{{types}}" as="ty" hint-placeholder-count="3">
+<button role="radio" aria-checked="{{ty.on}}" onClick="{{ty.pick}}" style="height: 38px; border-radius: 10px; font-size: 13px; font-weight: 500; background: {{ty.bg}}; color: {{ty.fg}}; display: flex; flex-direction: column; align-items: center; justify-content: center">{{ty.label}}</button>
+</sc-for>
+</div>
+<sc-if value="{{hasTarget}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; align-items: center; gap: 10px">
+<div style="display: flex; align-items: center; gap: 4px; padding: 3px; border-radius: 14px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<button onClick="{{dec}}" aria-label="Lower target" style="width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+<span style="min-width: 48px; text-align: center; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 18px; font-weight: 500">{{target}}</span>
+<button onClick="{{inc}}" aria-label="Raise target" style="width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; background: {{t.panel2}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+</div>
+<label style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)" for="pl-hb-unit">Unit</label>
+<input id="pl-hb-unit" value="{{unit}}" onChange="{{onUnit}}" style="width: 160px; height: 48px; padding: 0 14px; border-radius: 14px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.text}}; font-size: 15px">
+<span style="font-size: 13px; color: {{t.muted}}">{{targetHint}}</span>
+</div>
+</sc-if>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">HOW OFTEN</span>
+<div role="radiogroup" aria-label="Frequency" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 13px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<sc-for list="{{freqs}}" as="fq" hint-placeholder-count="3">
+<button role="radio" aria-checked="{{fq.on}}" onClick="{{fq.pick}}" style="height: 38px; border-radius: 10px; font-size: 13px; font-weight: 500; background: {{fq.bg}}; color: {{fq.fg}}">{{fq.label}}</button>
+</sc-for>
+</div>
+<sc-if value="{{isDays}}" hint-placeholder-val="{{false}}">
+<div role="group" aria-label="Days" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{dayChips}}" as="dc" hint-placeholder-count="7">
+<button onClick="{{dc.toggle}}" aria-pressed="{{dc.on}}" aria-label="{{dc.aria}}" style="height: 44px; border-radius: 12px; font-size: 13px; font-weight: 600; background: {{dc.bg}}; color: {{dc.fg}}; border: 1px solid {{dc.bd}}">{{dc.l}}</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{isWeekly}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; align-items: center; gap: 12px; font-size: 14px">
+<div style="display: flex; align-items: center; gap: 4px; padding: 3px; border-radius: 14px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<button onClick="{{decWeek}}" aria-label="Fewer times" style="width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; color: {{t.muted}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+<span style="min-width: 40px; text-align: center; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 18px; font-weight: 500">{{perWeek}}</span>
+<button onClick="{{incWeek}}" aria-label="More times" style="width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; background: {{t.panel2}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+</div>
+<span style="color: {{t.muted}}">times a week, any days you like</span>
+</div>
+</sc-if>
+</div>
+
+<div style="display: flex; gap: 20px">
+<div style="flex-grow: 1; display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">TIME OF DAY</span>
+<div role="radiogroup" aria-label="Time of day" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 13px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<sc-for list="{{tods}}" as="td" hint-placeholder-count="3">
+<button role="radio" aria-checked="{{td.on}}" onClick="{{td.pick}}" style="height: 38px; border-radius: 10px; font-size: 13px; font-weight: 500; background: {{td.bg}}; color: {{td.fg}}">{{td.label}}</button>
+</sc-for>
+</div>
+</div>
+<div style="width: 290px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: center"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">REMINDER</span>
+<button onClick="{{toggleRem}}" role="switch" aria-checked="{{remStr}}" aria-label="Reminder" style="display: flex; align-items: center"><span style="width: 38px; height: 22px; border-radius: 999px; padding: 3px; background: {{swBg}}; display: flex; justify-content: {{swJust}}"><span style="width: 16px; height: 16px; border-radius: 50%; background: {{swKnob}}"></span></span></button>
+</div>
+<span style="position: relative; display: flex">
+<select value="{{remTime}}" onChange="{{onRemTime}}" aria-label="Reminder time" disabled="{{remOff}}" style="width: 100%; height: 46px; padding: 0 34px 0 14px; border-radius: 13px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{remFg}}; font-size: 14px">
+<option value="every2">Every 2 hours, 9 AM – 9 PM</option>
+<option value="9">Once at 9:00 AM</option>
+<option value="12">Once at 12:00 PM</option>
+<option value="19">Once at 7:00 PM</option>
+</select>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px; top: 16px; pointer-events: none; color: {{t.muted}}"><path d="m6 9 6 6 6-6"></path></svg>
+</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; border-radius: 16px; border: 1px solid {{t.line}}; overflow: hidden">
+<button onClick="{{toggleHome}}" role="switch" aria-checked="{{homeStr}}" style="display: flex; align-items: center; gap: 14px; min-height: 58px; padding: 10px 16px; text-align: left; border-bottom: 1px solid {{t.line}}">
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 500">Show on Home</span><span style="font-size: 12px; color: {{t.muted}}">Adds it to the Habits card on your home screen</span></span>
+<span style="width: 38px; height: 22px; border-radius: 999px; padding: 3px; background: {{homeBg}}; display: flex; justify-content: {{homeJust}}"><span style="width: 16px; height: 16px; border-radius: 50%; background: {{homeKnob}}"></span></span>
+</button>
+<button onClick="{{toggleTask}}" role="switch" aria-checked="{{taskStr}}" style="display: flex; align-items: center; gap: 14px; min-height: 58px; padding: 10px 16px; text-align: left">
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 500">Add to Today in Tasks</span><span style="font-size: 12px; color: {{t.muted}}">Shows up next to your to-dos on days it's due</span></span>
+<span style="width: 38px; height: 22px; border-radius: 999px; padding: 3px; background: {{taskBg}}; display: flex; justify-content: {{taskJust}}"><span style="width: 16px; height: 16px; border-radius: 50%; background: {{taskKnob}}"></span></span>
+</button>
+</div>
+</div>
+
+<aside style="width: 360px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; padding: 24px 22px; background: {{t.side}}; border-left: 1px solid {{t.line}}">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">PREVIEW</span>
+<div style="display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 18px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<span style="width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; background: {{pv.soft}}; color: {{pv.color}}; display: flex; align-items: center; justify-content: center"><sc-if value="{{pv.ic.drop}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"></path></svg></sc-if><sc-if value="{{pv.ic.book}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"></path><path d="M4 21V5M19 19v2H6"></path></svg></sc-if><sc-if value="{{pv.ic.route}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"></circle><circle cx="18" cy="5" r="2"></circle><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"></path></svg></sc-if><sc-if value="{{pv.ic.heart}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg></sc-if><sc-if value="{{pv.ic.pen}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path><path d="m13.5 6.5 4 4"></path></svg></sc-if><sc-if value="{{pv.ic.moon}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg></sc-if><sc-if value="{{pv.ic.dumbbell}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"></path></svg></sc-if><sc-if value="{{pv.ic.music}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"></path><circle cx="6.5" cy="18" r="2.5"></circle><circle cx="17.5" cy="16" r="2.5"></circle></svg></sc-if><sc-if value="{{pv.ic.leaf}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20c0-9 6-15 15-15 0 9-6 15-15 15z"></path><path d="M5 20 13 12"></path></svg></sc-if><sc-if value="{{pv.ic.code}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 8-4 4 4 4M15 8l4 4-4 4"></path></svg></sc-if></span>
+<span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px">
+<span style="font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{pv.name}}</span>
+<span style="font-size: 12px; color: {{t.muted}}">{{pv.goal}}</span>
+</span>
+<sc-if value="{{hasTarget}}" hint-placeholder-val="{{true}}"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 14px; font-weight: 500; padding: 10px 12px; border-radius: 12px; background: {{t.panel2}}"><span style="color: {{pv.color}}">5</span>/{{target}}</span></sc-if>
+<sc-if value="{{noTarget}}" hint-placeholder-val="{{false}}"><span style="width: 48px; height: 48px; border-radius: 14px; border: 1.5px solid {{t.faint}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 12.5 4 4 8-9"></path></svg></span></sc-if>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 18px; background: {{pv.softer}}">
+<span style="font-size: 13px; line-height: 1.5">{{pv.sentence}}</span>
+<div style="display: flex; gap: 5px">
+<sc-for list="{{pv.week}}" as="d" hint-placeholder-count="7">
+<span style="flex-grow: 1; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; background: {{d.bg}}; color: {{d.fg}}; border: 1px {{d.bs}} {{d.bd}}">{{d.l}}</span>
+</sc-for>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 14px; background: {{t.panel}}; border: 1px solid {{t.line}}"><span style="font-size: 11px; color: {{t.muted}}">Current streak</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 17px">11 days</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 14px; background: {{t.panel}}; border: 1px solid {{t.line}}"><span style="font-size: 11px; color: {{t.muted}}">Started</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 17px">Mar 14</span></div>
+</div>
+<div style="flex-grow: 1"></div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding-top: 16px; border-top: 1px solid {{t.line}}">
+<button style="height: 44px; border-radius: 12px; border: 1px solid {{t.line}}; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="5" rx="1.5"></rect><path d="M5 9v10h14V9M10 13h4"></path></svg>Archive habit</button>
+<button style="height: 44px; border-radius: 12px; font-size: 13px; font-weight: 500; color: {{t.danger}}; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6"></path><path d="M6 7l1 13h10l1-13"></path><path d="M9 7V4h6v3"></path></svg>Delete habit and history</button>
+</div>
+</aside>
+</div>
+
+<footer style="height: 68px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: {{t.side}}; border-top: 1px solid {{t.line}}">
+<span style="font-size: 13px; color: {{t.muted}}">{{summary}}</span>
+<div style="display: flex; align-items: center; gap: 10px">
+<a href="Habits.dc.html" style="height: 44px; padding: 0 18px; border-radius: 13px; border: 1px solid {{t.line}}; display: flex; align-items: center; font-size: 14px; font-weight: 500">Cancel</a>
+<a href="Habits.dc.html" style="height: 44px; padding: 0 20px; border-radius: 13px; background: {{t.accent}}; color: {{t.accentInk}}; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600">Save changes<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; font-weight: 500; opacity: 0.75">Ctrl Enter</span></a>
+</div>
+</footer>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["midnight","aurora","ember","daylight"],"default":"midnight"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  palette() {
+    return {
+      midnight: { bg: '#0A0C11', side: '#0D1017', panel: '#12161F', panel2: '#1A1F2B', line: 'rgba(255,255,255,0.07)', text: '#ECEEF5', muted: '#969DAF', faint: '#5D6477', accent: '#A092FF', accentInk: '#0A0C11', accentSoft: 'rgba(160,146,255,0.16)', accent2: '#5CE1C6', warn: '#FFB36B', danger: '#FF7A85', scrim: 'rgba(4,5,9,0.62)', hues: ['#A092FF', '#5CE1C6', '#FFB36B', '#FF7A85', '#6FA8FF', '#F28DC4'] },
+      aurora: { bg: '#07110F', side: '#0A1614', panel: '#0F1D1A', panel2: '#162824', line: 'rgba(220,255,245,0.08)', text: '#E8F4F0', muted: '#93ABA4', faint: '#4E6760', accent: '#4FE0B0', accentInk: '#06120F', accentSoft: 'rgba(79,224,176,0.16)', accent2: '#7CB8FF', warn: '#FFC37A', danger: '#FF8590', scrim: 'rgba(2,8,7,0.62)', hues: ['#4FE0B0', '#7CB8FF', '#FFC37A', '#FF8590', '#B69CFF', '#F59BC9'] },
+      ember: { bg: '#110C0A', side: '#16100D', panel: '#1D1512', panel2: '#281E19', line: 'rgba(255,235,220,0.08)', text: '#F6ECE6', muted: '#B5A197', faint: '#6E5A50', accent: '#FF9A5C', accentInk: '#140C08', accentSoft: 'rgba(255,154,92,0.16)', accent2: '#F2CF6A', warn: '#FFC37A', danger: '#FF7A7A', scrim: 'rgba(8,5,4,0.62)', hues: ['#FF9A5C', '#F2CF6A', '#8FD9A8', '#FF7A7A', '#7FB6FF', '#E79AD0'] },
+      daylight: { bg: '#F3F2EE', side: '#ECEAE4', panel: '#FFFFFF', panel2: '#F3F2EE', line: 'rgba(20,22,30,0.09)', text: '#15171D', muted: '#5A5F6B', faint: '#A9A69E', accent: '#5A48E0', accentInk: '#FFFFFF', accentSoft: 'rgba(90,72,224,0.12)', accent2: '#0B8A6D', warn: '#B4501A', danger: '#C62F3D', scrim: 'rgba(20,22,30,0.38)', hues: ['#5A48E0', '#0B8A6D', '#B4501A', '#C62F3D', '#2F6FD6', '#B23A7C'] }
+    };
+  }
+  soft(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+  icFlags(key) {
+    const o = {};
+    ['drop', 'book', 'route', 'heart', 'pen', 'moon', 'dumbbell', 'music', 'leaf', 'code'].forEach((k) => { o[k] = k === key; });
+    return o;
+  }
+
+  renderVals() {
+    const P = this.palette();
+    const s = this.state || {};
+    const key = this.props.theme || 'midnight';
+    const t = P[key] || P.midnight;
+    const toggle = (on, onBg) => ({ bg: on ? onBg : t.panel2, just: on ? 'flex-end' : 'flex-start', knob: on ? t.accentInk : t.muted });
+
+    const name = s.name !== undefined ? s.name : 'Drink water';
+    const icon = s.icon || 'drop';
+    const hue = s.hue != null ? s.hue : 4;
+    const color = t.hues[hue];
+    const type = s.type || 'count';
+    const target = s.target || 8;
+    const unit = s.unit !== undefined ? s.unit : 'glasses';
+    const freq = s.freq || 'daily';
+    const days = s.days || [true, true, true, true, true, true, true];
+    const perWeek = s.perWeek || 5;
+    const tod = s.tod || 'anytime';
+    const rem = s.rem !== false;
+    const remTime = s.remTime || 'every2';
+    const home = s.home !== false;
+    const task = !!s.task;
+
+    const ICON_NAMES = { drop: 'Water drop', book: 'Book', route: 'Path', heart: 'Heart', pen: 'Pen', moon: 'Moon', dumbbell: 'Weights', music: 'Music', leaf: 'Leaf', code: 'Code' };
+    const icons = Object.keys(ICON_NAMES).map((k) => ({
+      ic: this.icFlags(k), label: ICON_NAMES[k], on: String(k === icon),
+      bg: k === icon ? this.soft(color, 0.18) : t.panel, fg: k === icon ? color : t.muted, bd: k === icon ? color : t.line,
+      pick: () => this.setState({ icon: k })
+    }));
+    const hueNames = ['Violet', 'Mint', 'Amber', 'Coral', 'Sky', 'Pink'];
+    const colors = t.hues.map((c, i) => ({ c: c, label: hueNames[i], on: String(i === hue), ring: i === hue ? c : 'transparent', pick: () => this.setState({ hue: i }) }));
+
+    const seg = (list, cur, set) => list.map((o) => ({ label: o[1], on: String(o[0] === cur), bg: o[0] === cur ? t.panel2 : 'transparent', fg: o[0] === cur ? t.text : t.muted, pick: () => set(o[0]) }));
+    const types = seg([['check', 'Just check it off'], ['count', 'Count it'], ['time', 'Time it']], type, (v) => this.setState({ type: v, unit: v === 'time' ? 'minutes' : (v === 'count' ? 'glasses' : unit), target: v === 'time' ? 20 : 8 }));
+    const freqs = seg([['daily', 'Every day'], ['days', 'Specific days'], ['weekly', 'Times a week']], freq, (v) => this.setState({ freq: v }));
+    const tods = seg([['morning', 'Morning'], ['anytime', 'Anytime'], ['evening', 'Evening']], tod, (v) => this.setState({ tod: v }));
+
+    const dl = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    const dn = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const dayChips = dl.map((l, i) => ({
+      l: l, on: String(days[i]), aria: dn[i],
+      bg: days[i] ? this.soft(color, 0.18) : t.panel, fg: days[i] ? color : t.muted, bd: days[i] ? color : t.line,
+      toggle: () => this.setState({ days: days.map((d, j) => (j === i ? !d : d)) })
+    }));
+
+    const hasTarget = type !== 'check';
+    const goal = hasTarget ? target + ' ' + (unit || '') : 'Check off';
+    const activeDays = freq === 'days' ? days.filter(Boolean).length : 7;
+    const freqText = freq === 'daily' ? 'every day' : (freq === 'weekly' ? perWeek + ' times a week' : (activeDays === 5 && !days[5] && !days[6] ? 'on weekdays' : 'on ' + dl.filter((l, i) => days[i]).length + ' days a week'));
+    const todText = { morning: 'in the morning', anytime: 'any time of day', evening: 'in the evening' }[tod];
+    const remTexts = { every2: 'every 2 hours', '9': 'at 9 AM', '12': 'at noon', '19': 'at 7 PM' };
+    const sentence = (hasTarget ? (type === 'time' ? target + ' ' + unit + ' of ' + name.toLowerCase() : target + ' ' + unit + ', ') : name + ', ') + freqText + ', ' + todText + '.' + (rem ? ' Reminds you ' + remTexts[remTime] + '.' : ' No reminders.');
+    const pvWeek = dl.map((l, i) => {
+      const on = freq === 'days' ? days[i] : (freq === 'weekly' ? i < perWeek : true);
+      return { l: l, bg: on ? this.soft(color, 0.3) : 'transparent', fg: on ? t.text : t.muted, bd: on ? 'transparent' : t.faint, bs: on ? 'solid' : 'dashed' };
+    });
+
+    const r = toggle(rem, t.accent), h = toggle(home, t.accent), k = toggle(task, t.accent);
+    return {
+      t: t, themeKey: key,
+      name: name, onName: (e) => this.setState({ name: e.target.value }),
+      icons: icons, colors: colors, types: types, freqs: freqs, tods: tods, dayChips: dayChips,
+      hasTarget: hasTarget, noTarget: !hasTarget, target: target, unit: unit,
+      onUnit: (e) => this.setState({ unit: e.target.value }),
+      inc: () => this.setState({ target: target + (type === 'time' ? 5 : 1) }),
+      dec: () => this.setState({ target: Math.max(1, target - (type === 'time' ? 5 : 1)) }),
+      targetHint: type === 'time' ? 'per day, a timer counts it for you' : 'per day, tap + each time',
+      isDays: freq === 'days', isWeekly: freq === 'weekly', perWeek: perWeek,
+      incWeek: () => this.setState({ perWeek: Math.min(7, perWeek + 1) }), decWeek: () => this.setState({ perWeek: Math.max(1, perWeek - 1) }),
+      toggleRem: () => this.setState({ rem: !rem }), remStr: String(rem), remOff: !rem, remTime: remTime,
+      onRemTime: (e) => this.setState({ remTime: e.target.value }), remFg: rem ? t.text : t.muted,
+      swBg: r.bg, swJust: r.just, swKnob: r.knob,
+      toggleHome: () => this.setState({ home: !home }), homeStr: String(home), homeBg: h.bg, homeJust: h.just, homeKnob: h.knob,
+      toggleTask: () => this.setState({ task: !task }), taskStr: String(task), taskBg: k.bg, taskJust: k.just, taskKnob: k.knob,
+      pv: { name: name || 'New habit', goal: goal + ' · ' + { morning: 'Morning', anytime: 'Anytime', evening: 'Evening' }[tod], color: color, soft: this.soft(color, 0.16), softer: this.soft(color, 0.08), ic: this.icFlags(icon), sentence: sentence.charAt(0).toUpperCase() + sentence.slice(1), week: pvWeek },
+      summary: (name || 'New habit') + ' · ' + goal + ' · ' + freqText
+    };
+  }
+}
+</script>
+</body>
+</html>

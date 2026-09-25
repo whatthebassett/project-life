@@ -1,0 +1,236 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/* Tailwind reads its colors, fonts and type sizes from the theme tokens, and
+   only from them: the default palette is switched off so a stray bg-gray-800
+   can't sneak in. Class names follow DESIGN.md's token names (bg-panel,
+   text-muted, border-line, bg-accent-soft …). */
+@theme inline {
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: #ffffff;
+  --color-bg: var(--bg);
+  --color-side: var(--side);
+  --color-panel: var(--panel);
+  --color-panel2: var(--panel2);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent2: var(--accent2);
+  --color-accent2-soft: var(--accent2-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-glow: var(--glow);
+  --color-scrim: var(--scrim);
+  --color-today: var(--today-tint);
+  --color-hue-0: var(--hue-0);
+  --color-hue-1: var(--hue-1);
+  --color-hue-2: var(--hue-2);
+  --color-hue-3: var(--hue-3);
+  --color-hue-4: var(--hue-4);
+  --color-hue-5: var(--hue-5);
+
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+  --font-head: var(--head-font);
+
+  /* Type sizes, in the mockups' pixels, scaled by Settings → Text size.
+     text-14 is 14px at M. Only text scales; spacing stays exact. */
+  --text-*: initial;
+  --text-9: calc(9px * var(--text-scale));
+  --text-10: calc(10px * var(--text-scale));
+  --text-11: calc(11px * var(--text-scale));
+  --text-12: calc(12px * var(--text-scale));
+  --text-13: calc(13px * var(--text-scale));
+  --text-14: calc(14px * var(--text-scale));
+  --text-15: calc(15px * var(--text-scale));
+  --text-16: calc(16px * var(--text-scale));
+  --text-17: calc(17px * var(--text-scale));
+  --text-18: calc(18px * var(--text-scale));
+  --text-20: calc(20px * var(--text-scale));
+  --text-22: calc(22px * var(--text-scale));
+  --text-24: calc(24px * var(--text-scale));
+  --text-26: calc(26px * var(--text-scale));
+  --text-28: calc(28px * var(--text-scale));
+  --text-30: calc(30px * var(--text-scale));
+  --text-32: calc(32px * var(--text-scale));
+  --text-34: calc(34px * var(--text-scale));
+  --text-36: calc(36px * var(--text-scale));
+  --text-40: calc(40px * var(--text-scale));
+  --text-50: calc(50px * var(--text-scale));
+  --text-58: calc(58px * var(--text-scale));
+  --text-64: calc(64px * var(--text-scale));
+  --text-96: calc(96px * var(--text-scale));
+}
+
+:root {
+  --text-scale: 1;
+  --head-font: "Atkinson Hyperlegible", "Geist", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    /* The mockups use the browser's normal line height, not Tailwind's 1.5. */
+    line-height: normal;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-size: calc(14px * var(--text-scale));
+    user-select: none;
+  }
+
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: default;
+  }
+
+  input,
+  textarea {
+    user-select: text;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: inherit;
+    opacity: 0.8;
+  }
+
+  /* Text fields show focus through their own border; everything else gets
+     the ring (DESIGN.md §8). */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  /* Settings → Accessibility → Always show the focus ring. */
+  :root[data-focus="always"] :is(button, a, [tabindex]):focus {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+}
+
+/* Scrollbars, app wide (DESIGN.md §5). Don't also set scrollbar-color: in
+   Chromium it overrides these rules. */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--faint);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  min-height: 40px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted);
+}
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--accent);
+}
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* A small control keeps its drawn size but gets a 44 x 44 hit area
+   (DESIGN.md §4). The element needs position: relative. */
+.hit::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
+
+/* The "live" dot beside Up next and the now line. */
+@keyframes pl-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent2) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--accent2) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent2) 0%, transparent);
+  }
+}
+.pl-pulse {
+  animation: pl-pulse 2.2s ease-out infinite;
+}
+
+/* Pop-ups fade and zoom in; lib/motion.ts zooms them back out. */
+@keyframes pl-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes pl-zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+.popup-scrim {
+  animation: pl-fade-in 160ms ease-out;
+}
+.popup-panel {
+  animation: pl-zoom-in 180ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Reduce motion: from Settings → Accessibility, or from Windows' own
+   "Animation effects" switch. No pulse, no transitions. */
+:root[data-motion="reduced"] .pl-pulse {
+  animation: none;
+}
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] *::before,
+:root[data-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pl-pulse {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

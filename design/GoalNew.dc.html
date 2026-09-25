@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project Life · New goal</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&amp;family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:"Geist",ui-sans-serif,system-ui,sans-serif;background:#0A0C11;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+button{font:inherit;cursor:pointer;background:none;border:0;padding:0;color:inherit}
+input,textarea,select{font:inherit}
+select{appearance:none;-webkit-appearance:none;cursor:pointer}
+input::placeholder{color:inherit;opacity:.8}
+input:focus{outline:none}
+button:focus-visible,a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:12px;height:12px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background-color:var(--sb-thumb,rgba(128,128,128,.4));border-radius:999px;border:3px solid transparent;background-clip:padding-box;min-height:40px}::-webkit-scrollbar-thumb:hover{background-color:var(--sb-hover,rgba(128,128,128,.7))}::-webkit-scrollbar-thumb:active{background-color:var(--sb-active,rgba(128,128,128,.9))}::-webkit-scrollbar-button{display:none;width:0;height:0}
+</style>
+</helmet>
+
+<div style="--sb-thumb: {{t.faint}}; --sb-hover: {{t.muted}}; --sb-active: {{t.accent}}; width: 1440px; height: 1000px; position: relative; overflow: hidden; background: {{t.bg}}; font-family: Geist, ui-sans-serif, system-ui, sans-serif">
+<div aria-hidden="true" style="position: absolute; inset: 0">
+<dc-import name="Goals" theme="{{themeKey}}" hint-size="1440px,1000px"></dc-import>
+</div>
+<a href="Goals.dc.html" aria-label="Close" style="position: absolute; inset: 0; background: {{t.scrim}}; backdrop-filter: blur(6px)"></a>
+
+<div role="dialog" aria-modal="true" aria-labelledby="pl-g-title" style="position: absolute; left: 190px; top: 40px; width: 1060px; height: 920px; display: flex; flex-direction: column; border-radius: 28px; background: {{t.bg}}; color: {{t.text}}; border: 1px solid {{t.line}}; box-shadow: 0 40px 120px rgba(0,0,0,0.55); overflow: hidden">
+<header style="height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 16px 0 24px; background: {{t.side}}; border-bottom: 1px solid {{t.line}}">
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="display: flex; align-items: center; height: 30px; padding: 0 10px; border-radius: 9px; background: {{t.panel}}; border: 1px solid {{t.line}}; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.08em; color: {{t.muted}}">NEW GOAL</span>
+<span style="font-size: 13px; color: {{t.muted}}">Something you want to get done, and a way to know you got there.</span>
+</div>
+<a href="Goals.dc.html" aria-label="Close" title="Close (Esc)" style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid {{t.line}}; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></a>
+</header>
+
+<div style="flex-grow: 1; min-height: 0; display: flex">
+<div class="pl-scroll" style="flex-grow: 1; min-width: 0; overflow-y: auto; padding: 22px 28px; display: flex; flex-direction: column; gap: 16px">
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="pl-g-title"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">THE GOAL</span></label>
+<input id="pl-g-title" value="{{title}}" onChange="{{onTitle}}" placeholder="What do you want to achieve?" style="height: 50px; padding: 0 16px; border-radius: 14px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.text}}; font-family: 'Atkinson Hyperlegible', Geist, sans-serif; font-size: 22px; font-weight: 700">
+<div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center">
+<span style="font-size: 12px; color: {{t.muted}}; margin-right: 2px">Ideas</span>
+<sc-for list="{{ideas}}" as="idea" hint-placeholder-count="4">
+<button onClick="{{idea.pick}}" style="height: 28px; padding: 0 10px; border-radius: 8px; font-size: 12px; border: 1px dashed {{t.line}}; color: {{t.muted}}">{{idea.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">AREA</span>
+<div role="radiogroup" aria-label="Area" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{areaChips}}" as="ac" hint-placeholder-count="4">
+<button role="radio" aria-checked="{{ac.on}}" onClick="{{ac.pick}}" style="height: 40px; padding: 0 12px; border-radius: 11px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 500; background: {{ac.bg}}; border: 1px solid {{ac.bd}}; color: {{ac.fg}}"><span style="width: 8px; height: 8px; border-radius: 3px; background: {{ac.color}}"></span>{{ac.name}}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="pl-g-why"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">WHY IT MATTERS</span></label>
+<textarea id="pl-g-why" value="{{why}}" onChange="{{onWhy}}" rows="3" placeholder="Why does this matter to you? It shows on the goal when you need a push." style="width: 100%; resize: none; padding: 12px 16px; border-radius: 14px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.text}}; font-size: 15px; line-height: 1.55"></textarea>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">HOW YOU'LL MEASURE IT</span>
+<div role="radiogroup" aria-label="Measure" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 13px; background: {{t.panel}}; border: 1px solid {{t.line}}">
+<sc-for list="{{kinds}}" as="k" hint-placeholder-count="3">
+<button role="radio" aria-checked="{{k.on}}" onClick="{{k.pick}}" style="height: 38px; border-radius: 10px; font-size: 13px; font-weight: 500; background: {{k.bg}}; color: {{k.fg}}">{{k.label}}</button>
+</sc-for>
+</div>
+<sc-if value="{{isNum}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; align-items: flex-end; gap: 10px">
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: {{t.muted}}; width: 110px">Starting at<input value="{{startVal}}" onChange="{{onStartVal}}" inputmode="numeric" style="height: 44px; padding: 0 14px; border-radius: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.text}}; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 15px"></label>
+<span style="height: 44px; display: flex; align-items: center; color: {{t.muted}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: {{t.muted}}; width: 110px">Target<input value="{{targetVal}}" onChange="{{onTarget}}" inputmode="numeric" style="height: 44px; padding: 0 14px; border-radius: 12px; background: {{t.panel}}; border: 1px solid {{sel.color}}; color: {{t.text}}; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 15px; font-weight: 500"></label>
+<label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: {{t.muted}}; flex-grow: 1">Unit<input value="{{unit}}" onChange="{{onUnit}}" style="height: 44px; padding: 0 14px; border-radius: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.text}}; font-size: 15px"></label>
+</div>
+</sc-if>
+<sc-if value="{{isMs}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; border-radius: 14px; border: 1px solid {{t.line}}; overflow: hidden; background: {{t.panel}}">
+<div class="pl-scroll" style="max-height: 132px; overflow-y: auto">
+<sc-for list="{{msList}}" as="m" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 8px 0 14px; border-bottom: 1px solid {{t.line}}; font-size: 14px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; color: {{t.muted}}; width: 16px">{{m.n}}</span>
+<span style="flex-grow: 1">{{m.text}}</span>
+<button onClick="{{m.remove}}" aria-label="{{m.aria}}" style="width: 32px; height: 32px; border-radius: 8px; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+</div>
+</sc-for>
+</div>
+<label style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 14px; color: {{t.muted}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg><input value="{{msDraft}}" onChange="{{onMsDraft}}" onKeyDown="{{onMsKey}}" placeholder="Add a milestone and press Enter" aria-label="Add a milestone" style="flex-grow: 1; background: transparent; border: 0; color: {{t.text}}; font-size: 14px"></label>
+</div>
+</sc-if>
+<sc-if value="{{isOnce}}" hint-placeholder-val="{{false}}">
+<div style="padding: 12px 14px; border-radius: 14px; border: 1px dashed {{t.line}}; font-size: 13px; color: {{t.muted}}">You'll mark it done when it's done. Linked tasks and habits below still show up as activity.</div>
+</sc-if>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">BY WHEN</span>
+<div role="radiogroup" aria-label="Due date" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+<sc-for list="{{dues}}" as="d" hint-placeholder-count="4">
+<button role="radio" aria-checked="{{d.on}}" onClick="{{d.pick}}" style="height: 46px; border-radius: 13px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: {{d.bg}}; color: {{d.fg}}; border: 1px solid {{d.bd}}"><span style="font-size: 13px; font-weight: 600">{{d.label}}</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; opacity: 0.8">{{d.date}}</span></button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">WHAT MOVES IT FORWARD</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<sc-for list="{{linkChips}}" as="l" hint-placeholder-count="5">
+<button onClick="{{l.toggle}}" aria-pressed="{{l.on}}" style="height: 34px; padding: 0 12px; border-radius: 10px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; background: {{l.bg}}; border: 1px solid {{l.bd}}; color: {{l.fg}}"><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; color: {{t.muted}}">{{l.kind}}</span>{{l.name}}</button>
+</sc-for>
+</div>
+<sc-if value="{{showAuto}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 8px 14px; border-radius: 14px; border: 1px solid {{t.line}}">
+<span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 500">Count habit check-ins toward this goal</span><span style="font-size: 12px; color: {{t.muted}}">Each Morning walk adds <b style="font-weight: 600; color: {{t.text}}">{{perCheck}}</b> {{unit}}</span></span>
+<span style="display: flex; align-items: center; gap: 4px">
+<button onClick="{{perDec}}" aria-label="Less per check-in" style="width: 30px; height: 30px; border-radius: 8px; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
+<button onClick="{{perInc}}" aria-label="More per check-in" style="width: 30px; height: 30px; border-radius: 8px; color: {{t.muted}}; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+</span>
+<button onClick="{{toggleAuto}}" role="switch" aria-checked="{{autoStr}}" aria-label="Count habit check-ins" style="height: 44px; display: flex; align-items: center"><span style="width: 38px; height: 22px; border-radius: 999px; padding: 3px; background: {{autoBg}}; display: flex; justify-content: {{autoJust}}"><span style="width: 16px; height: 16px; border-radius: 50%; background: {{autoKnob}}"></span></span></button>
+</div>
+</sc-if>
+</div>
+
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">CHECK-INS</span>
+<span style="position: relative; display: flex; flex-grow: 1">
+<select value="{{checkin}}" onChange="{{onCheckin}}" aria-label="Check-in reminder" style="width: 100%; height: 42px; padding: 0 34px 0 14px; border-radius: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}; color: {{t.text}}; font-size: 14px">
+<option value="sun">Every Sunday evening, ask how it's going</option>
+<option value="mon">Every Monday morning, show this week's pace</option>
+<option value="month">First of the month, quick review</option>
+<option value="none">No check-in reminders</option>
+</select>
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px; top: 14px; pointer-events: none; color: {{t.muted}}"><path d="m6 9 6 6 6-6"></path></svg>
+</span>
+</div>
+</div>
+
+<aside style="width: 360px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; padding: 24px 22px; background: {{t.side}}; border-left: 1px solid {{t.line}}">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: 0.12em; color: {{t.muted}}">PREVIEW</span>
+<div style="display: flex; flex-direction: column; gap: 14px; padding: 18px; border-radius: 22px; background: {{t.panel}}; border: 1.5px solid {{sel.color}}">
+<span style="display: flex; justify-content: space-between; align-items: center">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: {{t.muted}}"><span style="width: 8px; height: 8px; border-radius: 3px; background: {{sel.color}}"></span>{{sel.area}} · Due {{sel.due}}</span>
+<span style="height: 24px; padding: 0 9px; border-radius: 8px; display: flex; align-items: center; font-size: 11px; font-weight: 600; background: {{t.panel2}}">New</span>
+</span>
+<span style="font-size: 18px; font-weight: 600; line-height: 1.3">{{sel.title}}</span>
+<span style="display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: {{t.muted}}"><b style="font-family: 'Atkinson Hyperlegible', Geist, sans-serif; font-size: 26px; font-weight: 700; color: {{t.text}}">{{sel.pct}}%</b><span>{{sel.detail}}</span></span>
+<span style="display: block; height: 10px; border-radius: 10px; background: {{t.panel2}}; overflow: hidden"><span style="display: block; width: {{sel.pct}}%; height: 100%; border-radius: 10px; background: {{sel.color}}"></span></span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 18px; background: {{sel.soft}}">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.12em; color: {{t.muted}}">THE PLAN</span>
+<span style="font-size: 20px; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em">{{plan.big}}</span>
+<span style="font-size: 13px; line-height: 1.5; color: {{t.muted}}">{{plan.small}}</span>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 10px; border-radius: 12px; background: {{t.panel}}"><span style="font-size: 10px; color: {{t.muted}}">Days</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 16px">{{plan.days}}</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 10px; border-radius: 12px; background: {{t.panel}}"><span style="font-size: 10px; color: {{t.muted}}">Per week</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 16px">{{plan.week}}</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 10px; border-radius: 12px; background: {{t.panel}}"><span style="font-size: 10px; color: {{t.muted}}">Per day</span><span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 16px">{{plan.day}}</span></div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 10px; letter-spacing: 0.12em; color: {{t.muted}}">LINKED</span>
+<sc-if value="{{hasLinks}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<sc-for list="{{linkedShown}}" as="ls" hint-placeholder-count="2">
+<span style="height: 28px; padding: 0 10px; border-radius: 8px; display: flex; align-items: center; gap: 6px; font-size: 12px; background: {{t.panel}}; border: 1px solid {{t.line}}"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{ls.dot}}"></span>{{ls.name}}</span>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{noLinks}}" hint-placeholder-val="{{false}}"><span style="font-size: 13px; color: {{t.muted}}">Nothing linked yet. You can add habits, tasks or events later.</span></sc-if>
+</div>
+</aside>
+</div>
+
+<footer style="height: 68px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: {{t.side}}; border-top: 1px solid {{t.line}}">
+<span style="font-size: 13px; color: {{t.muted}}">{{summary}}</span>
+<div style="display: flex; align-items: center; gap: 10px">
+<a href="Goals.dc.html" style="height: 44px; padding: 0 18px; border-radius: 13px; border: 1px solid {{t.line}}; display: flex; align-items: center; font-size: 14px; font-weight: 500">Cancel</a>
+<a href="Goals.dc.html" style="height: 44px; padding: 0 20px; border-radius: 13px; background: {{t.accent}}; color: {{t.accentInk}}; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600">Create goal<span style="font-family: 'Geist Mono', ui-monospace, monospace; font-size: 11px; font-weight: 500; opacity: 0.75">Ctrl Enter</span></a>
+</div>
+</footer>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["midnight","aurora","ember","daylight"],"default":"midnight"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  palette() {
+    return {
+      midnight: { bg: '#0A0C11', side: '#0D1017', panel: '#12161F', panel2: '#1A1F2B', line: 'rgba(255,255,255,0.07)', text: '#ECEEF5', muted: '#969DAF', faint: '#5D6477', accent: '#A092FF', accentInk: '#0A0C11', accentSoft: 'rgba(160,146,255,0.16)', accent2: '#5CE1C6', warn: '#FFB36B', danger: '#FF7A85', scrim: 'rgba(4,5,9,0.62)', hues: ['#A092FF', '#5CE1C6', '#FFB36B', '#FF7A85', '#6FA8FF', '#F28DC4'] },
+      aurora: { bg: '#07110F', side: '#0A1614', panel: '#0F1D1A', panel2: '#162824', line: 'rgba(220,255,245,0.08)', text: '#E8F4F0', muted: '#93ABA4', faint: '#4E6760', accent: '#4FE0B0', accentInk: '#06120F', accentSoft: 'rgba(79,224,176,0.16)', accent2: '#7CB8FF', warn: '#FFC37A', danger: '#FF8590', scrim: 'rgba(2,8,7,0.62)', hues: ['#4FE0B0', '#7CB8FF', '#FFC37A', '#FF8590', '#B69CFF', '#F59BC9'] },
+      ember: { bg: '#110C0A', side: '#16100D', panel: '#1D1512', panel2: '#281E19', line: 'rgba(255,235,220,0.08)', text: '#F6ECE6', muted: '#B5A197', faint: '#6E5A50', accent: '#FF9A5C', accentInk: '#140C08', accentSoft: 'rgba(255,154,92,0.16)', accent2: '#F2CF6A', warn: '#FFC37A', danger: '#FF7A7A', scrim: 'rgba(8,5,4,0.62)', hues: ['#FF9A5C', '#F2CF6A', '#8FD9A8', '#FF7A7A', '#7FB6FF', '#E79AD0'] },
+      daylight: { bg: '#F3F2EE', side: '#ECEAE4', panel: '#FFFFFF', panel2: '#F3F2EE', line: 'rgba(20,22,30,0.09)', text: '#15171D', muted: '#5A5F6B', faint: '#A9A69E', accent: '#5A48E0', accentInk: '#FFFFFF', accentSoft: 'rgba(90,72,224,0.12)', accent2: '#0B8A6D', warn: '#B4501A', danger: '#C62F3D', scrim: 'rgba(20,22,30,0.38)', hues: ['#5A48E0', '#0B8A6D', '#B4501A', '#C62F3D', '#2F6FD6', '#B23A7C'] }
+    };
+  }
+  soft(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+  areas(t) {
+    return {
+      projects: { name: 'Projects', color: t.hues[0] },
+      health: { name: 'Health', color: t.hues[1] },
+      creative: { name: 'Creative', color: t.hues[5] },
+      home: { name: 'Home', color: t.hues[2] }
+    };
+  }
+  status(t, pct, pace) {
+    const diff = pct - pace;
+    if (pct >= 100) return { label: 'Done', fg: t.accentInk, bg: t.accent2 };
+    if (diff >= 8) return { label: 'Ahead', fg: t.accent2, bg: this.soft(t.accent2, 0.14) };
+    if (diff >= -8) return { label: 'On track', fg: t.text, bg: t.panel2 };
+    return { label: 'Behind', fg: t.warn, bg: this.soft(t.warn, 0.14) };
+  }
+
+  renderVals() {
+    const P = this.palette();
+    const s = this.state || {};
+    const key = this.props.theme || 'midnight';
+    const t = P[key] || P.midnight;
+    const AR = this.areas(t);
+
+    const title = s.title !== undefined ? s.title : 'Walk 100 miles before the new year';
+    const why = s.why !== undefined ? s.why : 'Keep the fall walks going once it gets cold out.';
+    const area = s.area || 'health';
+    const kind = s.kind || 'num';
+    const startVal = s.startVal !== undefined ? s.startVal : '0';
+    const targetVal = s.targetVal !== undefined ? s.targetVal : '100';
+    const unit = s.unit !== undefined ? s.unit : 'miles';
+    const due = s.due || 'year';
+    const ms = s.ms || ['Pick a route near home', 'First 25 miles', 'Halfway there', 'Last 10 miles'];
+    const msDraft = s.msDraft || '';
+    const links = s.links || { walk: true };
+    const auto = s.auto !== false;
+    const perCheck = s.perCheck || 2;
+    const checkin = s.checkin || 'sun';
+
+    const ideas = [
+      ['Read 12 books', { title: 'Read 12 books next year', kind: 'num', startVal: '0', targetVal: '12', unit: 'books', area: 'health' }],
+      ['Run a 5K', { title: 'Run a 5K without stopping', kind: 'ms', area: 'health', ms: ['Walk 3 miles easy', 'Run 1 mile', 'Run 2 miles', 'Race day'] }],
+      ['Finish a video series', { title: 'Finish the desk setup series', kind: 'ms', area: 'creative', ms: ['Script all 4 parts', 'Film', 'Edit part 1', 'Publish all 4'] }],
+      ['Save for a trip', { title: 'Save for a spring trip', kind: 'num', startVal: '0', targetVal: '1500', unit: 'dollars', area: 'home' }]
+    ].map((i) => ({ label: i[0], pick: () => this.setState(i[1]) }));
+
+    const areaChips = Object.keys(AR).map((k) => ({
+      name: AR[k].name, color: AR[k].color, on: String(k === area),
+      bg: k === area ? this.soft(AR[k].color, 0.16) : 'transparent', bd: k === area ? AR[k].color : t.line, fg: k === area ? t.text : t.muted,
+      pick: () => this.setState({ area: k })
+    }));
+    const kinds = [['num', 'Reach a number'], ['ms', 'Hit milestones'], ['once', 'Done or not']].map((o) => ({
+      label: o[1], on: String(kind === o[0]), bg: kind === o[0] ? t.panel2 : 'transparent', fg: kind === o[0] ? t.text : t.muted,
+      pick: () => this.setState({ kind: o[0] })
+    }));
+    const DUES = [['month', 'End of month', 'Sep 30', 5], ['quarter', 'End of year', 'Dec 31', 97], ['days90', 'In 90 days', 'Dec 24', 90], ['custom', 'Pick a date', 'Mar 20, 2027', 176]];
+    DUES[0] = ['month', 'End of October', 'Oct 31', 36];
+    const DUE_KEYS = { month: 0, year: 1, days90: 2, custom: 3 };
+    DUES[1][0] = 'year';
+    const dues = DUES.map((d) => ({
+      label: d[1], date: d[2], on: String(due === d[0]),
+      bg: due === d[0] ? t.accent : t.panel, fg: due === d[0] ? t.accentInk : t.text, bd: due === d[0] ? t.accent : t.line,
+      pick: () => this.setState({ due: d[0] })
+    }));
+    const dSel = DUES[DUE_KEYS[due]];
+    const days = dSel[3];
+
+    const HABITS = [['walk', 'Habit', 'Morning walk', 1], ['read', 'Habit', 'Read 20 minutes', 0], ['stretch', 'Habit', 'Stretch', 5], ['onboard', 'Task', 'Outline onboarding flow', 0], ['asmr', 'Event', 'Record ASMR', 5]];
+    const linkChips = HABITS.map((h) => ({
+      kind: h[1].toUpperCase(), name: h[2], on: String(!!links[h[0]]),
+      bg: links[h[0]] ? this.soft(t.hues[h[3]], 0.16) : 'transparent', bd: links[h[0]] ? t.hues[h[3]] : t.line, fg: links[h[0]] ? t.text : t.muted,
+      toggle: () => this.setState({ links: { ...links, [h[0]]: !links[h[0]] } })
+    }));
+    const linkedShown = HABITS.filter((h) => links[h[0]]).map((h) => ({ name: h[1] + ': ' + h[2], dot: t.hues[h[3]] }));
+
+    const a = parseFloat(startVal) || 0, b = parseFloat(targetVal) || 0;
+    const need = Math.max(0, b - a);
+    const fmtN = (n) => (n >= 10 ? String(Math.round(n)) : (Math.round(n * 10) / 10).toString());
+    let plan;
+    if (kind === 'num') {
+      const perDay = need / days, perWeek = perDay * 7;
+      const walks = auto && links.walk && perCheck > 0 ? Math.ceil(need / perCheck) : 0;
+      plan = {
+        big: fmtN(perWeek) + ' ' + unit + ' a week',
+        small: walks ? 'That\'s about ' + Math.ceil(walks / (days / 7)) + ' Morning walks a week at ' + perCheck + ' ' + unit + ' each. Walks you log count automatically.' : 'Log progress whenever you like. You\'ll see if you\'re ahead or behind an even pace.',
+        days: days, week: fmtN(perWeek), day: fmtN(perDay)
+      };
+    } else if (kind === 'ms') {
+      const every = Math.round(days / Math.max(1, ms.length));
+      plan = { big: ms.length + ' milestones, one every ' + every + ' days', small: 'Each milestone gets its own date, spaced evenly. Drag them later to change the order.', days: days, week: fmtN(ms.length / (days / 7)), day: '–' };
+    } else {
+      plan = { big: 'Done by ' + dSel[2], small: 'A simple finish line. Linked tasks show up as activity so you can see it moving.', days: days, week: '–', day: '–' };
+    }
+
+    const msList = ms.map((m, i) => ({ n: i + 1, text: m, aria: 'Remove ' + m, remove: () => this.setState({ ms: ms.filter((x, j) => j !== i) }) }));
+    const addMs = () => { const v = (this.state && this.state.msDraft || '').trim(); if (v) this.setState({ ms: ms.concat([v]), msDraft: '' }); };
+    const tg = (on) => ({ bg: on ? t.accent : t.panel2, just: on ? 'flex-end' : 'flex-start', knob: on ? t.accentInk : t.muted });
+    const at = tg(auto);
+    const A = AR[area];
+    return {
+      t: t, themeKey: key, title: title, why: why, ideas: ideas, areaChips: areaChips, kinds: kinds,
+      onTitle: (e) => this.setState({ title: e.target.value }), onWhy: (e) => this.setState({ why: e.target.value }),
+      isNum: kind === 'num', isMs: kind === 'ms', isOnce: kind === 'once',
+      startVal: startVal, targetVal: targetVal, unit: unit,
+      onStartVal: (e) => this.setState({ startVal: e.target.value }), onTarget: (e) => this.setState({ targetVal: e.target.value }), onUnit: (e) => this.setState({ unit: e.target.value }),
+      msList: msList, msDraft: msDraft, onMsDraft: (e) => this.setState({ msDraft: e.target.value }), onMsKey: (e) => { if (e.key === 'Enter') addMs(); },
+      dues: dues, linkChips: linkChips, linkedShown: linkedShown, hasLinks: linkedShown.length > 0, noLinks: linkedShown.length === 0,
+      showAuto: kind === 'num' && !!links.walk, autoStr: String(auto), toggleAuto: () => this.setState({ auto: !auto }),
+      autoBg: at.bg, autoJust: at.just, autoKnob: at.knob, perCheck: perCheck,
+      perInc: () => this.setState({ perCheck: perCheck + 1 }),
+      perDec: () => this.setState({ perCheck: Math.max(1, perCheck - 1) }),
+      checkin: checkin, onCheckin: (e) => this.setState({ checkin: e.target.value }),
+      sel: { title: title || 'New goal', area: A.name, color: A.color, soft: this.soft(A.color, 0.1), due: dSel[2], pct: 0,
+        detail: kind === 'num' ? a + ' / ' + (b || '?') + ' ' + unit : (kind === 'ms' ? '0 of ' + ms.length + ' milestones' : 'Not done yet') },
+      plan: plan,
+      summary: (title || 'New goal') + ' · ' + A.name + ' · due ' + dSel[2] + (linkedShown.length ? ' · ' + linkedShown.length + ' linked' : '')
+    };
+  }
+}
+</script>
+</body>
+</html>
