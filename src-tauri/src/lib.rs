@@ -1,7 +1,9 @@
 // The file layer. Project Life keeps everything local, in a Data folder beside
-// the executable: settings now, and tasks, events, habits and goals as JSON
-// files in later phases. The frontend owns the JSON; this side only reads and
-// writes it whole, so keys it doesn't know about are never lost.
+// the executable: settings, and tasks, events, habits and goals as JSON files.
+// The frontend owns the JSON; this side only reads and writes it whole, so
+// keys it doesn't know about are never lost.
+mod web;
+
 use std::{
     ffi::OsString,
     fs,
@@ -52,6 +54,33 @@ fn read_settings() -> Result<Option<String>, String> {
 #[tauri::command]
 fn write_settings(contents: String) -> Result<(), String> {
     write_atomic(&ensure(data_dir())?.join("settings.json"), &contents)
+}
+
+// The data files the frontend may read and write, by name. Nothing else in
+// Data\ (or outside it) can be reached this way.
+const DATA_FILES: [&str; 4] = ["tasks.json", "events.json", "habits.json", "goals.json"];
+
+fn data_file(name: &str) -> Result<PathBuf, String> {
+    if !DATA_FILES.contains(&name) {
+        return Err(format!("{name} isn't one of Project Life's data files."));
+    }
+    Ok(data_dir().join(name))
+}
+
+#[tauri::command]
+fn read_data(name: String) -> Result<Option<String>, String> {
+    let path = data_file(&name)?;
+    if !path.exists() {
+        return Ok(None);
+    }
+    fs::read_to_string(path).map(Some).map_err(err)
+}
+
+#[tauri::command]
+fn write_data(name: String, contents: String) -> Result<(), String> {
+    let path = data_file(&name)?;
+    ensure(data_dir())?;
+    write_atomic(&path, &contents)
 }
 
 // The name to greet someone by until they set their own in Settings → Profile.
@@ -109,6 +138,7 @@ pub fn run() {
         return;
     }
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         // Remember size and position, but never the frame (the window draws its
         // own) or visibility (the page shows the window once its theme is on).
         .plugin(
@@ -126,7 +156,7 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![read_settings, write_settings, default_name])
+        .invoke_handler(tauri::generate_handler![read_settings, write_settings, read_data, write_data, default_name, web::fetch_text])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

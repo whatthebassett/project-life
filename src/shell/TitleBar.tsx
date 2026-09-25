@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Copy, LayoutGrid, Minus, Square, X } from "lucide-react";
 import { inTauri } from "../lib/api";
+import { taskStore } from "../tasks/useTasks";
 
 interface Props {
   title: string;
@@ -55,7 +56,7 @@ export default function TitleBar({ title, onGallery, galleryOpen }: Props) {
         <WinButton title={maximized ? "Restore" : "Maximize"} onClick={() => inTauri && void win().toggleMaximize()}>
           {maximized ? <Copy size={13} className="-scale-x-100" /> : <Square size={13} />}
         </WinButton>
-        <WinButton title="Close" close onClick={() => inTauri && void win().close()}>
+        <WinButton title="Close" close onClick={() => inTauri && void taskStore().flush().finally(() => win().close())}>
           <X size={17} />
         </WinButton>
       </div>

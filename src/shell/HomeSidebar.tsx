@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { useTodayOpenCount } from "../home/useHome";
 import { useSettings } from "../lib/SettingsContext";
 import { themeFor, themes } from "../lib/themes";
 import { Icon } from "../ui/icons";
@@ -9,8 +10,6 @@ interface Props {
   screen: Screen;
   onNavigate: (screen: Screen) => void;
   onSettings: () => void;
-  // Open tasks, shown beside Tasks once there are any (Phase 4).
-  taskCount?: number;
 }
 
 // The default spaces (DESIGN.md §2, calendars and lists). They become real
@@ -23,8 +22,10 @@ const spaces = [
 
 // Home's full 240px sidebar (Main.dc.html): nav, spaces, the theme picker and
 // the profile.
-export default function HomeSidebar({ screen, onNavigate, onSettings, taskCount = 0 }: Props) {
+export default function HomeSidebar({ screen, onNavigate, onSettings }: Props) {
   const { settings, update } = useSettings();
+  // Today's open tasks, beside Tasks.
+  const taskCount = useTodayOpenCount();
   const current = themeFor(settings.Theme);
 
   return (

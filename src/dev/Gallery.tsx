@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from "react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
+import { sample } from "../home/sample";
 import { textSizes, type TextSize } from "../lib/settings";
 import { useSettings } from "../lib/SettingsContext";
 import { themes, type ThemeId } from "../lib/themes";
@@ -30,6 +31,7 @@ export default function Gallery() {
   const [target, setTarget] = useState(8);
   const [popup, setPopup] = useState(false);
   const toggle = (k: string) => setChecks((c) => ({ ...c, [k]: !c[k] }));
+  const sampleOn = useSyncExternalStore(sample.subscribe, sample.on);
 
   return (
     <main className="min-w-0 flex-1 overflow-y-auto px-8 pt-[26px] pb-12">
@@ -49,6 +51,14 @@ export default function Gallery() {
       </header>
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(420px,1fr))] gap-5">
+        <Card title="Home sample data">
+          <ListGroup>
+            <ListRow label="Show the mockup's sample data on Home" description="Events, habits, notes, news and weather from Main.dc.html, with the clock at 4:18 PM. Kept in memory only; your tasks aren't touched.">
+              <Switch label="Show sample data on Home" checked={sampleOn} onChange={(v) => sample.set(v)} />
+            </ListRow>
+          </ListGroup>
+        </Card>
+
         <Card title="Pop-up shell">
           <p className="m-0 text-14 leading-[1.5] text-muted">Esc, the X, Cancel or a click on the dimmed area closes it. Ctrl+Enter runs the main button. Tab stays inside.</p>
           <div className="flex gap-2">

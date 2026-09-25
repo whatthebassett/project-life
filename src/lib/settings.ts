@@ -12,6 +12,11 @@ export interface Settings {
   ReduceMotion: boolean;
   AlwaysShowFocus: boolean;
   DisplayName: string;
+  // Home (read through home/prefs.ts, which checks their shape).
+  WeatherLocation?: unknown;
+  TemperatureUnit?: "C" | "F";
+  NewsSources?: unknown;
+  HomeNewsTopic?: string;
   [key: string]: unknown;
 }
 
