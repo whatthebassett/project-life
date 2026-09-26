@@ -2,7 +2,7 @@ import { useMemo, useSyncExternalStore } from "react";
 import { titleOf } from "../lib/api";
 import { joinUrlOf, occurrences, type Occurrence } from "../schedule/events";
 import { startOfDay } from "../tasks/dates";
-import { useEvents } from "../schedule/useEvents";
+import { useAllEvents } from "../schedule/useEvents";
 import { stepDay, toggleDay } from "../habits/actions";
 import { activeHabits, currentStreak, doneOn, habitDay, isDue, weekStartOf, type Habit, type HabitRules } from "../habits/model";
 import { rulesOf, useHabits } from "../habits/useHabits";
@@ -36,7 +36,7 @@ export function useHome(): HomeData {
   const now = useNow();
   const real = useTasks();
   const recentNotes = useRecentNotes();
-  const { events } = useEvents();
+  const { events } = useAllEvents();
   const { habits } = useHabits();
   const { settings } = useSettings();
   const rules = rulesOf(settings);

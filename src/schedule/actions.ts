@@ -9,6 +9,8 @@ import { parseCapture } from "../tasks/quick";
 import { toast } from "../ui/Toast";
 import { fromStamp, localStamp, reshapeSeries, skipDay, type CalEvent, type EventFile, type Occurrence } from "./events";
 import { eventStore } from "./useEvents";
+import { addMeetingLink, deleteRemote, moveRemote, moveRemoteToLocal, patchSynced, saveRemote } from "../accounts/actions";
+import { splitKey } from "../accounts/model";
 
 export type Scope = "one" | "all";
 
@@ -76,6 +78,7 @@ export function parseQuickEvent(text: string, now: Date): CalEvent | null {
 
 export function addEvent(event: CalEvent, quiet = false) {
   store().change((f) => ({ ...f, Events: [...f.Events, event] }));
+  void addMeetingLink(event);
   if (!quiet) toast(`Added “${event.Title || "New event"}”`, () => removeEvents((e) => e.Id === event.Id));
 }
 
@@ -86,12 +89,23 @@ function removeEvents(match: (e: CalEvent) => boolean) {
 // Saves an event, new or edited. `occ` is the day it was opened from; for a
 // repeating event, `scope` says whether the change is for that day only.
 export function saveEvent(draft: CalEvent, occ: Occurrence | null, scope: Scope) {
+  // Connected calendars: Outlook or Google Calendar has the event.
+  const before = draft.Remote ? draft : (store().getState().file.Events.find((e) => e.Id === draft.Id) ?? null);
+  if (splitKey(draft.Calendar)) {
+    void saveRemote(draft, before);
+    return;
+  }
+  if (draft.Remote) {
+    void moveRemoteToLocal(draft, draft);
+    return;
+  }
   const series = occ?.event;
   const seriesEdit = Boolean(occ && series?.Repeat && draft.Id === series.Id);
   if (seriesEdit && scope === "one") {
     // That day comes out of the series, and a copy with the changes takes its place.
     const one: CalEvent = { ...draft, Id: newId(), Repeat: null, Skip: [], Of: series!.Id, OnDate: occ!.day };
     store().change((f) => ({ ...f, Events: [...skipDay(f.Events, series!.Id, occ!.day), one] }));
+    void addMeetingLink(one);
     return;
   }
   // All of them: the editor showed the day it was opened from, so the new
@@ -101,11 +115,17 @@ export function saveEvent(draft: CalEvent, occ: Occurrence | null, scope: Scope)
     ...f,
     Events: f.Events.some((e) => e.Id === saved.Id) ? f.Events.map((e) => (e.Id === saved.Id ? saved : e)) : [...f.Events, saved],
   }));
+  // Teams or Meet asked for with no link yet: a connected account makes one.
+  void addMeetingLink(saved);
 }
 
 // Dragged to a new time (and maybe day).
 export function moveOccurrence(occ: Occurrence, start: Date, end: Date, scope: Scope) {
   const e = occ.event;
+  if (e.Remote) {
+    void moveRemote(e, localStamp(start), localStamp(end));
+    return;
+  }
   if (e.Repeat && scope === "all") {
     const shape = reshapeSeries(e, occ, start, end);
     store().change((f) => ({ ...f, Events: f.Events.map((x) => (x.Id === e.Id ? { ...x, ...shape, Reminded: new Date().toISOString() } : x)) }));
@@ -121,6 +141,10 @@ export function moveOccurrence(occ: Occurrence, start: Date, end: Date, scope: S
 
 export function deleteOccurrence(occ: Occurrence, scope: Scope) {
   const e = occ.event;
+  if (e.Remote) {
+    void deleteRemote(e);
+    return;
+  }
   const name = `“${e.Title || "Untitled"}”`;
   if (e.Repeat && scope === "one") {
     changeWithUndo(`Removed ${name} on ${fromYmd(occ.day).toLocaleDateString(locale(), { weekday: "long", month: "short", day: "numeric" })}`, (events) => skipDay(events, e.Id, occ.day));
@@ -131,5 +155,6 @@ export function deleteOccurrence(occ: Occurrence, scope: Scope) {
 }
 
 export function patchEvent(id: string, fields: Partial<CalEvent>) {
+  if (patchSynced(id, fields)) return;
   store().change((f) => ({ ...f, Events: f.Events.map((e) => (e.Id === id ? { ...e, ...fields } : e)) }));
 }

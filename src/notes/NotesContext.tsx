@@ -37,6 +37,7 @@ import { flushStats, forgetStats, loadStats, onStatsChange, recordEdit, recordOp
 import { flushSpots, forgetSpot, renameSpot } from "../lib/positions";
 import { splitFront, withCover, withCoverPosition } from "../lib/frontmatter";
 import { todoText } from "../editor/taskLinks";
+import { accountStore } from "../accounts/useAccounts";
 import { eventStore } from "../schedule/useEvents";
 import { setCompleted } from "../tasks/model";
 import { requestTasks } from "../tasks/nav";
@@ -590,6 +591,7 @@ export function NotesProvider({ visible, onShow, children }: Props) {
           : ts,
       );
       eventStore().change((f) => (f.Events.some((e) => e.Note === name) ? { ...f, Events: f.Events.map((e) => (e.Note === name ? { ...e, Note: next } : e)) } : f));
+      accountStore().change((f) => (f.Events.some((e) => e.Note === name) ? { ...f, Events: f.Events.map((e) => (e.Note === name ? { ...e, Note: next } : e)) } : f));
       setEditing((e) => (e === name ? next : e));
       if (currentRef.current === name) {
         currentRef.current = next;

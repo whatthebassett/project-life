@@ -31,6 +31,7 @@ import { TASKS_OPEN } from "./tasks/TasksWindow";
 import { Toaster } from "./ui/Toast";
 import GuidePopup from "./shell/GuidePopup";
 import Celebration from "./goals/Celebration";
+import { useAccountSync } from "./accounts/sync";
 import { useBackgroundJobs } from "./lib/jobs";
 import { keyMap, keyOf } from "./lib/shortcuts";
 import { textSizes, type Settings } from "./lib/settings";
@@ -61,6 +62,7 @@ export default function App() {
   const showNotes = useCallback(() => setScreen("notes"), []);
   useTaskReminders();
   useBackgroundJobs();
+  useAccountSync();
   const shortcutsRef = useRef(settings.Shortcuts);
   shortcutsRef.current = settings.Shortcuts;
   const textSizeRef = useRef(settings.TextSize);

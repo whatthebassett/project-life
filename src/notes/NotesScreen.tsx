@@ -23,7 +23,7 @@ import { useNow } from "../lib/dates";
 import { occurrences } from "../schedule/events";
 import { shortTime } from "../schedule/look";
 import { requestSchedule } from "../schedule/nav";
-import { useEvents } from "../schedule/useEvents";
+import { useAllEvents } from "../schedule/useEvents";
 import { requestTasks } from "../tasks/nav";
 import { useTasks } from "../tasks/useTasks";
 import { Icon } from "../ui/icons";
@@ -343,7 +343,7 @@ function RightPanel() {
   const info = n.notes.find((x) => x.name === n.current);
   const panel = useRef<HTMLElement>(null);
   const { tasks } = useTasks();
-  const { events } = useEvents();
+  const { events } = useAllEvents();
   const now = useNow();
   const sent = tasks.filter((t) => t.Note === n.current && t.NoteTodo);
   const openSent = sent.filter((t) => !t.Completed);

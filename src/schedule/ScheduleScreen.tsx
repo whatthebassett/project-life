@@ -3,7 +3,12 @@ import { locale } from "../lib/format";
 import clsx from "clsx";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { connectAccount } from "../accounts/actions";
+import { appName, calendarKey } from "../accounts/model";
+import { errorText, syncAll, syncIfStale } from "../accounts/sync";
+import { useAccounts } from "../accounts/useAccounts";
 import ContextMenu, { type MenuItem, type MenuState } from "../components/ContextMenu";
+import { toast } from "../ui/Toast";
 import { isoWeek, useNow, weekRangeLabel } from "../lib/dates";
 import { useSettings } from "../lib/SettingsContext";
 import { addDays, fromYmd, startOfDay, ymd } from "../tasks/dates";
@@ -13,12 +18,12 @@ import { useTasks } from "../tasks/useTasks";
 import { addEvent, blankEvent, deleteOccurrence, eventLength, moveOccurrence, parseQuickEvent, saveEvent, type Scope } from "./actions";
 import EventPopup from "./EventPopup";
 import { fromStamp, occurrences, type CalEvent, type Occurrence } from "./events";
-import { softOf } from "./look";
+import { shortTime, softOf } from "./look";
 import MonthView, { monthGrid } from "./MonthView";
 import { subscribeScheduleRequests, takeScheduleRequest } from "./nav";
 import ScheduleSidebar, { type CalendarRow } from "./ScheduleSidebar";
 import ScopeDialog from "./ScopeDialog";
-import { useEvents } from "./useEvents";
+import { useAllEvents } from "./useEvents";
 import WeekView, { type AllDayItem } from "./WeekView";
 
 const TASKS_CAL = "tasks";
@@ -30,8 +35,11 @@ const weekStartOf = (d: Date) => addDays(startOfDay(d), -dayOfWeek(d));
 // right. Double-click an event (or Edit) for the event pop-up
 // (EventNew.dc.html), which also makes new ones.
 export default function ScheduleScreen() {
-  const { events, error } = useEvents();
+  const { events, error } = useAllEvents();
   const { tasks, lists } = useTasks();
+  const { accounts } = useAccounts();
+  // A fresh look at connected calendars when the Schedule opens.
+  useEffect(() => syncIfStale(), []);
   const { settings, update } = useSettings();
   const now = useNow();
   const view = settings.ScheduleView === "month" ? "month" : "week";
@@ -80,7 +88,28 @@ export default function ScheduleScreen() {
       count: all.filter((o) => o.event.Calendar === l.Id).length,
     })),
     { id: TASKS_CAL, name: "Tasks due", color: "var(--muted)", on: !hidden.has(TASKS_CAL), count: tasksDue.length },
+    // Connected accounts' calendars, under the account they come from.
+    ...accounts.flatMap((a) =>
+      a.Calendars.filter((c) => c.On).map((c) => {
+        const key = calendarKey(a.Id, c.Id);
+        return { id: key, name: c.Name, color: listFor(key).color, on: !hidden.has(key), count: all.filter((o) => o.event.Calendar === key).length, group: `${appName[a.Provider]} · ${a.Email}` };
+      }),
+    ),
   ];
+
+  // How the connected calendars are doing, under the list.
+  const trouble = accounts.find((a) => a.NeedsSignIn || a.Error);
+  const lastSync = accounts.map((a) => a.LastSync).filter(Boolean).sort().pop();
+  const syncStatus = !accounts.length
+    ? null
+    : trouble
+      ? {
+          text: trouble.NeedsSignIn ? `${appName[trouble.Provider]} needs you to sign in again` : `${appName[trouble.Provider]} didn't sync: ${trouble.Error}`,
+          action: trouble.NeedsSignIn ? "Reconnect" : "Try again",
+          onAction: () => void (trouble.NeedsSignIn ? connectAccount(trouble.Provider).catch((e) => toast(errorText(e))) : syncAll()),
+          error: true,
+        }
+      : { text: lastSync ? `Synced ${shortTime(new Date(lastSync))}` : "Syncing…", action: "Sync now", onAction: () => void syncAll(), error: false };
 
   const toggle = (id: string) => {
     const next = new Set(hidden);
@@ -122,6 +151,12 @@ export default function ScheduleScreen() {
   };
 
   const move = (occ: Occurrence, start: Date, end: Date) => {
+    const remote = occ.event.Remote;
+    if (remote && !remote.Editable) {
+      const where = appName[accounts.find((a) => a.Id === remote.Account)?.Provider ?? "microsoft"];
+      toast(`Someone else organized “${occ.event.Title}”, so it can only be moved in ${where}`);
+      return;
+    }
     if (occ.event.Repeat) setMoving({ occ, start, end });
     else moveOccurrence(occ, start, end, "all");
     setSelectedKey(occ.event.Repeat ? null : `${occ.event.Id}@${ymd(start)}`);
@@ -160,6 +195,7 @@ export default function ScheduleScreen() {
         busy={busy}
         onPickDay={(d) => setFocus(startOfDay(d))}
         calendars={calendars}
+        syncStatus={syncStatus}
         onToggle={toggle}
         onNew={() => openNew()}
         quickPreview={(text) => parseQuickEvent(text, now)}

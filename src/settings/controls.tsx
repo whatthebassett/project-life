@@ -152,21 +152,41 @@ export function Swatches<T extends string>({ label, desc, value, options, onChan
   );
 }
 
-export function Account({ label, desc, connected, onToggle, disabled }: { label: string; desc: string; connected: boolean; onToggle: () => void; disabled?: boolean }) {
+export function Account({
+  label,
+  desc,
+  connected,
+  onToggle,
+  disabled,
+  status,
+  action,
+  warn,
+}: {
+  label: string;
+  desc: ReactNode;
+  connected: boolean;
+  onToggle: () => void;
+  disabled?: boolean;
+  // In place of "Connected" / "Not connected", and "Connect" / "Disconnect".
+  status?: string;
+  action?: string;
+  // Connected, but it needs signing in again.
+  warn?: boolean;
+}) {
   return (
     <ListRow label={label} description={desc}>
       <span className="flex shrink-0 items-center gap-2.5">
-        <span className={clsx("flex h-[26px] items-center gap-1.5 rounded-[8px] px-2.5 text-12 font-medium", connected ? "text-accent2" : "text-muted")}>
+        <span className={clsx("flex h-[26px] items-center gap-1.5 rounded-[8px] px-2.5 text-12 font-medium", warn ? "text-warn" : connected ? "text-accent2" : "text-muted")}>
           <span className="h-1.5 w-1.5 rounded-full bg-current" />
-          {connected ? "Connected" : "Not connected"}
+          {status ?? (connected ? "Connected" : "Not connected")}
         </span>
         <button
           type="button"
           disabled={disabled}
           onClick={onToggle}
-          className={clsx("h-9 rounded-[10px] border px-3.5 text-12 font-semibold disabled:opacity-50", connected ? "border-line text-text" : "border-accent bg-accent text-accent-ink")}
+          className={clsx("h-9 rounded-[10px] border px-3.5 text-12 font-semibold disabled:opacity-50", connected && !warn ? "border-line text-text" : "border-accent bg-accent text-accent-ink")}
         >
-          {connected ? "Disconnect" : "Connect"}
+          {action ?? (connected ? "Disconnect" : "Connect")}
         </button>
       </span>
     </ListRow>

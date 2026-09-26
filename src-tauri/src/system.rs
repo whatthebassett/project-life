@@ -93,7 +93,7 @@ pub fn current_location() -> Result<Position, String> {
 
 // ----- secrets (Windows Credential Manager) -----
 
-fn entry(name: &str) -> Result<keyring::Entry, String> {
+pub(crate) fn entry(name: &str) -> Result<keyring::Entry, String> {
     if name.is_empty() || !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '.') {
         return Err("That isn't a secret's name.".into());
     }
@@ -463,6 +463,15 @@ pub fn delete_all_data(app: AppHandle) -> Result<(), String> {
     // Notes kept outside Data (a folder shared with Checkpoint) aren't in
     // here, so they stay; notes in Data\Notes go with the rest.
     let data = data_dir();
+    // Connected accounts' sign-ins, and the OBS password, leave Credential Manager too.
+    if let Some(accounts) = fs::read_to_string(data.join("accounts.json")).ok().and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok()) {
+        for a in accounts["Accounts"].as_array().into_iter().flatten() {
+            if let Some(id) = a["Id"].as_str() {
+                let _ = crate::accounts::account_disconnect(id.to_string());
+            }
+        }
+    }
+    let _ = secret_set("obs-websocket".into(), None);
     if data.exists() {
         for entry in fs::read_dir(&data).map_err(err)?.flatten() {
             let path = entry.path();

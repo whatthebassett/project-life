@@ -4,8 +4,12 @@ import { useEffect, useState } from "react";
 import Dialog, { Button as DialogButton } from "../../components/Dialog";
 import { clearNewsCache } from "../../home/news";
 import { clearWeatherCache } from "../../home/weather";
-import { inTauri, system, type DataInfo } from "../../lib/api";
-import { dateText } from "../../lib/format";
+import { connectAccount, disconnectAccount, setCalendarOn } from "../../accounts/actions";
+import { appName, providerName, type Account as AccountRecord } from "../../accounts/model";
+import { errorText, syncAccount } from "../../accounts/sync";
+import { useAccounts } from "../../accounts/useAccounts";
+import { accountsApi, inTauri, system, type DataInfo, type ProviderId } from "../../lib/api";
+import { clockText, dateText } from "../../lib/format";
 import { backupNow, flushAll } from "../../lib/jobs";
 import { useSettings } from "../../lib/SettingsContext";
 import { fromYmd, ymd } from "../../tasks/dates";
@@ -17,26 +21,128 @@ import { Account, Action, Choice, Info, Note, Path, Toggle } from "../controls";
 
 // ----- Connected accounts -----
 
+const providerDesc: Record<ProviderId, string> = { microsoft: "Outlook calendar and Teams calls", google: "Google Calendar and Meet calls" };
+
 export function Accounts() {
+  const { settings, update } = useSettings();
+  const { accounts } = useAccounts();
+  const [available, setAvailable] = useState<Record<ProviderId, boolean> | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [leaving, setLeaving] = useState<AccountRecord | null>(null);
+  useEffect(() => {
+    void accountsApi.available().then(setAvailable);
+  }, []);
+
+  const connect = async (provider: ProviderId, key: string) => {
+    setBusy(key);
+    try {
+      const a = await connectAccount(provider);
+      toast(`Connected ${a.Email || providerName[provider]}`);
+    } catch (e) {
+      toast(errorText(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const row = (provider: ProviderId) => {
+    const mine = accounts.filter((a) => a.Provider === provider);
+    const ready = available?.[provider] ?? false;
+    if (!mine.length)
+      return (
+        <Account
+          key={provider}
+          label={providerName[provider]}
+          desc={ready || !inTauri ? providerDesc[provider] : `${providerDesc[provider]}. This build doesn't have its ${providerName[provider]} app registration yet (docs/ACCOUNTS.md).`}
+          connected={false}
+          status={ready ? undefined : "Needs setup"}
+          action={busy === provider ? "Waiting for the browser…" : undefined}
+          disabled={!ready || busy !== null}
+          onToggle={() => void connect(provider, provider)}
+        />
+      );
+    return mine.map((a) => (
+      <Account
+        key={a.Id}
+        label={providerName[provider]}
+        desc={`${a.Email}${provider === "microsoft" ? (a.Work ? " · Work or school, with Teams meetings" : " · Personal: paste Teams links") : ""}`}
+        connected
+        warn={a.NeedsSignIn}
+        status={a.NeedsSignIn ? "Sign in again" : undefined}
+        action={busy === a.Id ? "Waiting for the browser…" : a.NeedsSignIn ? "Reconnect" : undefined}
+        disabled={busy !== null}
+        onToggle={() => (a.NeedsSignIn ? void connect(provider, a.Id) : setLeaving(a))}
+      />
+    ));
+  };
+
   return (
     <>
       <ListGroup>
-        <Account label="Microsoft" desc="Outlook calendar and Teams calls" connected={false} disabled onToggle={() => {}} />
-        <Account label="Google" desc="Google Calendar and Meet calls" connected={false} disabled onToggle={() => {}} />
-        <Account label="Zoom" desc="Zoom meeting links" connected={false} disabled onToggle={() => {}} />
+        {row("microsoft")}
+        {row("google")}
+        <Info label="Zoom" desc="Paste a zoom.us link into an event and its Join button opens it" value="Links only" />
         <Choice
           label="Sync calendars"
-          value="5"
-          disabled
-          onChange={() => {}}
+          value={settings.SyncEvery ?? "5"}
+          onChange={(v) => update({ SyncEvery: v })}
           options={[
             { value: "5", label: "Every 5 minutes" },
             { value: "15", label: "Every 15 minutes" },
             { value: "open", label: "Only when open" },
           ]}
         />
+        <Toggle label="Show declined events" desc="Invitations you said no to" value={settings.ShowDeclined === true} onChange={(v) => update({ ShowDeclined: v })} />
       </ListGroup>
-      <Note>Connecting accounts arrives in Phase 8. Until then, paste a Teams, Meet or Zoom link into an event and its Join button works the same way.</Note>
+      {accounts.map((a) => (
+        <ListGroup key={a.Id} title={`${appName[a.Provider].toUpperCase()} · ${a.Email.toUpperCase()}`}>
+          {a.Calendars.map((c) => (
+            <Toggle
+              key={c.Id}
+              label={c.Name}
+              desc={c.Primary ? "Your main calendar" : c.CanEdit ? undefined : "Read only"}
+              value={c.On}
+              onChange={(on) => setCalendarOn(a, c.Id, on)}
+            />
+          ))}
+          {!a.Calendars.length && <Info label="Calendars" desc={a.Error ?? "They show up after the first sync"} />}
+          <Action
+            label={a.Error ? "Didn't sync" : "Last synced"}
+            desc={a.Error ?? (a.LastSync ? dateText(new Date(a.LastSync), new Date()) + " at " + clockText(new Date(a.LastSync)) : "Not yet")}
+            action="Sync now"
+            disabled={a.NeedsSignIn}
+            onClick={() => void syncAccount(a.Id)}
+          />
+        </ListGroup>
+      ))}
+      <Note>
+        Sign-in happens in your browser, and Project Life keeps it in Windows Credential Manager, never in its files. Synced events can be changed here and the change goes to {accounts.length ? [...new Set(accounts.map((a) => appName[a.Provider]))].join(" and ") : "Outlook or Google Calendar"}; a whole repeating series is changed there.
+      </Note>
+      {leaving && (
+        <Dialog
+          title={`Disconnect ${providerName[leaving.Provider]}?`}
+          width={440}
+          onClose={() => setLeaving(null)}
+          footer={
+            <>
+              <DialogButton onClick={() => setLeaving(null)}>Cancel</DialogButton>
+              <DialogButton
+                danger
+                onClick={() => {
+                  void disconnectAccount(leaving);
+                  setLeaving(null);
+                }}
+              >
+                Disconnect
+              </DialogButton>
+            </>
+          }
+        >
+          <p className="m-0 leading-[1.6]">
+            {leaving.Email}'s calendars leave Project Life. Nothing changes in {appName[leaving.Provider]}, and you can connect again any time.
+          </p>
+        </Dialog>
+      )}
     </>
   );
 }
@@ -251,6 +357,7 @@ export function Privacy() {
 // ----- About -----
 
 const releaseNotes: { title: string; items: string[] }[] = [
+  { title: "Connected accounts", items: ["Connect Microsoft and Google: Outlook and Google calendars sync into the Schedule, both ways", "New events get a Teams or Meet link when you save, and Join works right from the notification"] },
   { title: "Settings", items: ["Every section works: profile, startup, dates, appearance, Home cards, notifications, shortcuts and more", "Mica and Acrylic window backgrounds on Windows 11, accent colors and your own fonts", "Daily backups, export, import from Checkpoint, and quiet while you're live on OBS or Meld Studio"] },
   { title: "Habits and goals", items: ["Check, count and timed habits, streaks with a streak saver, and a late-night day", "Goals with milestones, linked habits and weekly check-ins, plus a Goals card on Home"] },
   { title: "Schedule", items: ["Week and month, repeating events, time zones, and Join buttons for Teams, Meet and Zoom links", "Reminders as Windows notifications, even with the window closed to the tray"] },

@@ -2,14 +2,15 @@ import { weekLetters } from "../lib/format";
 import { locale } from "../lib/format";
 import clsx from "clsx";
 import { ArrowRight, Check, ChevronLeft, ChevronRight, Copy, FileText, Plus, Sparkles, Video } from "lucide-react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { openUrl, titleOf } from "../lib/api";
 import { useNotes } from "../notes/NotesContext";
 import { addDays, fromYmd, ymd } from "../tasks/dates";
 import type { TaskList } from "../tasks/lists";
 import { SectionLabel } from "../ui/bits";
 import { toast } from "../ui/Toast";
-import { patchEvent } from "./actions";
+import { addMeetingLink } from "../accounts/actions";
+import { patchEvent, saveEvent } from "./actions";
 import { fromStamp, type CalEvent, type CallKind, type Occurrence } from "./events";
 import { joinState, rangeLabel } from "./look";
 import { monthGrid } from "./MonthView";
@@ -20,6 +21,15 @@ export interface CalendarRow {
   color: string;
   count: number;
   on: boolean;
+  // The connected account it comes from.
+  group?: string;
+}
+
+export interface SyncStatus {
+  text: string;
+  action: string;
+  onAction: () => void;
+  error: boolean;
 }
 
 interface Props {
@@ -30,6 +40,7 @@ interface Props {
   busy: Set<string>;
   onPickDay: (d: Date) => void;
   calendars: CalendarRow[];
+  syncStatus: SyncStatus | null;
   onToggle: (id: string) => void;
   onNew: () => void;
   quickPreview: (text: string) => CalEvent | null;
@@ -147,24 +158,36 @@ export default function ScheduleSidebar(props: Props) {
 
       <div className="flex flex-col gap-0.5">
         <SectionLabel className="px-1 pb-1.5">CALENDARS</SectionLabel>
-        {calendars.map((c) => (
-          <button
-            key={c.id}
-            role="checkbox"
-            aria-checked={c.on}
-            onClick={() => props.onToggle(c.id)}
-            className={clsx("flex h-9 items-center gap-3 rounded-[10px] px-1.5 text-left text-13 hover:bg-panel", c.on ? "text-text" : "text-muted")}
-          >
-            <span
-              className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[6px] text-accent-ink"
-              style={{ border: `1.5px solid ${c.color}`, background: c.on ? c.color : "transparent" }}
+        {calendars.map((c, i) => (
+          <Fragment key={c.id}>
+            {c.group && c.group !== calendars[i - 1]?.group && <span className="truncate px-1.5 pt-2.5 pb-1 font-mono text-10 tracking-[0.06em] text-muted">{c.group.toUpperCase()}</span>}
+            <button
+              role="checkbox"
+              aria-checked={c.on}
+              onClick={() => props.onToggle(c.id)}
+              className={clsx("flex h-9 items-center gap-3 rounded-[10px] px-1.5 text-left text-13 hover:bg-panel", c.on ? "text-text" : "text-muted")}
             >
-              {c.on && <Check size={11} strokeWidth={3.4} />}
-            </span>
-            <span className="min-w-0 flex-1 truncate">{c.name}</span>
-            <span className="font-mono text-11 text-muted">{c.count}</span>
-          </button>
+              <span
+                className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[6px] text-accent-ink"
+                style={{ border: `1.5px solid ${c.color}`, background: c.on ? c.color : "transparent" }}
+              >
+                {c.on && <Check size={11} strokeWidth={3.4} />}
+              </span>
+              <span className="min-w-0 flex-1 truncate">{c.name}</span>
+              <span className="font-mono text-11 text-muted">{c.count}</span>
+            </button>
+          </Fragment>
         ))}
+        {props.syncStatus && (
+          <div className={clsx("flex items-center gap-2 px-1.5 pt-1.5 text-11", props.syncStatus.error ? "text-warn" : "text-muted")} aria-live="polite">
+            <span className="min-w-0 flex-1 truncate" title={props.syncStatus.text}>
+              {props.syncStatus.text}
+            </span>
+            <button onClick={props.syncStatus.onAction} className="shrink-0 font-medium text-muted hover:text-text hover:underline">
+              {props.syncStatus.action}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex-1" />
@@ -244,8 +267,18 @@ function SelectedCard({ occ, now, calendarOf, onEdit }: { occ: Occurrence; now: 
                   key={p.id}
                   role="radio"
                   aria-checked={on}
-                  onClick={() => patchEvent(e.Id, { Call: p.id === "none" ? null : p.id })}
-                  className={clsx("h-7 rounded-[8px] text-12 font-medium", on ? "bg-panel text-text" : "text-muted hover:text-text")}
+                  disabled={Boolean(e.Remote && !e.Remote.Editable)}
+                  onClick={() => {
+                    const call = p.id === "none" ? null : p.id;
+                    // On a connected calendar the change goes there; either way,
+                    // Teams or Meet with no link yet gets one made.
+                    if (e.Remote) saveEvent({ ...e, Call: call }, null, "all");
+                    else {
+                      patchEvent(e.Id, { Call: call });
+                      void addMeetingLink({ ...e, Call: call });
+                    }
+                  }}
+                  className={clsx("h-7 rounded-[8px] text-12 font-medium disabled:cursor-default", on ? "bg-panel text-text" : "text-muted enabled:hover:text-text")}
                 >
                   {p.label}
                 </button>

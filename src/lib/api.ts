@@ -34,7 +34,7 @@ export async function writeSettings(contents: string): Promise<void> {
 }
 
 // The JSON data files in Data\ (tasks.json, events.json …), read and written whole.
-export type DataFile = "tasks.json" | "events.json" | "habits.json" | "goals.json";
+export type DataFile = "tasks.json" | "events.json" | "habits.json" | "goals.json" | "accounts.json";
 
 export async function readData(name: DataFile): Promise<string | null> {
   if (!inTauri) {
@@ -275,4 +275,67 @@ export const system = {
   deleteAllData: () => invoke<void>("delete_all_data"),
   saveCrash: (text: string) => tauriOnly(undefined, () => invoke<void>("save_crash", { text })),
   importCheckpoint: (folder: string) => invoke<CheckpointImport>("import_checkpoint", { folder }),
+};
+
+// ----- Connected accounts (accounts.rs) -----
+
+export type ProviderId = "microsoft" | "google";
+
+export interface AccountInfo {
+  id: string;
+  provider: ProviderId;
+  email: string;
+  name: string;
+  work: boolean;
+}
+
+export interface RemoteCalendar {
+  id: string;
+  name: string;
+  color: string | null;
+  canEdit: boolean;
+  primary: boolean;
+  reminders: number[];
+}
+
+export interface RemoteEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  allDay: boolean;
+  place: string;
+  description: string;
+  joinUrl: string | null;
+  reminders: number[];
+  series: string | null;
+  link: string | null;
+  editable: boolean;
+  declined: boolean;
+}
+
+export interface RemoteEventInput {
+  title: string;
+  start: string;
+  end: string;
+  allDay: boolean;
+  place: string;
+  description: string;
+  reminders: number[];
+  meeting: boolean;
+}
+
+const needsApp = () => Promise.reject(new Error("Connected accounts work in the Project Life app."));
+
+export const accountsApi = {
+  available: () => tauriOnly<Record<ProviderId, boolean>>({ microsoft: false, google: false }, () => invoke("accounts_available")),
+  connect: (provider: ProviderId) => (inTauri ? invoke<AccountInfo>("account_connect", { provider }) : needsApp()),
+  allowMeetings: (account: string, email: string) => invoke<void>("account_allow_meetings", { account, email }),
+  disconnect: (account: string) => tauriOnly(undefined, () => invoke<void>("account_disconnect", { account })),
+  calendars: (account: string) => invoke<RemoteCalendar[]>("account_calendars", { account }),
+  events: (account: string, calendar: string, from: string, to: string, zone: string, writable: boolean, defaults: number[]) =>
+    invoke<RemoteEvent[]>("account_events", { account, calendar, from, to, zone, writable, defaults }),
+  saveEvent: (account: string, calendar: string, id: string | null, event: RemoteEventInput, zone: string) => invoke<RemoteEvent>("account_save_event", { account, calendar, id, event, zone }),
+  deleteEvent: (account: string, calendar: string, id: string) => invoke<void>("account_delete_event", { account, calendar, id }),
+  meeting: (account: string, title: string, start: string, end: string) => invoke<string>("account_meeting", { account, title, start, end }),
 };

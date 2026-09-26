@@ -7,7 +7,9 @@ import { invoke } from "@tauri-apps/api/core";
 import { useEffect } from "react";
 import { inTauri } from "../lib/api";
 import { callNames, joinUrlOf, occurrences } from "../schedule/events";
-import { eventStore } from "../schedule/useEvents";
+import { patchSynced } from "../accounts/actions";
+import { accountStore } from "../accounts/useAccounts";
+import { allEvents, eventStore } from "../schedule/useEvents";
 import { shortTime } from "../schedule/look";
 import { formatTime, fromYmd } from "./dates";
 import { patchTask, type Task } from "./model";
@@ -115,7 +117,7 @@ function checkTasks(now: number) {
 function checkEvents(now: number) {
   const store = eventStore();
   if (store.unread()) return;
-  const events = store.getState().file.Events;
+  const events = allEvents();
   // Reminders reach up to a day ahead, so look that far past now.
   const shows = occurrences(
     events.filter((e) => e.Reminders?.length),
@@ -140,6 +142,8 @@ function checkEvents(now: number) {
   }
   if (!fired.size) return;
   store.change((f) => ({ ...f, Events: f.Events.map((e) => (fired.has(e.Id) ? { ...e, Reminded: new Date(fired.get(e.Id)!).toISOString() } : e)) }));
+  // Synced events keep theirs in accounts.json.
+  for (const [id, at] of fired) patchSynced(id, { Reminded: new Date(at).toISOString() });
   for (const t of toShow) void notify("events", t.title, t.body, t.join);
 }
 
@@ -218,7 +222,7 @@ function checkCalls(now: number) {
   const store = eventStore();
   if (store.unread()) return;
   const soon = occurrences(
-    store.getState().file.Events.filter((e) => e.Call),
+    allEvents().filter((e) => e.Call),
     new Date(now),
     new Date(now + 2 * 60_000),
   );
@@ -244,7 +248,7 @@ function check() {
 
 export function useTaskReminders() {
   useEffect(() => {
-    void Promise.all([taskStore().load(), eventStore().load(), habitStore().load(), goalStore().load()]).then(check);
+    void Promise.all([taskStore().load(), eventStore().load(), habitStore().load(), goalStore().load(), accountStore().load()]).then(check);
     const timer = window.setInterval(check, 30_000);
     return () => window.clearInterval(timer);
   }, []);

@@ -71,7 +71,16 @@ export function defaultListId(): string {
 }
 
 export function listFor(id: string | undefined): TaskList {
-  return current.find((l) => l.id === id) ?? current.find((l) => l.id === defaultListId()) ?? current[0];
+  return current.find((l) => l.id === id) ?? synced.find((l) => l.id === id) ?? current.find((l) => l.id === defaultListId()) ?? current[0];
+}
+
+// Calendars from connected accounts (accounts/model.ts), so their events get
+// a name and color everywhere lists are looked up. Not lists: tasks can't go
+// on them.
+let synced: TaskList[] = [];
+
+export function setSyncedCalendars(calendars: TaskList[]) {
+  synced = calendars;
 }
 
 // "#personal", "#stream", "#youtube", "#errands": a list by its id, its whole

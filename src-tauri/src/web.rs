@@ -130,7 +130,7 @@ fn system_proxy() -> Option<ureq::Proxy> {
 // - It goes through the proxy Windows is set to use (system_proxy).
 // - It refuses private and local addresses (PublicOnly).
 // Redirects are left to the caller.
-fn web_agent(timeout_secs: u64, user_agent: &str) -> ureq::Agent {
+pub(crate) fn web_agent(timeout_secs: u64, user_agent: &str) -> ureq::Agent {
     let proxy = system_proxy();
     let config = ureq::Agent::config_builder()
         .timeout_global(Some(std::time::Duration::from_secs(timeout_secs)))

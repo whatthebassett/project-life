@@ -9,7 +9,7 @@ import { rulesOf, useHabits } from "../habits/useHabits";
 import { habitDay } from "../habits/model";
 import { useNow, yearProgressLabel } from "../lib/dates";
 import { useSettings } from "../lib/SettingsContext";
-import { useEvents } from "../schedule/useEvents";
+import { useAllEvents } from "../schedule/useEvents";
 import { clearGoal, peekGoal } from "../shell/go";
 import { daysBetween, fromYmd } from "../tasks/dates";
 import { useTasks } from "../tasks/useTasks";
@@ -29,7 +29,7 @@ export default function GoalsScreen() {
   const { goals, areas, error } = useGoals();
   const { habits } = useHabits();
   const { tasks } = useTasks();
-  const { events } = useEvents();
+  const { events } = useAllEvents();
   const { settings, update } = useSettings();
   const now = useNow();
   const rules = rulesOf(settings);

@@ -5,11 +5,11 @@ import { listFor } from "../tasks/lists";
 import { Popup } from "../ui/Popup";
 import { occurrences, repeatLabels } from "./events";
 import { shortTime } from "./look";
-import { useEvents } from "./useEvents";
+import { useAllEvents } from "./useEvents";
 
 // Link an event: what's coming up (a repeating event once), with a search box.
 export default function EventPicker({ onPick, onClose }: { onPick: (id: string) => void; onClose: () => void }) {
-  const { events } = useEvents();
+  const { events } = useAllEvents();
   const [q, setQ] = useState("");
   const [at, setAt] = useState(0);
   const shown = useMemo(() => {

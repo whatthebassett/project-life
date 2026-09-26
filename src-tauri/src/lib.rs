@@ -3,9 +3,11 @@
 // The frontend owns the JSON; this side only reads and writes it whole, so
 // keys it doesn't know about are never lost. Notes are Markdown files in
 // their own folder (notes.rs).
+mod accounts;
 mod attachments;
 mod merge;
 mod notes;
+mod oauth_ids;
 mod system;
 mod tray;
 mod web;
@@ -64,7 +66,7 @@ fn write_settings(contents: String) -> Result<(), String> {
 
 // The data files the frontend may read and write, by name. Nothing else in
 // Data\ (or outside it) can be reached this way.
-const DATA_FILES: [&str; 4] = ["tasks.json", "events.json", "habits.json", "goals.json"];
+const DATA_FILES: [&str; 5] = ["tasks.json", "events.json", "habits.json", "goals.json", "accounts.json"];
 
 fn data_file(name: &str) -> Result<PathBuf, String> {
     if !DATA_FILES.contains(&name) {
@@ -246,6 +248,15 @@ pub fn run() {
             system::delete_all_data,
             system::save_crash,
             system::import_checkpoint,
+            accounts::accounts_available,
+            accounts::account_connect,
+            accounts::account_allow_meetings,
+            accounts::account_disconnect,
+            accounts::account_calendars,
+            accounts::account_events,
+            accounts::account_save_event,
+            accounts::account_delete_event,
+            accounts::account_meeting,
             tray::show_toast,
             attachments::attach_file,
             attachments::open_attachment,

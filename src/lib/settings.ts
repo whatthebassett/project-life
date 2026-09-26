@@ -118,6 +118,9 @@ export interface Settings {
   LastBackup?: string | null;
   // Privacy.
   SaveCrashReports?: boolean;
+  // Connected accounts: how often calendars sync, and declined invitations.
+  SyncEvery?: "5" | "15" | "open";
+  ShowDeclined?: boolean;
   [key: string]: unknown;
 }
 

@@ -35,7 +35,7 @@ import { priorityColor, priorityLabel, type PriorityValue } from "../lib/noteboo
 import { useSettings } from "../lib/SettingsContext";
 import { useNotes } from "../notes/NotesContext";
 import { requestSchedule } from "../schedule/nav";
-import { useEvents } from "../schedule/useEvents";
+import { useAllEvents } from "../schedule/useEvents";
 import { Popup } from "../ui/Popup";
 import { SectionLabel } from "../ui/bits";
 import { toast } from "../ui/Toast";
@@ -103,7 +103,7 @@ export default function TaskPopup({ task, onClose, openMenu }: Props) {
   const titleId = useId();
   const n = useNotes();
   const { settings } = useSettings();
-  const { events } = useEvents();
+  const { events } = useAllEvents();
   const now = useNow();
   const [later, setLater] = useState(false);
   const [calendar, setCalendar] = useState<DOMRect | null>(null);

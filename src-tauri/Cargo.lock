@@ -2835,11 +2835,13 @@ version = "0.1.0"
 dependencies = [
  "base64 0.23.1",
  "chrono",
+ "getrandom 0.3.4",
  "keyring",
  "percent-encoding",
  "regex",
  "serde",
  "serde_json",
+ "sha2",
  "tauri",
  "tauri-build",
  "tauri-plugin-autostart",

@@ -44,8 +44,23 @@ export interface CalEvent {
   // The task it blocks time for, or the note it links to.
   Task?: string | null;
   Note?: string | null;
+  // From a connected account's calendar (accounts/model.ts).
+  Remote?: RemoteRef | null;
   Created: string;
   [key: string]: unknown;
+}
+
+// Where a synced event lives in Outlook or Google Calendar.
+export interface RemoteRef {
+  Account: string;
+  // The calendar's id there.
+  Calendar: string;
+  Id: string;
+  // The repeating event this is one day of.
+  Series?: string | null;
+  Link?: string | null;
+  Editable: boolean;
+  Declined?: boolean;
 }
 
 export interface EventFile {
@@ -62,26 +77,29 @@ export function parseEvents(text: string | null): EventFile {
   const clean = text?.replace(/^﻿/, "").trim();
   if (!clean) return { Events: [] };
   const data = JSON.parse(clean) as Partial<EventFile>;
-  const events = Array.isArray(data.Events) ? data.Events : [];
-  return {
-    ...data,
-    Events: events
-      .filter(
-        (e): e is CalEvent =>
-          Boolean(e) && typeof e === "object" && typeof e.Id === "string" && typeof e.Title === "string" && LOCAL.test(String(e.Start)) && LOCAL.test(String(e.End)),
-      )
-      .map((e) => ({
-        ...e,
-        Kind: KINDS.includes(e.Kind) ? e.Kind : "event",
-        End: e.End < e.Start ? e.Start : e.End,
-        Calendar: typeof e.Calendar === "string" && e.Calendar ? e.Calendar : "personal",
-        Call: CALLS.includes(e.Call as CallKind) ? e.Call : null,
-        Repeat: REPEATS.includes(e.Repeat as EventRepeat) ? e.Repeat : null,
-        Reminders: Array.isArray(e.Reminders) ? e.Reminders.filter((m) => typeof m === "number" && m >= 0) : [],
-        Skip: Array.isArray(e.Skip) ? e.Skip.filter(isYmd) : [],
-        Created: typeof e.Created === "string" ? e.Created : new Date(0).toISOString(),
-      })),
-  };
+  return { ...data, Events: cleanEvents(data.Events) };
+}
+
+// Events brought to the shape the rest of the code relies on; anything that
+// isn't one is dropped.
+export function cleanEvents(list: unknown): CalEvent[] {
+  const events = (Array.isArray(list) ? list : []) as CalEvent[];
+  return events
+    .filter(
+      (e): e is CalEvent =>
+        Boolean(e) && typeof e === "object" && typeof e.Id === "string" && typeof e.Title === "string" && LOCAL.test(String(e.Start)) && LOCAL.test(String(e.End)),
+    )
+    .map((e) => ({
+      ...e,
+      Kind: KINDS.includes(e.Kind) ? e.Kind : "event",
+      End: e.End < e.Start ? e.Start : e.End,
+      Calendar: typeof e.Calendar === "string" && e.Calendar ? e.Calendar : "personal",
+      Call: CALLS.includes(e.Call as CallKind) ? e.Call : null,
+      Repeat: REPEATS.includes(e.Repeat as EventRepeat) ? e.Repeat : null,
+      Reminders: Array.isArray(e.Reminders) ? e.Reminders.filter((m) => typeof m === "number" && m >= 0) : [],
+      Skip: Array.isArray(e.Skip) ? e.Skip.filter(isYmd) : [],
+      Created: typeof e.Created === "string" ? e.Created : new Date(0).toISOString(),
+    }));
 }
 
 export const serializeEvents = (file: EventFile) => JSON.stringify(file, null, 2);
@@ -302,7 +320,7 @@ export const commonZones = [
 export const callNames: Record<CallKind, string> = { teams: "Teams", meet: "Meet", zoom: "Zoom" };
 
 const joinPatterns: [CallKind, RegExp][] = [
-  ["teams", /https?:\/\/teams\.(?:microsoft|live)\.com\/l\/meetup-join\/[^\s<>"')\]]+/i],
+  ["teams", /https?:\/\/teams\.(?:microsoft|live)\.com\/(?:l\/meetup-join|meet)\/[^\s<>"')\]]+/i],
   ["meet", /https?:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}[^\s<>"')\]]*/i],
   ["zoom", /https?:\/\/(?:[\w-]+\.)?zoom\.us\/j\/[^\s<>"')\]]+/i],
 ];

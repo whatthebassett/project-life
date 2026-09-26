@@ -63,7 +63,7 @@ const groups: { label: string; items: Section[] }[] = [
   {
     label: "DATA",
     items: [
-      { id: "accounts", label: "Connected accounts", desc: "Calendars and video calls", icon: "accounts", keywords: "microsoft outlook google zoom sync calendars connect" },
+      { id: "accounts", label: "Connected accounts", desc: "Calendars and video calls", icon: "accounts", keywords: "microsoft outlook teams google meet zoom sync calendars connect disconnect reconnect declined sign in" },
       { id: "storage", label: "Storage and backup", desc: "Your data lives on this PC", icon: "storage", keywords: "data folder daily backup backup folder onedrive back up now space used import from checkpoint export everything zip" },
       { id: "privacy", label: "Privacy", desc: "No account, no tracking", icon: "privacy", keywords: "what goes online crash reports logs clear cached previews news delete all data" },
       { id: "about", label: "About", desc: "Version and release notes", icon: "about", keywords: "version check for updates what's new release notes made by open-source licenses" },
