@@ -9,6 +9,7 @@ import { Popup } from "../ui/Popup";
 import { SectionLabel } from "../ui/bits";
 import { archiveHabit, deleteHabit } from "./actions";
 import { HabitIcon, iconNames } from "./icons";
+import { deleteConfirm } from "./menus";
 import { currentStreak, goalLabel, hueColor, hueNames, hueSoft, iconIds, todLabel, type Habit, type HabitKind, type HabitReminderAt, type HabitRules } from "./model";
 
 interface Props {
@@ -358,11 +359,7 @@ export default function HabitEditPopup({ habit, isNew, today, rules, onSave, onC
 
       {confirm && (
         <ConfirmDialog
-          title={`Delete “${habit.Name}”?`}
-          message="Its streak and every check-in go with it. Archive it instead to keep the history."
-          okLabel="Delete"
-          cancelLabel="Cancel"
-          danger
+          {...deleteConfirm(habit)}
           onResult={(ok) => {
             setConfirm(false);
             if (ok) {

@@ -1,17 +1,53 @@
 import { dayOfWeek, weekLetters } from "../lib/format";
 import clsx from "clsx";
+import { Check, EyeOff, Maximize2, Repeat, RotateCcw } from "lucide-react";
+import { menuPoint, type MenuItem } from "../components/ContextMenu";
+import { saveHabit } from "../habits/actions";
+import { habitStore, useHabits } from "../habits/useHabits";
+import { useNotes } from "../notes/NotesContext";
+import { showHabit } from "../shell/go";
 import type { Screen } from "../shell/nav";
+import { toast } from "../ui/Toast";
 import { Card, CardHeader, CardLink, Empty } from "./parts";
 import type { HomeData } from "./useHome";
-
+import type { HomeHabit } from "./sources";
 
 // This week for each habit, Monday first: done days filled, missed ones
 // outlined, today clickable, the days to come dashed.
 export default function HabitsCard({ home, onNavigate }: { home: HomeData; onNavigate: (s: Screen) => void }) {
   const todayIdx = dayOfWeek(home.now);
   const letters = weekLetters();
+  const { habits } = useHabits();
+  const { openMenu } = useNotes();
+
+  // Sample habits aren't real ones, so they can't be opened or hidden.
+  const habitMenu = (h: HomeHabit): MenuItem[] => {
+    const real = home.sample ? undefined : habits.find((x) => x.Id === h.id);
+    return [
+      h.doneToday
+        ? { label: "Undo today", icon: <RotateCcw size={13} />, onSelect: () => home.toggleHabit(h.id) }
+        : { label: "Mark today done", icon: <Check size={13} />, onSelect: () => home.toggleHabit(h.id) },
+      { label: "Open in Habits", icon: <Maximize2 size={13} />, onSelect: () => (real ? showHabit(real.Id) : onNavigate("habits")) },
+      { type: "separator" },
+      {
+        label: "Hide from Home",
+        icon: <EyeOff size={13} />,
+        disabled: !real,
+        onSelect: () => {
+          if (!real) return;
+          saveHabit({ ...real, ShowOnHome: false });
+          toast(`Hid “${real.Name}” from Home`, () => {
+            // Whatever it is by then, with Show on Home back on.
+            const now = habitStore().getState().file.Habits.find((x) => x.Id === real.Id);
+            if (now) saveHabit({ ...now, ShowOnHome: true });
+          });
+        },
+      },
+    ];
+  };
+
   return (
-    <Card label="Habits" className="gap-3 px-6 py-[22px]">
+    <Card id="habits" menu={[{ label: "Open Habits", icon: <Repeat size={13} />, onSelect: () => onNavigate("habits") }]} label="Habits" className="gap-3 px-6 py-[22px]">
       <CardHeader title="Habits">
         <div className="flex gap-1.5" aria-hidden="true">
           {letters.map((l, i) => (
@@ -26,7 +62,16 @@ export default function HabitsCard({ home, onNavigate }: { home: HomeData; onNav
         const past = Array.from({ length: todayIdx }, (_, i) => h.past[h.past.length - todayIdx + i] ?? false);
         const streak = h.streak + (h.doneToday ? 1 : 0);
         return (
-          <div key={h.id} className="flex min-h-11 items-center justify-between gap-3">
+          <div
+            key={h.id}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const { x, y } = menuPoint(e);
+              openMenu(x, y, habitMenu(h));
+            }}
+            className="flex min-h-11 items-center justify-between gap-3"
+          >
             <div className="flex min-w-0 flex-col gap-[3px]">
               <div className="truncate text-14 font-medium">{h.name}</div>
               <div className="font-mono text-11 text-muted">{streak} day streak</div>

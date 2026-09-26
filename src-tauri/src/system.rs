@@ -45,6 +45,74 @@ pub fn os_build() -> u32 {
         .unwrap_or(0)
 }
 
+// What's on the clipboard, as text and as HTML (either can be empty), for
+// Paste in the right-click menu. The page can't read the clipboard itself
+// without WebView2 asking permission first.
+#[derive(Serialize)]
+pub struct ClipboardContents {
+    text: String,
+    html: String,
+}
+
+#[tauri::command]
+pub fn read_clipboard() -> Result<ClipboardContents, String> {
+    use windows::core::w;
+    use windows::Win32::Foundation::HGLOBAL;
+    use windows::Win32::System::DataExchange::{CloseClipboard, GetClipboardData, OpenClipboard, RegisterClipboardFormatW};
+    use windows::Win32::System::Memory::{GlobalLock, GlobalSize, GlobalUnlock};
+    const CF_UNICODETEXT: u32 = 13;
+
+    unsafe fn read(format: u32) -> Option<Vec<u8>> {
+        let handle = GetClipboardData(format).ok()?;
+        let global = HGLOBAL(handle.0);
+        let data = GlobalLock(global) as *const u8;
+        if data.is_null() {
+            return None;
+        }
+        let bytes = std::slice::from_raw_parts(data, GlobalSize(global)).to_vec();
+        let _ = GlobalUnlock(global);
+        Some(bytes)
+    }
+
+    unsafe {
+        // Another app can hold the clipboard for a moment.
+        let mut open = false;
+        for _ in 0..5 {
+            if OpenClipboard(None).is_ok() {
+                open = true;
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        if !open {
+            return Err("The clipboard is busy. Try again in a moment.".into());
+        }
+        let text = read(CF_UNICODETEXT)
+            .map(|b| {
+                let units: Vec<u16> = b.chunks_exact(2).map(|c| u16::from_le_bytes([c[0], c[1]])).take_while(|&u| u != 0).collect();
+                String::from_utf16_lossy(&units)
+            })
+            .unwrap_or_default();
+        let html_format = RegisterClipboardFormatW(w!("HTML Format"));
+        let html = if html_format == 0 { None } else { read(html_format) }.map(|b| html_fragment(&b)).unwrap_or_default();
+        let _ = CloseClipboard();
+        Ok(ClipboardContents { text, html })
+    }
+}
+
+// Windows' "HTML Format" is UTF-8 with a header giving where the copied part
+// starts and ends, in bytes.
+fn html_fragment(bytes: &[u8]) -> String {
+    let end = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
+    let bytes = &bytes[..end];
+    let head = String::from_utf8_lossy(&bytes[..bytes.len().min(512)]);
+    let offset = |name: &str| head.lines().find_map(|l| l.strip_prefix(name)?.trim().parse::<usize>().ok());
+    match (offset("StartFragment:"), offset("EndFragment:")) {
+        (Some(start), Some(end)) if start <= end && end <= bytes.len() => String::from_utf8_lossy(&bytes[start..end]).into_owned(),
+        _ => String::new(),
+    }
+}
+
 // Which of these programs are running (by .exe name, any case).
 #[tauri::command]
 pub fn running_apps(names: Vec<String>) -> Vec<String> {
@@ -539,4 +607,20 @@ pub fn import_checkpoint(folder: String) -> Result<Imported, String> {
     let shared = inside(&from, &to) && inside(&to, &from);
     let notes = if shared { merge::MergeReport::default() } else { merge::merge_notebook(&from, &to)? };
     Ok(Imported { notes, tasks, from: from.to_string_lossy().to_string() })
+}
+
+#[cfg(test)]
+mod clipboard_tests {
+    use super::html_fragment;
+
+    #[test]
+    fn takes_the_copied_part() {
+        let body = "<html><body><!--StartFragment--><b>Hi</b><!--EndFragment--></body></html>";
+        let header_len = "Version:0.9\r\nStartHTML:0000000000\r\nEndHTML:0000000000\r\nStartFragment:0000000000\r\nEndFragment:0000000000\r\n".len();
+        let start = header_len + body.find("<b>").unwrap();
+        let end = header_len + body.find("<!--EndFragment").unwrap();
+        let data = format!("Version:0.9\r\nStartHTML:{header_len:010}\r\nEndHTML:{:010}\r\nStartFragment:{start:010}\r\nEndFragment:{end:010}\r\n{body}\0", header_len + body.len());
+        assert_eq!(html_fragment(data.as_bytes()), "<b>Hi</b>");
+        assert_eq!(html_fragment(b"no header"), "");
+    }
 }

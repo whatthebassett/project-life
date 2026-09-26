@@ -140,7 +140,7 @@ Soft versions are the same color at 0.16 opacity (fills behind icons) or 0.08 to
   - Middle: Home, Notes, Schedule, Tasks, Habits, Goals.
   - Bottom: Settings and avatar.
   - Items are 48 x 48 with radius 14. The active one gets `accentSoft` background and `accent` icon.
-- **Home** uses a full 240px sidebar instead: nav with a task count badge, Spaces, a theme picker (4 split swatches) and the profile.
+- **Home** uses a full 240px sidebar instead: nav with a task count badge, Spaces and the profile. Themes are picked in Settings → Appearance only (the sidebar picker in Main.dc.html was dropped at the user's request).
 - **List panel:** 256 to 300px, `side` background, holds the screen title, a **+** button, views and filters.
 - **Main area:** fills the rest.
 - **Details panel:** 340px on the right for the selected item (task, habit, goal, note info).

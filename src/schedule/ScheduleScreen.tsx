@@ -1,24 +1,29 @@
 import { dayOfWeek } from "../lib/format";
 import { locale } from "../lib/format";
 import clsx from "clsx";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, CalendarPlus, CalendarRange, Check, ChevronLeft, ChevronRight, Copy, Eye, EyeOff, FileText, Focus, Link, Maximize2, Pencil, Plus, RefreshCw, Trash2, Video } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { connectAccount } from "../accounts/actions";
-import { appName, calendarKey } from "../accounts/model";
-import { errorText, syncAll, syncIfStale } from "../accounts/sync";
+import { appName, calendarKey, splitKey } from "../accounts/model";
+import { errorText, syncAccount, syncAll, syncIfStale } from "../accounts/sync";
 import { useAccounts } from "../accounts/useAccounts";
-import ContextMenu, { type MenuItem, type MenuState } from "../components/ContextMenu";
+import ConfirmDialog from "../components/ConfirmDialog";
+import ContextMenu, { menuPoint, type MenuItem, type MenuState } from "../components/ContextMenu";
+import { openUrl } from "../lib/api";
+import { useNotes } from "../notes/NotesContext";
 import { toast } from "../ui/Toast";
 import { isoWeek, useNow, weekRangeLabel } from "../lib/dates";
 import { useSettings } from "../lib/SettingsContext";
 import { addDays, fromYmd, startOfDay, ymd } from "../tasks/dates";
-import { listFor } from "../tasks/lists";
+import { toggleTask } from "../tasks/actions";
+import { currentLists, listFor } from "../tasks/lists";
+import { newId } from "../tasks/model";
 import { requestTasks } from "../tasks/nav";
 import { useTasks } from "../tasks/useTasks";
-import { addEvent, blankEvent, deleteOccurrence, eventLength, moveOccurrence, parseQuickEvent, saveEvent, type Scope } from "./actions";
+import { addEvent, allDayRange, blankEvent, deleteOccurrence, eventLength, moveOccurrence, parseQuickEvent, patchEvent, saveEvent, type Scope } from "./actions";
 import EventPopup from "./EventPopup";
-import { fromStamp, occurrences, type CalEvent, type Occurrence } from "./events";
-import { shortTime, softOf } from "./look";
+import { freeSlot, fromStamp, joinUrlOf, localStamp, occurrences, type CalEvent, type Occurrence } from "./events";
+import { joinState, shortTime, softOf } from "./look";
 import MonthView, { monthGrid } from "./MonthView";
 import { subscribeScheduleRequests, takeScheduleRequest } from "./nav";
 import ScheduleSidebar, { type CalendarRow } from "./ScheduleSidebar";
@@ -48,6 +53,10 @@ export default function ScheduleScreen() {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [editor, setEditor] = useState<{ event: CalEvent; occ: Occurrence | null; isNew: boolean } | null>(null);
   const [moving, setMoving] = useState<{ occ: Occurrence; start: Date; end: Date } | null>(null);
+  // Deleting from the right-click menu: which day or days of a repeating
+  // event, or a yes for one on a connected calendar (that can't be undone).
+  const [deleting, setDeleting] = useState<Occurrence | null>(null);
+  const notes = useNotes();
   const [menu, setMenu] = useState<MenuState | null>(null);
   const openMenu = useCallback((x: number, y: number, items: MenuItem[]) => setMenu({ x, y, items }), []);
 
@@ -164,6 +173,161 @@ export default function ScheduleScreen() {
 
   const edit = (o: Occurrence) => setEditor({ event: o.event, occ: o, isNew: false });
 
+  const openNewAllDay = (day: Date) => {
+    const d = startOfDay(day);
+    setEditor({ event: { ...blankEvent(d, d), ...allDayRange(ymd(d)), Reminders: [] }, occ: null, isNew: true });
+  };
+
+  // A copy of the one showing that was clicked, as an event of its own:
+  // copying a whole repeating series is rarely what's meant, and the copy can
+  // be made to repeat in Edit. One on a connected calendar is added there.
+  const duplicate = (o: Occurrence) => {
+    const at = new Date().toISOString();
+    const copy: CalEvent = {
+      ...o.event,
+      Id: newId(),
+      Title: o.event.Title ? `${o.event.Title} (copy)` : "",
+      Start: localStamp(o.start),
+      End: localStamp(o.end),
+      Repeat: null,
+      Skip: [],
+      Of: null,
+      OnDate: null,
+      Remote: null,
+      Reminded: at,
+      Created: at,
+    };
+    if (splitKey(copy.Calendar)) saveEvent(copy, null, "all");
+    else {
+      addEvent(copy);
+      setSelectedKey(`${copy.Id}@${copy.Start.slice(0, 10)}`);
+    }
+  };
+
+  const moveToCalendar = (e: CalEvent, id: string, name: string) => {
+    const before = e.Calendar;
+    patchEvent(e.Id, { Calendar: id });
+    toast(`Moved “${e.Title || "Untitled"}” to ${name}`, () => patchEvent(e.Id, { Calendar: before }));
+  };
+
+  const remove = (o: Occurrence) => {
+    // Repeating ones ask which days; synced ones ask first, as Outlook and
+    // Google Calendar have no Undo.
+    if (o.event.Repeat || o.event.Remote) setDeleting(o);
+    else deleteOccurrence(o, "all");
+  };
+
+  const eventMenu = (o: Occurrence): MenuItem[] => {
+    const e = o.event;
+    const readOnly = Boolean(e.Remote && !e.Remote.Editable);
+    const join = joinState(o, now);
+    const link = join.url ?? joinUrlOf(e);
+    const note = e.Note;
+    return [
+      { label: "Edit…", icon: <Pencil size={13} />, hint: "Enter", onSelect: () => edit(o) },
+      ...(link ? [{ label: join.url ? join.label : "Join call", icon: <Video size={13} />, onSelect: () => void openUrl(link) }] : []),
+      ...(note ? [{ label: "Open note", icon: <FileText size={13} />, onSelect: () => void notes.activate(note) }] : []),
+      ...(link
+        ? [
+            {
+              label: "Copy meeting link",
+              icon: <Link size={13} />,
+              onSelect: () => void navigator.clipboard.writeText(link).then(() => toast("Copied the meeting link"), () => toast("Couldn't copy the link")),
+            },
+          ]
+        : []),
+      { type: "separator" },
+      { label: "Duplicate", icon: <Copy size={13} />, disabled: readOnly, onSelect: () => duplicate(o) },
+      // Synced events move between calendars in the pop-up, which knows
+      // which of the account's calendars can take them.
+      ...(e.Remote
+        ? []
+        : [
+            {
+              label: "Calendar",
+              icon: <CalendarDays size={13} />,
+              children: currentLists().map<MenuItem>((l) => ({
+                label: l.name,
+                icon: <span className="h-[9px] w-[9px] rounded-[3px]" style={{ background: l.color }} />,
+                checked: e.Calendar === l.id,
+                onSelect: () => e.Calendar !== l.id && moveToCalendar(e, l.id, l.name),
+              })),
+            },
+          ]),
+      { type: "separator" },
+      { label: e.Repeat || e.Remote ? "Delete…" : "Delete", icon: <Trash2 size={13} />, danger: true, disabled: readOnly, onSelect: () => remove(o) },
+    ];
+  };
+
+  const taskMenu = (id: string): MenuItem[] => {
+    const task = tasks.find((t) => t.Id === id);
+    if (!task) return [];
+    return [
+      { label: "Open in Tasks", icon: <Maximize2 size={13} />, onSelect: () => requestTasks({ kind: "open", id, popup: true }) },
+      { label: "Complete", icon: <Check size={13} />, onSelect: () => toggleTask(task) },
+    ];
+  };
+
+  // Right-clicking an event picks it too, so the card on the left shows
+  // what the menu is about.
+  const showEventMenu = (e: React.MouseEvent, o: Occurrence) => {
+    const { x, y } = menuPoint(e);
+    setSelectedKey(o.key);
+    openMenu(x, y, eventMenu(o));
+  };
+
+  const showSlotMenu = (e: React.MouseEvent, start: Date) => {
+    const { x, y } = menuPoint(e);
+    openMenu(x, y, [
+      { label: "New event here", icon: <Plus size={13} />, onSelect: () => openNew(start, new Date(start.getTime() + 60 * 60_000)) },
+      { label: "New all-day event", icon: <CalendarPlus size={13} />, onSelect: () => openNewAllDay(start) },
+    ]);
+  };
+
+  const showDayMenu = (e: React.MouseEvent, day: Date) => {
+    const { x, y } = menuPoint(e);
+    openMenu(x, y, [
+      {
+        label: "New event on this day",
+        icon: <Plus size={13} />,
+        onSelect: () => {
+          // The first free time that day, the way quick add picks one.
+          const slot = freeSlot(events, ymd(day), null, eventLength(), new Date());
+          openNew(slot.start, slot.end);
+        },
+      },
+      { label: "New all-day event", icon: <CalendarPlus size={13} />, onSelect: () => openNewAllDay(day) },
+      { type: "separator" },
+      {
+        label: "Go to this week",
+        icon: <CalendarRange size={13} />,
+        onSelect: () => {
+          setFocus(startOfDay(day));
+          update({ ScheduleView: "week" });
+        },
+      },
+    ]);
+  };
+
+  const showCalendarMenu = (e: React.MouseEvent, c: CalendarRow) => {
+    const { x, y } = menuPoint(e);
+    const others = calendars.filter((r) => r.id !== c.id);
+    const account = c.group ? splitKey(c.id)?.account : null;
+    openMenu(x, y, [
+      {
+        label: "Show only this calendar",
+        icon: <Focus size={13} />,
+        disabled: c.on && others.every((r) => !r.on),
+        onSelect: () => update({ ScheduleHidden: others.map((r) => r.id) }),
+      },
+      { label: "Show all calendars", icon: <Eye size={13} />, disabled: calendars.every((r) => r.on), onSelect: () => update({ ScheduleHidden: [] }) },
+      c.on
+        ? { label: "Hide this calendar", icon: <EyeOff size={13} />, onSelect: () => toggle(c.id) }
+        : { label: "Show this calendar", icon: <Eye size={13} />, onSelect: () => toggle(c.id) },
+      ...(account ? [{ type: "separator" } as MenuItem, { label: "Sync now", icon: <RefreshCw size={13} />, onSelect: () => void syncAccount(account) }] : []),
+    ]);
+  };
+
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const allDayRows: AllDayItem[][] = days.map((d) => {
     const key = ymd(d);
@@ -172,13 +336,32 @@ export default function ScheduleScreen() {
       .filter((o) => o.event.AllDay && o.start < next && o.end > d)
       .map<AllDayItem>((o) => {
         const cal = listFor(o.event.Calendar);
-        return { key: o.key, title: o.event.Title, task: false, color: cal.color, soft: softOf(cal.tone), onClick: () => setSelectedKey(o.key) };
+        return {
+          key: o.key,
+          title: o.event.Title,
+          task: false,
+          color: cal.color,
+          soft: softOf(cal.tone),
+          onClick: () => setSelectedKey(o.key),
+          onMenu: (e: React.MouseEvent) => showEventMenu(e, o),
+        };
       });
     const due = hidden.has(TASKS_CAL)
       ? []
       : tasksDue
           .filter((t) => t.Due === key)
-          .map<AllDayItem>((t) => ({ key: `task:${t.Id}`, title: t.Title, task: true, color: "var(--muted)", soft: "var(--panel2)", onClick: () => requestTasks({ kind: "open", id: t.Id }) }));
+          .map<AllDayItem>((t) => ({
+            key: `task:${t.Id}`,
+            title: t.Title,
+            task: true,
+            color: "var(--muted)",
+            soft: "var(--panel2)",
+            onClick: () => requestTasks({ kind: "open", id: t.Id }),
+            onMenu: (e: React.MouseEvent) => {
+              const { x, y } = menuPoint(e);
+              openMenu(x, y, taskMenu(t.Id));
+            },
+          }));
     return [...evs, ...due];
   });
 
@@ -203,6 +386,8 @@ export default function ScheduleScreen() {
         selected={selected}
         calendarOf={listFor}
         onEdit={edit}
+        onCalendarMenu={showCalendarMenu}
+        onEventMenu={showEventMenu}
       />
 
       <main className="flex min-w-0 flex-1 flex-col gap-4 bg-bg px-7 pt-[22px]">
@@ -254,6 +439,8 @@ export default function ScheduleScreen() {
             onOpen={edit}
             onCreate={(s, e) => openNew(s, e)}
             onMove={move}
+            onEventMenu={showEventMenu}
+            onSlotMenu={showSlotMenu}
           />
         ) : (
           <MonthView
@@ -266,6 +453,8 @@ export default function ScheduleScreen() {
               update({ ScheduleView: "week" });
             }}
             onSelect={(o) => setSelectedKey(o.key)}
+            onEventMenu={showEventMenu}
+            onDayMenu={showDayMenu}
           />
         )}
       </main>
@@ -302,6 +491,28 @@ export default function ScheduleScreen() {
           }}
         />
       )}
+      {deleting &&
+        (deleting.event.Remote ? (
+          <ConfirmDialog
+            title={`Delete “${deleting.event.Title || "Untitled"}”?`}
+            message={`It's deleted in ${appName[accounts.find((a) => a.Id === deleting.event.Remote!.Account)?.Provider ?? "microsoft"]} too, and can't be undone.`}
+            okLabel="Delete"
+            cancelLabel="Cancel"
+            danger
+            onResult={(ok) => {
+              if (ok) deleteOccurrence(deleting, "all");
+              setDeleting(null);
+            }}
+          />
+        ) : (
+          <ScopeDialog
+            verb="Delete"
+            onResult={(scope) => {
+              if (scope) deleteOccurrence(deleting, scope);
+              setDeleting(null);
+            }}
+          />
+        ))}
       <ContextMenu menu={menu} onClose={() => setMenu(null)} />
     </>
   );

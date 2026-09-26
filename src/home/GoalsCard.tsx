@@ -1,17 +1,53 @@
 import { locale } from "../lib/format";
+import { Check, Maximize2, Minus, Plus, RotateCcw, Target } from "lucide-react";
 import { useMemo } from "react";
-import { paceOn, progressOn, statusLabel, statusOf, statusStyle } from "../goals/model";
+import { menuPoint, type MenuItem } from "../components/ContextMenu";
+import { logProgress, setDone } from "../goals/actions";
+import { fmt, paceOn, progressOn, statusLabel, statusOf, statusStyle, type Goal } from "../goals/model";
 import { useGoals } from "../goals/useGoals";
 import { habitDay, hueColor } from "../habits/model";
 import { rulesOf, useHabits } from "../habits/useHabits";
 import { useSettings } from "../lib/SettingsContext";
+import { useNotes } from "../notes/NotesContext";
 import { showGoal } from "../shell/go";
 import type { Screen } from "../shell/nav";
 import { fromYmd } from "../tasks/dates";
+import { toast } from "../ui/Toast";
 import { Card, CardHeader, CardLink, Empty } from "./parts";
 import type { HomeData } from "./useHome";
 
 const SHOWN = 3;
+
+// Open, and Log a step (number goals) or Mark done ("done or not" goals), as
+// in the goal's details.
+function goalMenu(g: Goal): MenuItem[] {
+  const items: MenuItem[] = [{ label: "Open", icon: <Maximize2 size={13} />, onSelect: () => showGoal(g.Id) }];
+  if (g.Kind === "number") {
+    const step = `${fmt(g.Step)} ${g.Step === 1 ? g.Unit.replace(/s$/, "") : g.Unit}`.trim();
+    items.push(
+      { type: "separator" },
+      { label: `Log ${step}`, icon: <Plus size={13} />, onSelect: () => logProgress(g, g.Step) },
+      { label: `Take back ${step}`, icon: <Minus size={13} />, onSelect: () => logProgress(g, -g.Step) },
+    );
+  }
+  if (g.Kind === "once") {
+    items.push(
+      { type: "separator" },
+      g.Done
+        ? { label: "Mark not done", icon: <RotateCcw size={13} />, onSelect: () => setDone(g, false) }
+        : {
+            label: "Mark done",
+            icon: <Check size={13} />,
+            // Done goals leave the card, so say so.
+            onSelect: () => {
+              setDone(g, true);
+              toast(`Marked “${g.Title}” done`, () => setDone(g, false));
+            },
+          },
+    );
+  }
+  return items;
+}
 
 // Goals on Home, under Tasks: the active ones that most need a look (the
 // furthest behind an even pace first), each with its status, percent and a
@@ -20,6 +56,7 @@ export default function GoalsCard({ home, onNavigate }: { home: HomeData; onNavi
   const { goals, areas } = useGoals();
   const { habits } = useHabits();
   const { settings } = useSettings();
+  const { openMenu } = useNotes();
   const today = habitDay(home.now, rulesOf(settings));
 
   const rows = useMemo(
@@ -37,7 +74,7 @@ export default function GoalsCard({ home, onNavigate }: { home: HomeData; onNavi
   const behind = rows.filter((r) => r.status === "behind").length;
 
   return (
-    <Card label="Goals" className="shrink-0 gap-2 px-6 pt-5 pb-4">
+    <Card id="goals" menu={[{ label: "Open Goals", icon: <Target size={13} />, onSelect: () => onNavigate("goals") }]} label="Goals" className="shrink-0 gap-2 px-6 pt-5 pb-4">
       <CardHeader title="Goals">
         <span className="flex items-center gap-3">
           {behind > 0 && <span className="text-12 text-warn">{behind} behind</span>}
@@ -53,6 +90,12 @@ export default function GoalsCard({ home, onNavigate }: { home: HomeData; onNavi
             type="button"
             title={`${area?.Name} · due ${fromYmd(g.Due).toLocaleDateString(locale(), { month: "short", day: "numeric" })}`}
             onClick={() => showGoal(g.Id)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const { x, y } = menuPoint(e);
+              openMenu(x, y, goalMenu(g));
+            }}
             className="-mx-3 flex w-[calc(100%+24px)] flex-col gap-1.5 rounded-[12px] px-3 py-1.5 text-left transition-colors hover:bg-panel2"
           >
             <span className="flex w-full items-center gap-2">

@@ -14,6 +14,8 @@ interface Props {
   calendarOf: (id: string) => TaskList;
   onDay: (day: Date) => void;
   onSelect: (o: Occurrence) => void;
+  onEventMenu: (e: React.MouseEvent, o: Occurrence) => void;
+  onDayMenu: (e: React.MouseEvent, day: Date) => void;
 }
 
 // Six weeks from the week holding the 1st, starting on the day weeks start on.
@@ -25,7 +27,7 @@ export function monthGrid(month: Date): Date[] {
 
 // The month (Calendar.dc.html): up to two chips a day plus "+N more".
 // Clicking a day opens its week; clicking a chip picks that event.
-export default function MonthView({ month, occs, now, calendarOf, onDay, onSelect }: Props) {
+export default function MonthView({ month, occs, now, calendarOf, onDay, onSelect, onEventMenu, onDayMenu }: Props) {
   const days = monthGrid(month);
   const todayKey = ymd(now);
   const byDay = new Map<string, Occurrence[]>();
@@ -59,6 +61,10 @@ export default function MonthView({ month, occs, now, calendarOf, onDay, onSelec
               tabIndex={-1}
               aria-label={d.toLocaleDateString(locale(), { weekday: "long", month: "long", day: "numeric" })}
               onClick={() => onDay(d)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                onDayMenu(e, d);
+              }}
               className="flex min-h-0 cursor-pointer flex-col gap-1 overflow-hidden border-b border-l border-line p-2 hover:bg-panel2/40"
               style={{ background: !inMonth ? "var(--bg)" : today ? "var(--today-tint)" : undefined }}
             >
@@ -73,6 +79,11 @@ export default function MonthView({ month, occs, now, calendarOf, onDay, onSelec
                     onClick={(e) => {
                       e.stopPropagation();
                       onSelect(o);
+                    }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onEventMenu(e, o);
                     }}
                     className="flex h-[22px] shrink-0 items-center gap-1.5 overflow-hidden rounded-[6px] px-1.5 text-left text-11 font-medium whitespace-nowrap"
                     style={{ background: softOf(cal.tone) }}

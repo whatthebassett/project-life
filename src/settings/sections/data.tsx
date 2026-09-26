@@ -19,6 +19,8 @@ import { taskStore } from "../../tasks/useTasks";
 import { ListGroup } from "../../ui/bits";
 import { toast } from "../../ui/Toast";
 import { Account, Action, Choice, Info, Note, Path, Toggle } from "../controls";
+import ReleaseNotes from "../ReleaseNotes";
+import { releases } from "../releases";
 
 // ----- Connected accounts -----
 
@@ -357,15 +359,6 @@ export function Privacy() {
 
 // ----- About -----
 
-const releaseNotes: { title: string; items: string[] }[] = [
-  { title: "Connected accounts", items: ["Connect Microsoft and Google: Outlook and Google calendars sync into the Schedule, both ways", "New events get a Teams or Meet link when you save, and Join works right from the notification"] },
-  { title: "Settings", items: ["Every section works: profile, startup, dates, appearance, Home cards, notifications, shortcuts and more", "Mica and Acrylic window backgrounds on Windows 11, accent colors and your own fonts", "Daily backups, export, import from Checkpoint, and quiet while you're live on OBS or Meld Studio"] },
-  { title: "Habits and goals", items: ["Check, count and timed habits, streaks with a streak saver, and a late-night day", "Goals with milestones, linked habits and weekly check-ins, plus a Goals card on Home"] },
-  { title: "Schedule", items: ["Week and month, repeating events, time zones, and Join buttons for Teams, Meet and Zoom links", "Reminders as Windows notifications, even with the window closed to the tray"] },
-  { title: "Tasks", items: ["Lists, subtasks, repeats, reminders, a Recycle Bin, and to-dos sent from notes", "Block time on your schedule for a task"] },
-  { title: "Notes and Home", items: ["Checkpoint's editor, notebooks, tags and tabs", "Home with weather, news, and what's next"] },
-];
-
 const licenses: [string, string][] = [
   ["Tauri", "MIT or Apache-2.0"],
   ["React", "MIT"],
@@ -387,10 +380,12 @@ export function About() {
   useEffect(() => {
     if (inTauri) void getVersion().then(setVersion);
   }, []);
+  // The release's name, like Hyrule.
+  const name = releases.find((r) => r.version.split(" ")[0] === version)?.name;
   return (
     <>
       <ListGroup>
-        <Info label="Version" value={`${version} beta · codename Project Life`} />
+        <Info label="Version" value={`${version} beta${name ? ` · ${name}` : ""}`} />
         {updates.kind === "ready" ? (
           <Action label={`Project Life ${updates.release.version} is ready`} desc="Restart to finish updating. Your data stays as it is." action="Restart now" tone="primary" onClick={() => void installUpdate()} />
         ) : (
@@ -418,25 +413,7 @@ export function About() {
         <Info label="Made by" value="Ultima, with Checkpoint at its heart" />
         <Action label="Open-source licenses" action="View" onClick={() => setOpen("licenses")} />
       </ListGroup>
-      {open === "notes" && (
-        <Dialog title="What’s new" width={560} onClose={() => setOpen(null)}>
-          <div className="flex flex-col gap-4">
-            <p className="m-0 leading-[1.5] text-muted">
-              <span className="font-semibold text-text">{version} beta</span> is the first release: notes, schedule, tasks, habits and goals in one place, built on Checkpoint.
-            </p>
-            {releaseNotes.map((r) => (
-              <div key={r.title} className="flex flex-col gap-1.5">
-                <h3 className="m-0 text-15 font-semibold">{r.title}</h3>
-                <ul className="m-0 flex list-disc flex-col gap-1 pl-5 leading-[1.5] text-muted">
-                  {r.items.map((i) => (
-                    <li key={i}>{i}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </Dialog>
-      )}
+      {open === "notes" && <ReleaseNotes onClose={() => setOpen(null)} />}
       {open === "licenses" && (
         <Dialog title="Open-source licenses" width={520} onClose={() => setOpen(null)}>
           <p className="mt-0 leading-[1.5] text-muted">Project Life is built on these, with thanks.</p>

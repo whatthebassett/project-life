@@ -333,6 +333,7 @@ export default function TaskPopup({ task, onClose, openMenu }: Props) {
                     onEmoji={() => editor?.chain().focus().insertContent(":").run()}
                     onEditor={setEditor}
                     linkPreviews={settings.LinkPreviews !== false}
+                    videoEmbeds={settings.VideoEmbeds !== false}
                     commands={commands}
                   />
                 </div>

@@ -23,6 +23,14 @@ export interface MenuState {
   items: MenuItem[];
 }
 
+// Where a right-click menu opens: at the pointer, or beside the item when the
+// Menu key or Shift+F10 asked for it (those come with no pointer position).
+export function menuPoint(e: { clientX: number; clientY: number; currentTarget: EventTarget | null }): { x: number; y: number } {
+  if (e.clientX || e.clientY) return { x: e.clientX, y: e.clientY };
+  const r = (e.currentTarget as Element | null)?.getBoundingClientRect?.();
+  return r ? { x: r.left + 12, y: r.bottom - 4 } : { x: 0, y: 0 };
+}
+
 interface Props {
   menu: MenuState | null;
   onClose: () => void;

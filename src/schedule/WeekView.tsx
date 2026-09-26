@@ -20,6 +20,7 @@ export interface AllDayItem {
   color: string;
   soft: string;
   onClick: () => void;
+  onMenu: (e: React.MouseEvent) => void;
 }
 
 interface Props {
@@ -33,6 +34,10 @@ interface Props {
   onOpen: (o: Occurrence) => void;
   onCreate: (start: Date, end: Date) => void;
   onMove: (o: Occurrence, start: Date, end: Date) => void;
+  // Right-clicks: on an event, and on empty time (`start` is where a click
+  // there would begin a new event).
+  onEventMenu: (e: React.MouseEvent, o: Occurrence) => void;
+  onSlotMenu: (e: React.MouseEvent, start: Date) => void;
 }
 
 interface Placed {
@@ -95,7 +100,7 @@ function place(occs: Occurrence[], day: Date): Placed[] {
 // row, the hours down the side, events in their calendar's soft color. Drag
 // an event to move it, its bottom edge to resize it, or empty space to make
 // a new one; double-click to open one.
-export default function WeekView({ days, timed, allDay, now, selectedKey, calendarOf, onSelect, onOpen, onCreate, onMove }: Props) {
+export default function WeekView({ days, timed, allDay, now, selectedKey, calendarOf, onSelect, onOpen, onCreate, onMove, onEventMenu, onSlotMenu }: Props) {
   const scroller = useRef<HTMLDivElement>(null);
   const grid = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
@@ -106,7 +111,7 @@ export default function WeekView({ days, timed, allDay, now, selectedKey, calend
     if (scroller.current) scroller.current.scrollTop = FIRST_HOUR * HOUR - 4;
   }, []);
 
-  const at = (e: React.PointerEvent) => {
+  const at = (e: { clientX: number; clientY: number }) => {
     const r = grid.current!.getBoundingClientRect();
     const day = Math.min(6, Math.max(0, Math.floor(((e.clientX - r.left) / r.width) * 7)));
     const minutes = Math.min(24 * 60, Math.max(0, ((e.clientY - r.top) / HOUR) * 60));
@@ -204,6 +209,10 @@ export default function WeekView({ days, timed, allDay, now, selectedKey, calend
                     <button
                       key={a.key}
                       onClick={a.onClick}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        a.onMenu(e);
+                      }}
                       title={a.title}
                       className="flex h-6 min-w-0 items-center gap-1.5 rounded-[7px] px-2 text-left text-11 font-medium text-text"
                       style={{ background: a.task ? "var(--panel2)" : a.soft }}
@@ -253,7 +262,18 @@ export default function WeekView({ days, timed, allDay, now, selectedKey, calend
             {days.map((d, i) => {
               const today = ymd(d) === todayKey;
               return (
-                <div key={i} data-col={i} className="relative border-l border-line" style={{ background: today ? "var(--today-tint)" : undefined }}>
+                <div
+                  key={i}
+                  data-col={i}
+                  className="relative border-l border-line"
+                  style={{ background: today ? "var(--today-tint)" : undefined }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    // The same half hour a click there would start on.
+                    const from = Math.floor(at(e).minutes / 30) * 30;
+                    onSlotMenu(e, new Date(d.getTime() + from * 60_000));
+                  }}
+                >
                   {place(shown, d).map((p) => {
                     const o = p.occ;
                     const cal = calendarOf(o.event.Calendar);
@@ -271,6 +291,11 @@ export default function WeekView({ days, timed, allDay, now, selectedKey, calend
                         aria-pressed={selected}
                         onPointerDown={(e) => startEventDrag(e, o, "move")}
                         onDoubleClick={() => onOpen(o)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onEventMenu(e, o);
+                        }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") onOpen(o);
                           else if (e.key === " ") {

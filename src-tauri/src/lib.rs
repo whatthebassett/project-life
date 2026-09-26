@@ -236,6 +236,7 @@ pub fn run() {
             system::system_theme,
             system::os_build,
             system::running_apps,
+            system::read_clipboard,
             system::current_location,
             system::secret_get,
             system::secret_set,

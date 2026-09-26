@@ -1,6 +1,6 @@
 import { locale } from "../lib/format";
-import { Check, Ellipsis, Minus, Pencil, Plus } from "lucide-react";
-import type { MenuItem } from "../components/ContextMenu";
+import { Check, Ellipsis, ExternalLink, Minus, Pencil, Plus, RotateCcw, Trash2, Unlink } from "lucide-react";
+import { menuPoint, type MenuItem } from "../components/ContextMenu";
 import { currentStreak, hueColor, hueSoft, type Habit, type HabitRules } from "../habits/model";
 import { titleOf } from "../lib/api";
 import { useNotes } from "../notes/NotesContext";
@@ -13,8 +13,8 @@ import { listFor } from "../tasks/lists";
 import type { Task } from "../tasks/model";
 import { requestTasks } from "../tasks/nav";
 import { SectionLabel } from "../ui/bits";
-import { deleteGoal, logProgress, setDone, toggleMilestone } from "./actions";
-import { fmt, historyOf, paceNote, paceOn, progressOn, statusLabel, statusOf, statusStyle, valueOn, type Area, type Goal } from "./model";
+import { deleteGoal, logProgress, removeMilestone, setDone, toggleMilestone, unlinkFromGoal } from "./actions";
+import { fmt, historyOf, paceNote, paceOn, progressOn, statusLabel, statusOf, statusStyle, stepLabel, valueOn, type Area, type Goal } from "./model";
 
 interface Props {
   goal: Goal | null;
@@ -55,7 +55,6 @@ export default function GoalDetails({ goal, area, habits, tasks, events, today, 
   const nowX = Math.round((pace / 100) * W);
   const last = pts[pts.length - 1] ?? [0, BOT];
   const current = valueOn(goal, habits, today);
-  const stepLabel = `${fmt(goal.Step)} ${goal.Step === 1 ? goal.Unit.replace(/s$/, "") : goal.Unit}`.trim();
 
   const feeds = [
     ...goal.Habits.map((link) => {
@@ -64,6 +63,8 @@ export default function GoalDetails({ goal, area, habits, tasks, events, today, 
       const s = currentStreak(h, today, rules);
       return {
         key: `h:${h.Id}`,
+        kind: "Habits" as const,
+        id: h.Id,
         tag: "HA",
         name: h.Name,
         note: [link.Count ? `Adds ${fmt(link.Per)} ${goal.Unit} each check-in` : "Habit", `${s.count} ${s.unit} streak`].join(" · "),
@@ -79,6 +80,8 @@ export default function GoalDetails({ goal, area, habits, tasks, events, today, 
       const subs = t.Subtasks?.length ? ` · ${t.Subtasks.filter((s) => s.Done).length} of ${t.Subtasks.length} subtasks` : "";
       return {
         key: `t:${t.Id}`,
+        kind: "Tasks" as const,
+        id: t.Id,
         tag: "TA",
         name: t.Title,
         note: `Task · ${t.Completed ? "Done" : t.Due ? `Due ${formatDue(t.Due, t.DueTime, startOfDay(new Date()))}` : "Someday"}${subs}`,
@@ -94,6 +97,8 @@ export default function GoalDetails({ goal, area, habits, tasks, events, today, 
       const cal = listFor(e.Calendar);
       return {
         key: `e:${e.Id}`,
+        kind: "Events" as const,
+        id: e.Id,
         tag: "EV",
         name: e.Title,
         note: `Event · ${next ? `${next.start.toLocaleDateString(locale(), { weekday: e.Repeat ? "long" : "short", month: e.Repeat ? undefined : "short", day: e.Repeat ? undefined : "numeric" })}${e.Repeat ? "s" : ""}, ${shortTime(next.start)}` : "Past"}`,
@@ -104,6 +109,8 @@ export default function GoalDetails({ goal, area, habits, tasks, events, today, 
     }),
     ...goal.Notes.map((name) => ({
       key: `n:${name}`,
+      kind: "Notes" as const,
+      id: name,
       tag: "NO",
       name: titleOf(name),
       note: "Linked note",
@@ -113,18 +120,32 @@ export default function GoalDetails({ goal, area, habits, tasks, events, today, 
     })),
   ].filter((f): f is NonNullable<typeof f> => f !== null);
 
+  // The More button's menu; right-clicking the header opens it too.
+  const moreItems = (): MenuItem[] => [
+    { label: "Edit goal…", icon: <Pencil size={13} />, onSelect: onEdit },
+    ...(goal.Kind === "once"
+      ? [
+          goal.Done
+            ? { label: "Mark not done", icon: <RotateCcw size={13} />, onSelect: () => setDone(goal, false) }
+            : { label: "Mark done", icon: <Check size={13} />, onSelect: () => setDone(goal, true) },
+        ]
+      : []),
+    { type: "separator" },
+    { label: "Delete goal", icon: <Trash2 size={13} />, danger: true, onSelect: () => deleteGoal(goal) },
+  ];
   const more = (e: React.MouseEvent<HTMLElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
-    openMenu(r.left, r.bottom + 4, [
-      { label: "Edit goal", onSelect: onEdit },
-      goal.Kind === "once" ? { label: goal.Done ? "Mark not done" : "Mark done", onSelect: () => setDone(goal, !goal.Done) } : { type: "separator" },
-      { label: "Delete goal", danger: true, onSelect: () => deleteGoal(goal) },
-    ]);
+    openMenu(r.left, r.bottom + 4, moreItems());
+  };
+  const menuAt = (e: React.MouseEvent<HTMLElement>, items: MenuItem[]) => {
+    e.preventDefault();
+    const { x, y } = menuPoint(e);
+    openMenu(x, y, items);
   };
 
   return (
     <aside aria-label="Goal details" className="flex w-[340px] shrink-0 flex-col gap-[18px] overflow-y-auto border-l border-line bg-side px-[22px] py-6">
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2" onContextMenu={(e) => menuAt(e, moreItems())}>
         <div className="flex items-center justify-between gap-2">
           <span className="flex items-center gap-2 text-12 text-muted">
             <span className="h-2 w-2 rounded-[3px]" style={{ background: color }} />
@@ -199,7 +220,7 @@ export default function GoalDetails({ goal, area, habits, tasks, events, today, 
             </button>
             <button onClick={() => logProgress(goal, goal.Step)} className="flex h-11 flex-1 items-center justify-center gap-2 rounded-[12px] text-13 font-semibold text-accent-ink" style={{ background: color }}>
               <Plus size={16} strokeWidth={2.4} />
-              Log {stepLabel}
+              Log {stepLabel(goal)}
             </button>
           </div>
         </div>
@@ -214,7 +235,23 @@ export default function GoalDetails({ goal, area, habits, tasks, events, today, 
             </span>
           </div>
           {goal.Milestones.map((m) => (
-            <button key={m.Id} role="checkbox" aria-checked={Boolean(m.Done)} onClick={() => toggleMilestone(goal, m)} className="flex min-h-11 items-center gap-3 px-1 text-left text-14">
+            <button
+              key={m.Id}
+              role="checkbox"
+              aria-checked={Boolean(m.Done)}
+              onClick={() => toggleMilestone(goal, m)}
+              onContextMenu={(e) =>
+                menuAt(e, [
+                  m.Done
+                    ? { label: "Mark not done", icon: <RotateCcw size={13} />, onSelect: () => toggleMilestone(goal, m) }
+                    : { label: "Mark done", icon: <Check size={13} />, onSelect: () => toggleMilestone(goal, m) },
+                  { label: "Edit goal…", icon: <Pencil size={13} />, onSelect: onEdit },
+                  { type: "separator" },
+                  { label: "Remove milestone", icon: <Trash2 size={13} />, danger: true, onSelect: () => removeMilestone(goal, m) },
+                ])
+              }
+              className="flex min-h-11 items-center gap-3 px-1 text-left text-14"
+            >
               <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border-[1.5px] text-accent-ink" style={{ borderColor: m.Done ? color : "var(--faint)", background: m.Done ? color : "transparent" }}>
                 {m.Done && <Check size={13} strokeWidth={3.2} />}
               </span>
@@ -240,7 +277,18 @@ export default function GoalDetails({ goal, area, habits, tasks, events, today, 
       <div className="flex flex-col gap-2">
         <SectionLabel>FEEDS INTO THIS GOAL</SectionLabel>
         {feeds.map((f) => (
-          <button key={f.key} onClick={f.open} className="flex items-center gap-3 rounded-[14px] border border-line bg-panel px-3 py-2.5 text-left hover:border-faint">
+          <button
+            key={f.key}
+            onClick={f.open}
+            onContextMenu={(e) =>
+              menuAt(e, [
+                { label: "Open", icon: <ExternalLink size={13} />, onSelect: f.open },
+                { type: "separator" },
+                { label: "Unlink", icon: <Unlink size={13} />, onSelect: () => unlinkFromGoal(goal, f.kind, f.id, f.name) },
+              ])
+            }
+            className="flex items-center gap-3 rounded-[14px] border border-line bg-panel px-3 py-2.5 text-left hover:border-faint"
+          >
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] font-mono text-11 font-semibold" style={{ background: f.soft, color: f.color }}>
               {f.tag}
             </span>

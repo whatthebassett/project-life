@@ -119,7 +119,9 @@ Type **/date** to pick a day (and a time, if you like) from a calendar, **/today
 ## Pictures, links and emoji
 
 - **Pictures**: paste one, drop a file onto the page, or pick **Image** from the / menu. They're saved in the notes folder, beside your notes.
-- **Link previews**: a link on its own line gets a card with the page's title and picture underneath it.
+- **Link previews**: point at a link for a moment to see the page's picture, title and description, with buttons to copy the link or open it in the browser.
+- **Link titles**: paste a web address and it turns into the page's title, still linked. Ctrl Z puts the address back.
+- **YouTube videos**: a YouTube link on a line of its own plays right in the note.
 - **Emoji**: type **:** and a word, like :tada, and pick from the list, or press **Ctrl ;** for all of them ✨
 
 https://tauri.app

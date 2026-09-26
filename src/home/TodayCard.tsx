@@ -1,3 +1,5 @@
+import { CheckSquare } from "lucide-react";
+import { go } from "../shell/go";
 import { openCount, todaysTasks } from "../tasks/model";
 import { ProgressRing } from "../ui/Progress";
 import { Card } from "./parts";
@@ -13,7 +15,7 @@ export default function TodayCard({ home }: { home: HomeData }) {
   const eventsLeft = home.events.filter((e) => e.end > home.now && e.start.toDateString() === home.now.toDateString()).length;
 
   return (
-    <Card label="Today" className="flex-row! items-center gap-6 p-[26px]">
+    <Card id="today" menu={[{ label: "Open Tasks", icon: <CheckSquare size={13} />, onSelect: () => go("tasks") }]} label="Today" className="flex-row! items-center gap-6 p-[26px]">
       <ProgressRing value={pct} size={132} radius={54} stroke={12} label={`${done} of ${total} of today's tasks done`}>
         <span className="font-mono text-26 font-medium">{Math.round(pct * 100)}%</span>
         <span className="text-11 tracking-[0.08em] text-muted">DONE</span>

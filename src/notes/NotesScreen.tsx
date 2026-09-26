@@ -309,6 +309,7 @@ function Page() {
           onEmoji={n.openEmoji}
           onEditor={n.onVisualEditor}
           linkPreviews={settings.LinkPreviews !== false}
+          videoEmbeds={settings.VideoEmbeds !== false}
           todoLinks={todoLinks}
           onOpenTodo={(id) => requestTasks({ kind: "open", id })}
           todoMenu={n.todoMenu}

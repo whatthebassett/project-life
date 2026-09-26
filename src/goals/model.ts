@@ -221,4 +221,7 @@ export function paceNote(goal: Goal, habits: Habit[], today: string): string {
 
 export const fmt = (n: number) => (Math.abs(n) >= 10 ? String(Math.round(n)) : String(Math.round(n * 10) / 10));
 
+// What one Log adds: "1 mile", "5 pages".
+export const stepLabel = (goal: Goal) => `${fmt(goal.Step)} ${goal.Step === 1 ? goal.Unit.replace(/s$/, "") : goal.Unit}`.trim();
+
 export const isFinished = (goal: Goal, habits: Habit[], today: string) => progressOn(goal, habits, today) >= 100;

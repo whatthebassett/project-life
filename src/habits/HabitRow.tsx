@@ -43,17 +43,18 @@ interface Props {
   rules: HabitRules;
   selected: boolean;
   onSelect: () => void;
+  onMenu: (e: React.MouseEvent<HTMLElement>) => void;
 }
 
 // One habit (Habits.dc.html): icon, name, goal and streak, the week, and the
 // check button, or the stepper for count and time habits.
-export default function HabitRow({ h, today, rules, selected, onSelect }: Props) {
+export default function HabitRow({ h, today, rules, selected, onSelect, onMenu }: Props) {
   const done = doneOn(h, today);
   const streak = currentStreak(h, today, rules);
   const color = hueColor(h.Hue);
   const sub = h.Frequency === "weekly" ? `${weekCount(h, today)} of ${h.PerWeek} this week` : goalLabel(h);
   return (
-    <div data-row="habit" className={clsx("flex min-h-20 items-center gap-4 rounded-[18px] border py-3 pr-3.5 pl-3", selected ? "border-line bg-panel" : "border-transparent hover:bg-panel/50")}>
+    <div data-row="habit" onContextMenu={onMenu} className={clsx("flex min-h-20 items-center gap-4 rounded-[18px] border py-3 pr-3.5 pl-3", selected ? "border-line bg-panel" : "border-transparent hover:bg-panel/50")}>
       <button onClick={onSelect} className="flex min-w-0 flex-1 items-center gap-3.5 text-left">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px]" style={{ background: hueSoft(h.Hue), color }}>
           <HabitIcon id={h.Icon} />

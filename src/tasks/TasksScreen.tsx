@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { ChevronRight, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ContextMenu, { type MenuItem, type MenuState } from "../components/ContextMenu";
+import ContextMenu, { menuPoint, type MenuItem, type MenuState } from "../components/ContextMenu";
 import { dayLabel, useNow } from "../lib/dates";
 import { motionReduced } from "../lib/motion";
 import { priorityColor, priorityLabel, type PriorityValue } from "../lib/notebook";
@@ -12,7 +12,7 @@ import { addTask, deleteTasks, setTaskDue, toggleTask } from "./actions";
 import Calendar from "./Calendar";
 import { formatTime, startOfDay, ymd, daysBetween, formatDate } from "./dates";
 import { listFor } from "./lists";
-import { taskMenu } from "./menus";
+import { groupMenu, habitTaskMenu, taskMenu } from "./menus";
 import type { Task } from "./model";
 import { subscribeTaskRequests, takeTaskRequest } from "./nav";
 import { parseCapture } from "./quick";
@@ -22,7 +22,7 @@ import TaskPopup from "./TaskPopup";
 import TaskRow from "./TaskRow";
 import TasksSidebar from "./TasksSidebar";
 import { useTasks } from "./useTasks";
-import { groupTasks, inView, listOfView, parseView, viewHeading, type ViewId } from "./views";
+import { groupTasks, inView, listOfView, parseView, viewHeading, type Group, type ViewId } from "./views";
 import { openTasksWindow } from "./window";
 import { inTauri } from "../lib/api";
 import HabitTaskRow from "../habits/HabitTaskRow";
@@ -205,6 +205,29 @@ export default function TasksScreen() {
     update({ TasksFolded: [...next] });
   };
 
+  const headerMenu = (e: React.MouseEvent, g: Group) => {
+    e.preventDefault();
+    const { x, y } = menuPoint(e);
+    const ids = groups.map((x) => x.id);
+    openMenu(
+      x,
+      y,
+      groupMenu(g, {
+        fold:
+          view === "completed"
+            ? undefined
+            : {
+                open: isOpen(g.id),
+                toggle: () => toggleGroup(g.id),
+                setAll: (open) => update({ TasksFolded: open ? [...folded].filter((id) => !ids.includes(id)) : [...new Set([...folded, ...ids])] }),
+                anyOpen: ids.some((id) => !folded.has(id)),
+                anyFolded: ids.some((id) => folded.has(id)),
+              },
+        groupBy: listView ? undefined : { value: groupBy, set: (by) => update({ TasksGroupBy: by }) },
+      }),
+    );
+  };
+
   const rovingId = selectedId && visibleIds.includes(selectedId) ? selectedId : visibleIds[0];
 
   return (
@@ -283,7 +306,17 @@ export default function TasksScreen() {
               </div>
               <div role="list" aria-label="Habits" className="flex flex-col gap-0.5">
                 {habitsToday.map((h) => (
-                  <HabitTaskRow key={h.Id} h={h} today={habitToday} />
+                  <div
+                    key={h.Id}
+                    role="none"
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      const { x, y } = menuPoint(e);
+                      openMenu(x, y, habitTaskMenu(h, habitToday, Boolean(settings.HabitsInTasks)));
+                    }}
+                  >
+                    <HabitTaskRow h={h} today={habitToday} />
+                  </div>
                 ))}
               </div>
             </div>
@@ -295,6 +328,7 @@ export default function TasksScreen() {
                 <button
                   aria-expanded={open}
                   onClick={() => view !== "completed" && toggleGroup(g.id)}
+                  onContextMenu={(e) => headerMenu(e, g)}
                   className={clsx("flex h-8 items-center gap-2.5 px-1 text-left font-mono text-11 tracking-[0.12em] uppercase", g.danger ? "text-danger" : "text-muted")}
                 >
                   <ChevronRight size={11} strokeWidth={2.6} className="transition-transform" style={{ transform: open ? "rotate(90deg)" : undefined }} />

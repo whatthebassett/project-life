@@ -556,8 +556,9 @@ fn meta_content(html: &str, names: &[&str]) -> Option<String> {
     None
 }
 
-// The title, description and picture a page offers for its link card. Cached
-// on disk in Data\LinkPreviews, so each link is fetched once.
+// The title, description and picture a page offers, for a link's hover card
+// and pasted link titles. Cached on disk in Data\LinkPreviews, so each link
+// is fetched once.
 #[tauri::command(async)]
 pub fn fetch_link_preview(url: String) -> Result<Option<LinkPreview>, String> {
     let cache = preview_cache_path(&url);
@@ -566,7 +567,7 @@ pub fn fetch_link_preview(url: String) -> Result<Option<LinkPreview>, String> {
             return Ok(Some(preview));
         }
     }
-    let Ok((current, kind, bytes)) = web::fetch_public(&url, "text/html,*/*;q=0.5", 512 * 1024, 8) else {
+    let Ok((current, kind, bytes)) = web::fetch_public_head(&url, 3 * 1024 * 1024, 8) else {
         return Ok(None);
     };
     if !kind.contains("html") {

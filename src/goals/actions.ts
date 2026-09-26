@@ -3,7 +3,7 @@ import { newId } from "../tasks/model";
 import { addDays, daysBetween, fromYmd, ymd } from "../tasks/dates";
 import { currentSettings } from "../lib/settings";
 import { toast } from "../ui/Toast";
-import type { Area, Goal, Milestone } from "./model";
+import type { Area, Goal, HabitLink, Milestone } from "./model";
 import { goalStore } from "./useGoals";
 
 const store = () => goalStore();
@@ -23,6 +23,36 @@ export function toggleMilestone(goal: Goal, m: Milestone) {
 
 export function setDone(goal: Goal, done: boolean) {
   edit(goal.Id, (g) => ({ ...g, Done: done ? new Date().toISOString() : null }));
+}
+
+export function moveToArea(goal: Goal, area: string) {
+  edit(goal.Id, (g) => ({ ...g, Area: area }));
+}
+
+// Undo puts it back where it was, unless it's back already.
+export function removeMilestone(goal: Goal, m: Milestone) {
+  const at = goal.Milestones.findIndex((x) => x.Id === m.Id);
+  if (at < 0) return;
+  edit(goal.Id, (g) => ({ ...g, Milestones: g.Milestones.filter((x) => x.Id !== m.Id) }));
+  toast(`Removed “${m.Text}”`, () =>
+    edit(goal.Id, (g) => (g.Milestones.some((x) => x.Id === m.Id) ? g : { ...g, Milestones: [...g.Milestones.slice(0, at), m, ...g.Milestones.slice(at)] })),
+  );
+}
+
+export type LinkKind = "Habits" | "Tasks" | "Events" | "Notes";
+
+// Takes a habit, task, event or note (by name) off the goal; the thing
+// itself stays.
+export function unlinkFromGoal(goal: Goal, kind: LinkKind, id: string, name: string) {
+  const key = (x: string | HabitLink) => (typeof x === "string" ? x : x.Id);
+  const links = (g: Goal) => g[kind] as (string | HabitLink)[];
+  const at = links(goal).findIndex((x) => key(x) === id);
+  if (at < 0) return;
+  const link = links(goal)[at];
+  edit(goal.Id, (g) => ({ ...g, [kind]: links(g).filter((x) => key(x) !== id) }));
+  toast(`Unlinked “${name}”`, () =>
+    edit(goal.Id, (g) => (links(g).some((x) => key(x) === id) ? g : { ...g, [kind]: [...links(g).slice(0, at), link, ...links(g).slice(at)] })),
+  );
 }
 
 // Milestones without a date get one, spaced evenly up to the due date.
@@ -62,6 +92,28 @@ export function blankGoal(area: string): Goal {
 export function saveGoal(goal: Goal) {
   const g = { ...goal, Milestones: spaceMilestones(goal.Milestones, goal.StartDate, goal.Due) };
   store().change((f) => ({ ...f, Goals: f.Goals.some((x) => x.Id === g.Id) ? f.Goals.map((x) => (x.Id === g.Id ? g : x)) : [...f.Goals, g] }));
+}
+
+// A fresh copy: same plan and links, nothing logged or ticked off yet.
+// Counting habits still add from the start date, as they do for the original.
+export function duplicateGoal(goal: Goal): Goal {
+  const at = new Date().toISOString();
+  const copy: Goal = {
+    ...goal,
+    Id: newId(),
+    Title: `${goal.Title} (copy)`,
+    Milestones: goal.Milestones.map((m) => ({ ...m, Id: newId(), Done: null })),
+    Done: null,
+    Log: [],
+    Habits: goal.Habits.map((l) => ({ ...l })),
+    Tasks: [...goal.Tasks],
+    Events: [...goal.Events],
+    Notes: [...goal.Notes],
+    CheckedIn: at,
+    Created: at,
+  };
+  store().change((f) => ({ ...f, Goals: [...f.Goals, copy] }));
+  return copy;
 }
 
 export function deleteGoal(goal: Goal) {

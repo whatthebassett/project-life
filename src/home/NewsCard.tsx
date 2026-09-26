@@ -1,9 +1,14 @@
+import { EyeOff, Filter, Link2, ListFilter, Newspaper, SquareArrowOutUpRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { menuPoint, type MenuItem } from "../components/ContextMenu";
 import { openUrl } from "../lib/api";
 import { useSettings } from "../lib/SettingsContext";
+import { useNotes } from "../notes/NotesContext";
 import { Chip } from "../ui/Chip";
+import { toast } from "../ui/Toast";
 import { LOCAL, localFeedUrl, topics } from "./feeds";
 import { cachedFeed, isFresh, loadFeed, mergeHeadlines, staleAfter, type Feed, type FeedResult } from "./news";
+import { copyLink } from "./menus";
 import NewsSourcesPopup from "./NewsSourcesPopup";
 import { Card, CardLink, Empty } from "./parts";
 import { newsSources, newsTopic, weatherPlace, type NewsSource } from "./prefs";
@@ -33,12 +38,15 @@ interface Shown {
   topic: string;
   source: string;
   published: number;
+  // The chosen source it came from (not for sample headlines).
+  from?: NewsSource;
 }
 
 // Headlines from the chosen sources, newest first, filtered by topic.
 export default function NewsCard({ home }: { home: HomeData }) {
   const { settings, update } = useSettings();
   const [managing, setManaging] = useState(false);
+  const { openMenu } = useNotes();
   // Settings objects are replaced on every change, so these only change when
   // the sources or the place do.
   const sources = useMemo(() => newsSources(settings), [settings.NewsSources]);
@@ -91,7 +99,7 @@ export default function NewsCard({ home }: { home: HomeData }) {
     const byUrl = new Map(inTopic.map((f) => [f.url, f.source]));
     shown = mergeHeadlines(loaded, 2).map((h) => {
       const s = byUrl.get(h.source)!;
-      return { key: h.link, title: h.title, link: h.link, topic: s.Topic, source: h.publisher ?? s.Name, published: h.published };
+      return { key: h.link, title: h.title, link: h.link, topic: s.Topic, source: h.publisher ?? s.Name, published: h.published, from: s };
     });
   }
   shown = shown.slice(0, 4);
@@ -100,6 +108,29 @@ export default function NewsCard({ home }: { home: HomeData }) {
   const pending = !home.sample && inTopic.some((f) => !results[f.url]);
   const failed = !home.sample && inTopic.length > 0 && inTopic.every((f) => results[f.url]?.error && !results[f.url]?.feed);
   const now = home.now.getTime();
+
+  const hideSource = (from: NewsSource) => {
+    const before = sources;
+    update({ NewsSources: sources.filter((s) => s.Url !== from.Url) });
+    toast(`Hid ${from.Name}`, () => update({ NewsSources: before }));
+  };
+
+  // A headline: open or copy it, narrow the card to its topic, or drop its
+  // source.
+  const headlineMenu = (h: Shown): MenuItem[] => {
+    const items: MenuItem[] = [
+      { label: "Open", icon: <SquareArrowOutUpRight size={13} />, onSelect: () => void openUrl(h.link) },
+      { label: "Copy link", icon: <Link2 size={13} />, onSelect: () => copyLink(h.link) },
+      { type: "separator" },
+    ];
+    if (topic === "All" && available.length > 1) items.push({ label: `Show only ${h.topic}`, icon: <Filter size={13} />, onSelect: () => update({ HomeNewsTopic: h.topic }) });
+    if (topic !== "All") items.push({ label: "Show all topics", icon: <ListFilter size={13} />, onSelect: () => update({ HomeNewsTopic: "All" }) });
+    if (h.from) {
+      const from = h.from;
+      items.push({ label: `Hide ${from.Name}`, icon: <EyeOff size={13} />, onSelect: () => hideSource(from) });
+    }
+    return items[items.length - 1]?.type === "separator" ? items.slice(0, -1) : items;
+  };
 
   let empty: React.ReactNode = null;
   if (!shown.length) {
@@ -111,7 +142,12 @@ export default function NewsCard({ home }: { home: HomeData }) {
   }
 
   return (
-    <Card label="News" className="col-span-2 gap-4 px-6 py-[22px]">
+    <Card
+      id="news"
+      menu={[{ label: "Manage sources…", icon: <Newspaper size={13} />, onSelect: () => setManaging(true) }]}
+      label="News"
+      className="col-span-2 gap-4 px-6 py-[22px]"
+    >
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
           <h2 className="m-0 text-16 font-semibold">News</h2>
@@ -136,6 +172,12 @@ export default function NewsCard({ home }: { home: HomeData }) {
                 key={h.key}
                 type="button"
                 onClick={() => void openUrl(h.link)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const { x, y } = menuPoint(e);
+                  openMenu(x, y, headlineMenu(h));
+                }}
                 title={h.title}
                 className="flex min-w-0 gap-[14px] rounded-[16px] border border-line bg-panel2 p-[14px] text-left transition-colors hover:border-faint"
               >

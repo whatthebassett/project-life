@@ -3,7 +3,7 @@ import { emitTo } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ChevronRight, Minus, Pin, Plus, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import ContextMenu, { type MenuItem, type MenuState } from "../components/ContextMenu";
+import ContextMenu, { menuPoint, type MenuItem, type MenuState } from "../components/ContextMenu";
 import { inTauri, onDataChanged } from "../lib/api";
 import { applyAppearance } from "../lib/appearance";
 import { useNow } from "../lib/dates";
@@ -11,10 +11,11 @@ import { motionReduced } from "../lib/motion";
 import { loadSettings } from "../lib/settings";
 import { SegmentedControl } from "../ui/SegmentedControl";
 import { Toaster } from "../ui/Toast";
+import AppMenu from "../components/AppMenu";
 import { addTask, deleteTasks, toggleTask } from "./actions";
 import { formatDue, startOfDay } from "./dates";
 import { listFor } from "./lists";
-import { taskMenu } from "./menus";
+import { groupMenu, taskMenu } from "./menus";
 import type { Task } from "./model";
 import { parseCapture } from "./quick";
 import TaskRow from "./TaskRow";
@@ -98,6 +99,7 @@ export default function TasksWindow() {
 
   const win = () => getCurrentWindow();
   const openMenu = (x: number, y: number, items: MenuItem[]) => setMenu({ x, y, items });
+  const toggleGroup = (id: string) => setFolded((f) => new Set(f.has(id) ? [...f].filter((x) => x !== id) : [...f, id]));
 
   return (
     <div className="relative flex h-full flex-col bg-bg text-text">
@@ -165,7 +167,25 @@ export default function TasksWindow() {
             <div key={g.id} className="flex flex-col">
               <button
                 aria-expanded={open}
-                onClick={() => setFolded((f) => new Set(f.has(g.id) ? [...f].filter((x) => x !== g.id) : [...f, g.id]))}
+                onClick={() => toggleGroup(g.id)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  const { x, y } = menuPoint(e);
+                  const ids = groups.map((x) => x.id);
+                  openMenu(
+                    x,
+                    y,
+                    groupMenu(g, {
+                      fold: {
+                        open,
+                        toggle: () => toggleGroup(g.id),
+                        setAll: (all) => setFolded((f) => (all ? new Set([...f].filter((id) => !ids.includes(id))) : new Set([...f, ...ids]))),
+                        anyOpen: ids.some((id) => !folded.has(id)),
+                        anyFolded: ids.some((id) => folded.has(id)),
+                      },
+                    }),
+                  );
+                }}
                 className={clsx("flex h-7 items-center gap-2 px-1 font-mono text-11 tracking-[0.12em] uppercase", g.danger ? "text-danger" : "text-muted")}
               >
                 <ChevronRight size={11} strokeWidth={2.6} style={{ transform: open ? "rotate(90deg)" : undefined }} />
@@ -204,6 +224,7 @@ export default function TasksWindow() {
       </div>
       <Toaster />
       <ContextMenu menu={menu} onClose={() => setMenu(null)} />
+      <AppMenu />
     </div>
   );
 }

@@ -1,16 +1,28 @@
 import clsx from "clsx";
-import { FileText, Maximize2, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, ExternalLink, FileText, ListPlus, Maximize2, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, type Ref } from "react";
-import type { MenuItem } from "../components/ContextMenu";
+import { menuPoint, type MenuItem } from "../components/ContextMenu";
 import { titleOf } from "../lib/api";
 import { priorityColor, type PriorityValue } from "../lib/notebook";
 import { useNotes } from "../notes/NotesContext";
 import { Checkbox } from "../ui/Checkbox";
 import { SectionLabel } from "../ui/bits";
-import { addSubtask, deleteTasks, renameTask, repeatLabel, setDescription, setPriority, toggleSubtask, toggleTask } from "./actions";
+import {
+  addSubtask,
+  deleteSubtask,
+  deleteTasks,
+  moveSubtask,
+  renameTask,
+  repeatLabel,
+  setDescription,
+  setPriority,
+  subtaskToTask,
+  toggleSubtask,
+  toggleTask,
+} from "./actions";
 import { listFor } from "./lists";
 import { listMenu, repeatMenu } from "./menus";
-import { subtaskProgress, type Task } from "./model";
+import { subtaskProgress, type Subtask, type Task } from "./model";
 import { dueLabel, dueTone, shortDate } from "./views";
 
 interface Props {
@@ -58,6 +70,23 @@ function Details({ task, now, openMenu, onOpen, onPickDate, titleRef }: Props & 
     const r = e.currentTarget.getBoundingClientRect();
     openMenu(r.left, r.bottom + 4, items);
   };
+  const rightClick = (e: React.MouseEvent<HTMLElement>, items: MenuItem[]) => {
+    e.preventDefault();
+    const { x, y } = menuPoint(e);
+    openMenu(x, y, items);
+  };
+
+  const subtaskMenu = (s: Subtask, i: number): MenuItem[] => [
+    s.Done
+      ? { label: "Mark not done", icon: <RotateCcw size={13} />, onSelect: () => toggleSubtask(task, s) }
+      : { label: "Mark done", icon: <Check size={13} />, onSelect: () => toggleSubtask(task, s) },
+    { type: "separator" },
+    { label: "Move up", icon: <ArrowUp size={13} />, disabled: i === 0, onSelect: () => moveSubtask(task, s.Id, subs[i - 1].Id) },
+    { label: "Move down", icon: <ArrowDown size={13} />, disabled: i === subs.length - 1, onSelect: () => moveSubtask(task, s.Id, subs[i + 2]?.Id ?? null) },
+    { label: "Make it a task", icon: <ListPlus size={13} />, onSelect: () => subtaskToTask(task, s) },
+    { type: "separator" },
+    { label: "Delete", icon: <Trash2 size={13} />, danger: true, onSelect: () => deleteSubtask(task, s) },
+  ];
 
   return (
     <aside aria-label="Task details" className="flex w-[340px] shrink-0 flex-col gap-[18px] overflow-y-auto border-l border-line bg-side px-[22px] py-6">
@@ -140,12 +169,13 @@ function Details({ task, now, openMenu, onOpen, onPickDate, titleRef }: Props & 
         <div className="h-1 overflow-hidden rounded-[4px] bg-panel2">
           <div className="h-full rounded-[4px] bg-accent2 transition-[width] duration-300" style={{ width: `${progress.total ? Math.round((progress.done / progress.total) * 100) : 0}%` }} />
         </div>
-        {subs.map((s) => (
+        {subs.map((s, i) => (
           <button
             key={s.Id}
             role="checkbox"
             aria-checked={s.Done}
             onClick={() => toggleSubtask(task, s)}
+            onContextMenu={(e) => rightClick(e, subtaskMenu(s, i))}
             className={clsx("flex min-h-10 items-center gap-3 px-1 text-left text-14", s.Done ? "text-muted line-through" : "text-text")}
           >
             <span
@@ -198,7 +228,16 @@ function Details({ task, now, openMenu, onOpen, onPickDate, titleRef }: Props & 
       </div>
 
       {task.Note && (
-        <button onClick={() => void n.activate(task.Note!)} className="flex items-center gap-3 rounded-[14px] border border-line bg-panel p-3 text-left hover:border-faint">
+        <button
+          onClick={() => void n.activate(task.Note!)}
+          onContextMenu={(e) =>
+            rightClick(e, [
+              { label: "Open note", icon: <FileText size={13} />, onSelect: () => void n.activate(task.Note!) },
+              { label: "Open in new tab", icon: <ExternalLink size={13} />, onSelect: () => void n.activate(task.Note!, true) },
+            ])
+          }
+          className="flex items-center gap-3 rounded-[14px] border border-line bg-panel p-3 text-left hover:border-faint"
+        >
           <span className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-accent">
             <FileText size={16} strokeWidth={1.9} />
           </span>

@@ -259,6 +259,9 @@ export const system = {
   theme: () => tauriOnly<"light" | "dark">(window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark", () => invoke("system_theme")),
   osBuild: () => tauriOnly(0, () => invoke<number>("os_build")),
   runningApps: (names: string[]) => tauriOnly<string[]>([], () => invoke("running_apps", { names })),
+  // The clipboard's text and HTML, for Paste in the right-click menu.
+  readClipboard: () =>
+    inTauri ? invoke<{ text: string; html: string }>("read_clipboard") : navigator.clipboard.readText().then((text) => ({ text, html: "" })),
   location: () => (inTauri ? invoke<{ latitude: number; longitude: number }>("current_location") : Promise.reject(new Error("Location works in the Project Life app."))),
   secretGet: (name: string) => tauriOnly<string | null>(null, () => invoke("secret_get", { name })),
   secretSet: (name: string, value: string | null) => tauriOnly(undefined, () => invoke<void>("secret_set", { name, value })),

@@ -1,16 +1,26 @@
 import { weekLetters } from "../lib/format";
 import { locale } from "../lib/format";
 import { Pencil } from "lucide-react";
+import { menuPoint, type MenuItem } from "../components/ContextMenu";
 import { addDays, fromYmd, ymd } from "../tasks/dates";
 import { SectionLabel } from "../ui/bits";
 import { HabitIcon } from "./icons";
+import { dayMenu } from "./menus";
 import { bestStreak, currentStreak, doneOn, frequencyLabel, goalLabel, hueColor, hueSoft, level, rate30, weekStartOf, reminderLabel, todLabel, totalDone, type Habit, type HabitRules } from "./model";
 
 const opacity = [1, 0.35, 0.65, 1];
 
 // The details panel (Habits.dc.html): the streak, best / 30 days / total,
 // the last 12 weeks, and the reminder and time of day.
-export default function HabitDetails({ h, today, rules, onEdit }: { h: Habit | null; today: string; rules: HabitRules; onEdit: () => void }) {
+interface Props {
+  h: Habit | null;
+  today: string;
+  rules: HabitRules;
+  onEdit: () => void;
+  openMenu: (x: number, y: number, items: MenuItem[]) => void;
+}
+
+export default function HabitDetails({ h, today, rules, onEdit, openMenu }: Props) {
   if (!h) {
     return (
       <aside aria-label="Habit details" className="flex w-[340px] shrink-0 flex-col items-center justify-center gap-2 border-l border-line bg-side px-8 text-center">
@@ -91,6 +101,13 @@ export default function HabitDetails({ h, today, rules, onEdit }: { h: Habit | n
                     opacity: future ? 1 : opacity[lv],
                     borderColor: day === today ? "var(--text)" : future ? "var(--line)" : "transparent",
                     borderStyle: future ? "dashed" : "solid",
+                  }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    const items = dayMenu(h, day, today);
+                    if (!items) return;
+                    const { x, y } = menuPoint(e);
+                    openMenu(x, y, items);
                   }}
                 />
               );

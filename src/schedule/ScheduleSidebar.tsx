@@ -48,6 +48,9 @@ interface Props {
   selected: Occurrence | null;
   calendarOf: (id: string) => TaskList;
   onEdit: (o: Occurrence) => void;
+  // Right-clicks on a calendar row and on the selected event's card.
+  onCalendarMenu: (e: React.MouseEvent, c: CalendarRow) => void;
+  onEventMenu: (e: React.MouseEvent, o: Occurrence) => void;
 }
 
 // Schedule's left panel (Calendar.dc.html): quick add, the mini month, the
@@ -165,6 +168,10 @@ export default function ScheduleSidebar(props: Props) {
               role="checkbox"
               aria-checked={c.on}
               onClick={() => props.onToggle(c.id)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                props.onCalendarMenu(e, c);
+              }}
               className={clsx("flex h-9 items-center gap-3 rounded-[10px] px-1.5 text-left text-13 hover:bg-panel", c.on ? "text-text" : "text-muted")}
             >
               <span
@@ -192,7 +199,9 @@ export default function ScheduleSidebar(props: Props) {
 
       <div className="flex-1" />
 
-      {selected ? <SelectedCard occ={selected} now={now} calendarOf={props.calendarOf} onEdit={() => props.onEdit(selected)} /> : null}
+      {selected ? (
+        <SelectedCard occ={selected} now={now} calendarOf={props.calendarOf} onEdit={() => props.onEdit(selected)} onMenu={(e) => props.onEventMenu(e, selected)} />
+      ) : null}
     </aside>
   );
 }
@@ -204,7 +213,19 @@ const providers: { id: CallKind | "none"; label: string }[] = [
   { id: "zoom", label: "Zoom" },
 ];
 
-function SelectedCard({ occ, now, calendarOf, onEdit }: { occ: Occurrence; now: Date; calendarOf: (id: string) => TaskList; onEdit: () => void }) {
+function SelectedCard({
+  occ,
+  now,
+  calendarOf,
+  onEdit,
+  onMenu,
+}: {
+  occ: Occurrence;
+  now: Date;
+  calendarOf: (id: string) => TaskList;
+  onEdit: () => void;
+  onMenu: (e: React.MouseEvent) => void;
+}) {
   const n = useNotes();
   const e = occ.event;
   const cal = calendarOf(e.Calendar);
@@ -223,7 +244,13 @@ function SelectedCard({ occ, now, calendarOf, onEdit }: { occ: Occurrence; now: 
       : null;
 
   return (
-    <div className="flex flex-col gap-3 rounded-[18px] border border-line bg-panel p-4">
+    <div
+      className="flex flex-col gap-3 rounded-[18px] border border-line bg-panel p-4"
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onMenu(e);
+      }}
+    >
       <div className="flex items-center gap-2">
         <span className="h-2 w-2 rounded-full" style={{ background: cal.color }} />
         <span className="font-mono text-11 tracking-[0.1em] text-muted uppercase">{cal.name}</span>

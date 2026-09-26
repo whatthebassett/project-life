@@ -1,15 +1,43 @@
 // The small menus tasks share: repeat, reminder, estimate, list, priority,
-// and the right-click menu for a task.
-import { AlarmClock, CalendarDays, CalendarX, Check, Copy, Flag, List, Maximize2, RotateCcw, Trash2 } from "lucide-react";
+// and the right-click menus for a task, a group's heading and a habit in
+// Today.
+import {
+  AlarmClock,
+  CalendarDays,
+  CalendarX,
+  Check,
+  CheckCheck,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  Copy,
+  EyeOff,
+  Flag,
+  FoldVertical,
+  LayoutList,
+  List,
+  Maximize2,
+  Minus,
+  Plus,
+  RotateCcw,
+  Trash2,
+  UnfoldVertical,
+} from "lucide-react";
 import type { MenuItem } from "../components/ContextMenu";
+import { saveHabit, stepDay, toggleDay } from "../habits/actions";
+import { doneOn, type Habit } from "../habits/model";
+import { habitStore } from "../habits/useHabits";
+import { showHabit } from "../shell/go";
+import { toast } from "../ui/Toast";
 import { priorityColor, priorityLabel, type PriorityValue } from "../lib/notebook";
 import {
   applyLater,
+  completeTasks,
   deleteTasks,
   duplicateTask,
   estimateLabel,
   estimates,
   laterChoices,
+  moveTasksToTomorrow,
   patch,
   reminderLabel,
   repeatLabel,
@@ -20,6 +48,7 @@ import {
 } from "./actions";
 import { currentLists } from "./lists";
 import type { ReminderId, RepeatId, Task } from "./model";
+import type { Group } from "./views";
 
 const dot = (color: string) => <span className="h-[9px] w-[9px] rounded-[3px]" style={{ background: color }} />;
 
@@ -99,5 +128,83 @@ export function taskMenu(task: Task, h: RowMenuHandlers): MenuItem[] {
     { label: "Duplicate", icon: <Copy size={13} />, onSelect: () => duplicateTask(task) },
     { type: "separator" },
     { label: "Move to Recycle Bin", icon: <Trash2 size={13} />, hint: "Del", danger: true, onSelect: () => deleteTasks([task]) },
+  ];
+}
+
+export interface GroupMenuHandlers {
+  // Left out where groups can't be folded (the Completed view).
+  fold?: { open: boolean; toggle: () => void; setAll: (open: boolean) => void; anyOpen: boolean; anyFolded: boolean };
+  // Left out where there's only the one way to group.
+  groupBy?: { value: "date" | "list"; set: (by: "date" | "list") => void };
+}
+
+// A group's heading: fold it or all of them, regroup, and act on every task
+// in it at once. Completed tasks can only be cleared away.
+export function groupMenu(g: Group, h: GroupMenuHandlers): MenuItem[] {
+  const open = g.tasks.filter((t) => !t.Completed);
+  const items: MenuItem[] = [];
+  if (h.fold) {
+    const f = h.fold;
+    items.push(
+      f.open ? { label: "Collapse", icon: <ChevronsDownUp size={13} />, onSelect: f.toggle } : { label: "Expand", icon: <ChevronsUpDown size={13} />, onSelect: f.toggle },
+      { label: "Collapse all", icon: <FoldVertical size={13} />, disabled: !f.anyOpen, onSelect: () => f.setAll(false) },
+      { label: "Expand all", icon: <UnfoldVertical size={13} />, disabled: !f.anyFolded, onSelect: () => f.setAll(true) },
+    );
+  }
+  if (h.groupBy) {
+    const by = h.groupBy;
+    items.push({
+      label: "Group by",
+      icon: <LayoutList size={13} />,
+      children: [
+        { label: "Date", checked: by.value === "date", onSelect: () => by.set("date") },
+        { label: "List", checked: by.value === "list", onSelect: () => by.set("list") },
+      ],
+    });
+  }
+  if (items.length) items.push({ type: "separator" });
+  if (g.kind === "completed") {
+    items.push({ label: "Clear completed", icon: <Trash2 size={13} />, danger: true, onSelect: () => deleteTasks(g.tasks) });
+    return items;
+  }
+  items.push({ label: "Complete all", icon: <CheckCheck size={13} />, disabled: !open.length, onSelect: () => completeTasks(open) });
+  if (g.kind === "overdue" || g.kind === "today") {
+    items.push({ label: "Move all to tomorrow", icon: <AlarmClock size={13} />, disabled: !open.length, onSelect: () => moveTasksToTomorrow(open) });
+  }
+  items.push({ type: "separator" }, { label: "Move all to Recycle Bin", icon: <Trash2 size={13} />, danger: true, onSelect: () => deleteTasks(g.tasks) });
+  return items;
+}
+
+const setInTasks = (id: string, on: boolean) => {
+  const h = habitStore().getState().file.Habits.find((x) => x.Id === id);
+  if (h) saveHabit({ ...h, InTasks: on });
+};
+
+// A habit among Today's tasks. Hiding it can't work while Settings shows
+// every habit due today anyway.
+export function habitTaskMenu(h: Habit, today: string, showsAll: boolean): MenuItem[] {
+  const done = doneOn(h, today);
+  const step = h.Kind === "time" ? "5 minutes" : "one";
+  return [
+    done
+      ? { label: "Mark not done", icon: <RotateCcw size={13} />, onSelect: () => toggleDay(h, today) }
+      : { label: "Mark done", icon: <Check size={13} />, onSelect: () => toggleDay(h, today) },
+    ...(h.Kind === "check"
+      ? []
+      : ([
+          { label: `Add ${step}`, icon: <Plus size={13} />, onSelect: () => stepDay(h, today, 1) },
+          { label: `Remove ${step}`, icon: <Minus size={13} />, disabled: !(h.Log[today] ?? 0), onSelect: () => stepDay(h, today, -1) },
+        ] as MenuItem[])),
+    { type: "separator" },
+    { label: "Open in Habits", icon: <Maximize2 size={13} />, onSelect: () => showHabit(h.Id) },
+    {
+      label: "Hide from Today",
+      icon: <EyeOff size={13} />,
+      disabled: showsAll,
+      onSelect: () => {
+        setInTasks(h.Id, false);
+        toast(`Hid “${h.Name}” from Today`, () => setInTasks(h.Id, true));
+      },
+    },
   ];
 }

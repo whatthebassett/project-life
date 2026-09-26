@@ -1,6 +1,9 @@
 import clsx from "clsx";
+import { menuPoint } from "../components/ContextMenu";
 import { useSettings } from "../lib/SettingsContext";
+import { useNotes } from "../notes/NotesContext";
 import { Icon } from "../ui/icons";
+import { navMenu, settingsMenu } from "./menus";
 import { initialOf, navItems, type Screen } from "./nav";
 
 interface Props {
@@ -10,9 +13,11 @@ interface Props {
 }
 
 // The 72px rail on every screen but Home (Tasks.dc.html and friends): logo,
-// the six places, then Settings and the avatar at the bottom.
+// the six places, then Settings and the avatar at the bottom. Right-click a
+// place for its menu.
 export default function IconRail({ screen, onNavigate, onSettings }: Props) {
-  const { settings } = useSettings();
+  const { settings, update } = useSettings();
+  const n = useNotes();
   return (
     <nav aria-label="App" className="flex w-[72px] shrink-0 flex-col items-center gap-1.5 border-r border-line bg-side pt-5 pb-[18px]">
       <div className="mb-[14px] flex h-9 w-9 items-center justify-center rounded-[11px] bg-accent text-accent-ink">
@@ -28,6 +33,11 @@ export default function IconRail({ screen, onNavigate, onSettings }: Props) {
             title={item.label}
             aria-current={on ? "page" : undefined}
             onClick={() => onNavigate(item.id)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              const { x, y } = menuPoint(e);
+              n.openMenu(x, y, navMenu(item.id, { open: onNavigate, newNote: n.actions.newNote, keyFor: n.keyFor }));
+            }}
             className={clsx(
               "flex h-12 w-12 items-center justify-center rounded-[14px] transition-colors duration-150",
               on ? "bg-accent-soft text-accent" : "text-muted hover:bg-panel hover:text-text",
@@ -43,6 +53,11 @@ export default function IconRail({ screen, onNavigate, onSettings }: Props) {
         aria-label="Settings"
         title="Settings (Ctrl+,)"
         onClick={onSettings}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          const { x, y } = menuPoint(e);
+          n.openMenu(x, y, settingsMenu({ open: onSettings, keyFor: n.keyFor, sidebar: settings.SidebarStyle ?? "full", setSidebar: (v) => update({ SidebarStyle: v }) }));
+        }}
         className="flex h-12 w-12 items-center justify-center rounded-[14px] text-muted transition-colors duration-150 hover:bg-panel hover:text-text"
       >
         <Icon name="settings" size={20} />

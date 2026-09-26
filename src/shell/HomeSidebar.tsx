@@ -1,11 +1,17 @@
 import clsx from "clsx";
+import { Maximize2 } from "lucide-react";
+import { useState } from "react";
+import { menuPoint, type MenuItem } from "../components/ContextMenu";
 import { useTodayOpenCount } from "../home/useHome";
+import { useNotes } from "../notes/NotesContext";
+import { DeleteListDialog, listActionsMenu, RenameListDialog } from "../tasks/listMenu";
+import type { ListRecord } from "../tasks/lists";
 import { requestTasks } from "../tasks/nav";
 import { useTasks } from "../tasks/useTasks";
 import { useSettings } from "../lib/SettingsContext";
-import { themeFor, themes } from "../lib/themes";
 import { Icon } from "../ui/icons";
 import { SectionLabel } from "../ui/bits";
+import { navMenu, settingsMenu } from "./menus";
 import { initialOf, navItems, type Screen } from "./nav";
 
 interface Props {
@@ -17,14 +23,24 @@ interface Props {
 // Spaces are your task lists (DESIGN.md §2); a click opens one in Tasks.
 const MAX_SPACES = 6;
 
-// Home's full 240px sidebar (Main.dc.html): nav, spaces, the theme picker and
-// the profile.
+// Home's full 240px sidebar (Main.dc.html): nav, spaces and the profile.
+// Themes are chosen in Settings → Appearance. Right-click a place or a space
+// for its menu.
 export default function HomeSidebar({ screen, onNavigate, onSettings }: Props) {
   const { settings, update } = useSettings();
+  const n = useNotes();
   // Today's open tasks, beside Tasks.
   const taskCount = useTodayOpenCount();
-  const { lists } = useTasks();
-  const current = themeFor(settings.Theme);
+  const { tasks, lists } = useTasks();
+  const [renaming, setRenaming] = useState<ListRecord | null>(null);
+  const [deleting, setDeleting] = useState<ListRecord | null>(null);
+
+  const openList = (l: ListRecord) => requestTasks({ kind: "list", id: l.Id });
+  const spaceMenu = (l: ListRecord): MenuItem[] => [
+    { label: "Open", icon: <Maximize2 size={13} />, onSelect: () => openList(l) },
+    { type: "separator" },
+    ...listActionsMenu(l, lists, { rename: () => setRenaming(l), remove: () => setDeleting(l), renameDialog: true }),
+  ];
 
   return (
     <aside className="flex w-60 shrink-0 flex-col gap-7 border-r border-line bg-side pt-7 pr-[18px] pb-[22px] pl-[18px]">
@@ -47,6 +63,11 @@ export default function HomeSidebar({ screen, onNavigate, onSettings }: Props) {
               type="button"
               aria-current={on ? "page" : undefined}
               onClick={() => onNavigate(item.id)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                const { x, y } = menuPoint(e);
+                n.openMenu(x, y, navMenu(item.id, { open: onNavigate, newNote: n.actions.newNote, keyFor: n.keyFor }));
+              }}
               className={clsx(
                 "flex h-11 items-center gap-3 rounded-[12px] px-3 text-left text-14 font-medium transition-colors duration-150",
                 on ? "bg-accent-soft text-text" : "text-muted hover:bg-panel hover:text-text",
@@ -69,7 +90,12 @@ export default function HomeSidebar({ screen, onNavigate, onSettings }: Props) {
         {lists.slice(0, MAX_SPACES).map((l) => (
           <button
             key={l.Id}
-            onClick={() => requestTasks({ kind: "list", id: l.Id })}
+            onClick={() => openList(l)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              const { x, y } = menuPoint(e);
+              n.openMenu(x, y, spaceMenu(l));
+            }}
             className="flex h-[38px] items-center gap-3 rounded-[10px] px-3 text-left text-14 text-muted hover:bg-panel hover:text-text"
           >
             <span className="h-[9px] w-[9px] shrink-0 rounded-[3px]" style={{ background: `var(--${l.Color})` }} />
@@ -79,34 +105,6 @@ export default function HomeSidebar({ screen, onNavigate, onSettings }: Props) {
       </div>
 
       <div className="flex-1" />
-
-      <div className="flex flex-col gap-[14px] rounded-[16px] border border-line bg-panel p-4">
-        <div className="flex items-baseline justify-between">
-          <SectionLabel>Theme</SectionLabel>
-          <span className="text-13 font-medium">{current.name}</span>
-        </div>
-        <div className="flex gap-3" role="radiogroup" aria-label="Theme">
-          {themes.map((t) => {
-            const on = t.id === current.id;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                role="radio"
-                aria-checked={on}
-                aria-label={`Switch to ${t.name} theme`}
-                title={t.name}
-                onClick={() => update({ Theme: t.id })}
-                className="h-[34px] w-[34px] rounded-full border border-line transition-shadow duration-150"
-                style={{
-                  background: `linear-gradient(135deg, ${t.preview.bg} 0 52%, ${t.preview.accent} 52% 100%)`,
-                  boxShadow: `0 0 0 2px var(--panel), 0 0 0 4px ${on ? "var(--accent)" : "transparent"}`,
-                }}
-              />
-            );
-          })}
-        </div>
-      </div>
 
       <div className="flex items-center gap-3 px-1.5">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-line bg-panel2 text-14 font-semibold text-accent">
@@ -118,11 +116,30 @@ export default function HomeSidebar({ screen, onNavigate, onSettings }: Props) {
           aria-label="Settings"
           title="Settings (Ctrl+,)"
           onClick={onSettings}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            const { x, y } = menuPoint(e);
+            n.openMenu(x, y, settingsMenu({ open: onSettings, keyFor: n.keyFor, sidebar: settings.SidebarStyle ?? "full", setSidebar: (v) => update({ SidebarStyle: v }) }));
+          }}
           className="flex h-11 w-11 items-center justify-center rounded-[12px] text-muted transition-colors duration-150 hover:bg-panel hover:text-text"
         >
           <Icon name="settings" size={18} />
         </button>
       </div>
+
+      {renaming && <RenameListDialog list={renaming} onClose={() => setRenaming(null)} />}
+      {deleting && (
+        <DeleteListDialog
+          list={deleting}
+          lists={lists}
+          tasks={tasks}
+          onDone={(deleted) => {
+            // Tasks would otherwise reopen on the list that's gone.
+            if (deleted && settings.TasksView === `list:${deleting.Id}`) update({ TasksView: "today" });
+            setDeleting(null);
+          }}
+        />
+      )}
     </aside>
   );
 }

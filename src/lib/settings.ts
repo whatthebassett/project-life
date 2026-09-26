@@ -23,6 +23,8 @@ export interface Settings {
   ActiveTab?: string | null;
   SortByPriority?: boolean;
   LinkPreviews?: boolean;
+  LinkTitles?: boolean;
+  VideoEmbeds?: boolean;
   WordWrap?: boolean;
   LineNumbers?: boolean;
   DefaultCodeLanguage?: string;

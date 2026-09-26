@@ -1,5 +1,7 @@
 import clsx from "clsx";
+import { AlarmClock, CalendarDays, Check, Maximize2 } from "lucide-react";
 import { useState } from "react";
+import type { MenuItem } from "../components/ContextMenu";
 import { openUrl } from "../lib/api";
 import { useNotes } from "../notes/NotesContext";
 import { requestSchedule } from "../schedule/nav";
@@ -7,7 +9,9 @@ import type { Screen } from "../shell/nav";
 import { fromYmd, nowTime, startOfDay, ymd } from "../tasks/dates";
 import { listFor } from "../tasks/lists";
 import { setCompleted, type Task } from "../tasks/model";
+import { requestTasks } from "../tasks/nav";
 import { Icon } from "../ui/icons";
+import { eventMenu } from "./menus";
 import { Card, clock, clockRange } from "./parts";
 import { callNames, type HomeEvent } from "./sources";
 import type { HomeData } from "./useHome";
@@ -55,10 +59,11 @@ export default function UpNext({ home, onNavigate }: { home: HomeData; onNavigat
   const snooze = (id: string) => setSnoozed((s) => ({ ...s, [id]: home.now.getTime() + SNOOZE }));
 
   const style = { background: "radial-gradient(520px 240px at 100% 0%, var(--glow), transparent 70%), var(--panel)" };
+  const openSchedule: MenuItem = { label: "Open Schedule", icon: <CalendarDays size={13} />, onSelect: () => onNavigate("schedule") };
 
   if (!next) {
     return (
-      <Card label="Up next" className="col-span-2 flex-row! gap-7 px-[30px] py-[26px]" style={style}>
+      <Card id="up" menu={[openSchedule]} label="Up next" className="col-span-2 flex-row! gap-7 px-[30px] py-[26px]" style={style}>
         <div className="flex min-w-0 flex-1 flex-col gap-[14px]">
           <div className="flex items-center gap-[10px]">
             <span className="h-2 w-2 rounded-full bg-faint" />
@@ -81,6 +86,7 @@ export default function UpNext({ home, onNavigate }: { home: HomeData; onNavigat
   let meta: string;
   let when: string;
   let actions: React.ReactNode;
+  let menu: MenuItem[];
   if (next.kind === "event") {
     const e = next.event;
     title = e.title;
@@ -112,8 +118,10 @@ export default function UpNext({ home, onNavigate }: { home: HomeData; onNavigat
         <SnoozeButton onClick={() => snooze(e.id)} />
       </>
     );
+    menu = [...eventMenu(e, Boolean(home.sample), (name) => void activate(name)), { type: "separator" }, snoozeItem(() => snooze(e.id))];
   } else {
     const t = next.task;
+    const done = () => home.updateTasks((tasks) => setCompleted(tasks, t.Id, true, new Date()));
     title = t.Title;
     when = clock(start);
     meta = ["Task", listFor(t.List).name, t.Notes].filter(Boolean).join(" · ");
@@ -121,7 +129,7 @@ export default function UpNext({ home, onNavigate }: { home: HomeData; onNavigat
       <>
         <button
           type="button"
-          onClick={() => home.updateTasks((tasks) => setCompleted(tasks, t.Id, true, new Date()))}
+          onClick={done}
           className="flex h-11 items-center gap-2 rounded-[13px] bg-accent px-[18px] text-14 font-semibold text-accent-ink transition-[filter] hover:brightness-110"
         >
           <Icon name="check" size={17} stroke={2.6} />
@@ -130,10 +138,16 @@ export default function UpNext({ home, onNavigate }: { home: HomeData; onNavigat
         <SnoozeButton onClick={() => snooze(t.Id)} />
       </>
     );
+    menu = [
+      { label: "Open", icon: <Maximize2 size={13} />, disabled: Boolean(home.sample), onSelect: () => requestTasks({ kind: "open", id: t.Id, popup: true }) },
+      { label: "Mark done", icon: <Check size={13} />, onSelect: done },
+      { type: "separator" },
+      snoozeItem(() => snooze(t.Id)),
+    ];
   }
 
   return (
-    <Card label="Up next" className="col-span-2 flex-row! gap-7 px-[30px] py-[26px]" style={style}>
+    <Card id="up" menu={menu} label="Up next" className="col-span-2 flex-row! gap-7 px-[30px] py-[26px]" style={style}>
       <div className="flex min-w-0 flex-1 flex-col gap-[14px]">
         <div className="flex items-center gap-[10px]">
           <span className="pl-pulse h-2 w-2 rounded-full bg-accent2" />
@@ -154,6 +168,8 @@ export default function UpNext({ home, onNavigate }: { home: HomeData; onNavigat
     </Card>
   );
 }
+
+const snoozeItem = (onSelect: () => void): MenuItem => ({ label: "Snooze 10 minutes", icon: <AlarmClock size={13} />, onSelect });
 
 function SnoozeButton({ onClick }: { onClick: () => void }) {
   return (

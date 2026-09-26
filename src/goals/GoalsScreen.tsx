@@ -1,9 +1,9 @@
 import { locale } from "../lib/format";
 import clsx from "clsx";
-import { Plus } from "lucide-react";
+import { Check, Copy, FolderInput, Maximize2, Minus, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ConfirmDialog from "../components/ConfirmDialog";
-import ContextMenu, { type MenuItem, type MenuState } from "../components/ContextMenu";
+import ContextMenu, { menuPoint, type MenuItem, type MenuState } from "../components/ContextMenu";
 import { hueColor, hueNames, hueSoft, type Habit } from "../habits/model";
 import { rulesOf, useHabits } from "../habits/useHabits";
 import { habitDay } from "../habits/model";
@@ -14,10 +14,10 @@ import { clearGoal, peekGoal } from "../shell/go";
 import { daysBetween, fromYmd } from "../tasks/dates";
 import { useTasks } from "../tasks/useTasks";
 import { SectionLabel } from "../ui/bits";
-import { addArea, blankGoal, deleteArea, patchArea, saveGoal } from "./actions";
+import { addArea, blankGoal, deleteArea, deleteGoal, duplicateGoal, logProgress, moveToArea, patchArea, saveGoal, setDone } from "./actions";
 import GoalDetails from "./GoalDetails";
 import GoalPopup from "./GoalPopup";
-import { fmt, paceOn, progressOn, statusLabel, statusOf, statusStyle, valueOn, type Area, type Goal } from "./model";
+import { fmt, paceOn, progressOn, statusLabel, statusOf, statusStyle, stepLabel, valueOn, type Area, type Goal } from "./model";
 import { useGoals } from "./useGoals";
 
 type View = "active" | "behind" | "done";
@@ -44,6 +44,11 @@ export default function GoalsScreen() {
   const [areaEdit, setAreaEdit] = useState<string | "new" | null>(null);
   const [confirmArea, setConfirmArea] = useState<Area | null>(null);
   const openMenu = useCallback((x: number, y: number, items: MenuItem[]) => setMenu({ x, y, items }), []);
+  const menuAt = (e: React.MouseEvent<HTMLElement>, items: MenuItem[]) => {
+    e.preventDefault();
+    const { x, y } = menuPoint(e);
+    openMenu(x, y, items);
+  };
 
   const rows = useMemo(
     () =>
@@ -86,6 +91,37 @@ export default function GoalsScreen() {
     },
     { type: "separator" },
     { label: "Delete area…", danger: true, disabled: areas.length <= 1, onSelect: () => setConfirmArea(a) },
+  ];
+
+  const goalMenu = (g: Goal): MenuItem[] => [
+    { label: "Open", icon: <Maximize2 size={13} />, onSelect: () => setSelectedId(g.Id) },
+    { label: "Edit…", icon: <Pencil size={13} />, onSelect: () => setEditing({ goal: g, isNew: false }) },
+    ...(g.Kind === "number"
+      ? [
+          { label: `Log ${stepLabel(g)}`, icon: <Plus size={13} />, onSelect: () => logProgress(g, g.Step) },
+          { label: `Take back ${stepLabel(g)}`, icon: <Minus size={13} />, onSelect: () => logProgress(g, -g.Step) },
+        ]
+      : g.Kind === "once"
+        ? [
+            g.Done
+              ? { label: "Mark not done", icon: <RotateCcw size={13} />, onSelect: () => setDone(g, false) }
+              : { label: "Mark done", icon: <Check size={13} />, onSelect: () => setDone(g, true) },
+          ]
+        : []),
+    { type: "separator" },
+    {
+      label: "Move to area",
+      icon: <FolderInput size={13} />,
+      children: areas.map<MenuItem>((a) => ({
+        label: a.Name,
+        checked: g.Area === a.Id,
+        icon: <span className="h-[9px] w-[9px] rounded-[3px]" style={{ background: hueColor(a.Hue) }} />,
+        onSelect: () => moveToArea(g, a.Id),
+      })),
+    },
+    { label: "Duplicate", icon: <Copy size={13} />, onSelect: () => setSelectedId(duplicateGoal(g).Id) },
+    { type: "separator" },
+    { label: "Delete goal", icon: <Trash2 size={13} />, danger: true, onSelect: () => deleteGoal(g) },
   ];
 
   return (
@@ -135,10 +171,7 @@ export default function GoalsScreen() {
                 aria-pressed={areaFilter === a.Id}
                 onClick={() => update({ GoalsArea: areaFilter === a.Id ? null : a.Id })}
                 onDoubleClick={() => setAreaEdit(a.Id)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  openMenu(e.clientX, e.clientY, areaMenu(a));
-                }}
+                onContextMenu={(e) => menuAt(e, areaMenu(a))}
                 className={clsx("flex h-[38px] items-center gap-3 rounded-[10px] px-3 text-left text-14", areaFilter === a.Id ? "bg-panel text-text" : "text-muted hover:text-text")}
               >
                 <span className="h-[9px] w-[9px] shrink-0 rounded-[3px]" style={{ background: hueColor(a.Hue) }} />
@@ -213,7 +246,16 @@ export default function GoalsScreen() {
         <div className="min-h-0 flex-1 overflow-y-auto pb-8">
           <div className="grid grid-cols-2 gap-4">
             {list.map((r) => (
-              <GoalCard key={r.g.Id} r={r} area={areaOf(r.g.Area)} habits={habits} today={today} selected={r.g.Id === selected?.g.Id} onPick={() => setSelectedId(r.g.Id)} />
+              <GoalCard
+                key={r.g.Id}
+                r={r}
+                area={areaOf(r.g.Area)}
+                habits={habits}
+                today={today}
+                selected={r.g.Id === selected?.g.Id}
+                onPick={() => setSelectedId(r.g.Id)}
+                onMenu={(e) => menuAt(e, goalMenu(r.g))}
+              />
             ))}
           </div>
           {goals.length === 0 ? (
@@ -296,6 +338,7 @@ function GoalCard({
   today,
   selected,
   onPick,
+  onMenu,
 }: {
   r: { g: Goal; pct: number; pace: number; status: ReturnType<typeof statusOf> };
   area: Area;
@@ -303,6 +346,7 @@ function GoalCard({
   today: string;
   selected: boolean;
   onPick: () => void;
+  onMenu: (e: React.MouseEvent<HTMLElement>) => void;
 }) {
   const { g, pct, pace, status } = r;
   const color = hueColor(area.Hue);
@@ -320,6 +364,7 @@ function GoalCard({
     <button
       aria-pressed={selected}
       onClick={onPick}
+      onContextMenu={onMenu}
       data-row="card"
       className="flex flex-col gap-3.5 rounded-[22px] border-[1.5px] bg-panel p-[18px] text-left"
       style={{ borderColor: selected ? color : "var(--line)" }}

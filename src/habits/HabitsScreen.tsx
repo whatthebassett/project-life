@@ -1,18 +1,21 @@
 import { weekLetters } from "../lib/format";
 import clsx from "clsx";
 import { Archive, Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import ConfirmDialog from "../components/ConfirmDialog";
+import ContextMenu, { menuPoint, type MenuItem, type MenuState } from "../components/ContextMenu";
 import { dayLabel, useNow } from "../lib/dates";
 import { useSettings } from "../lib/SettingsContext";
 import { addDays, fromYmd, ymd } from "../tasks/dates";
 import { ProgressRing } from "../ui/Progress";
 import { Popup, PopupHeader } from "../ui/Popup";
 import { SectionLabel } from "../ui/bits";
-import { archiveHabit, blankHabit, saveHabit } from "./actions";
+import { archiveHabit, blankHabit, deleteHabit, saveHabit } from "./actions";
 import HabitDetails from "./HabitDetails";
 import HabitEditPopup from "./HabitEditPopup";
 import HabitRow from "./HabitRow";
 import { HabitIcon } from "./icons";
+import { archivedMenu, deleteConfirm, habitMenu } from "./menus";
 import { activeHabits, bestStreak, doneOn, habitDay, hueColor, hueSoft, isDue, rate30, weekStartOf, type Habit, type TimeOfDay } from "./model";
 import { rulesOf, useHabits } from "./useHabits";
 import { clearHabit, peekHabit } from "../shell/go";
@@ -39,6 +42,14 @@ export default function HabitsScreen() {
   useEffect(() => clearHabit(), []);
   const [editing, setEditing] = useState<{ habit: Habit; isNew: boolean } | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [menu, setMenu] = useState<MenuState | null>(null);
+  const [deleting, setDeleting] = useState<Habit | null>(null);
+  const openMenu = useCallback((x: number, y: number, items: MenuItem[]) => setMenu({ x, y, items }), []);
+  const menuAt = (e: React.MouseEvent<HTMLElement>, items: MenuItem[]) => {
+    e.preventDefault();
+    const { x, y } = menuPoint(e);
+    openMenu(x, y, items);
+  };
 
   const active = useMemo(() => activeHabits(habits), [habits]);
   const archived = habits.filter((h) => h.Archived);
@@ -183,7 +194,15 @@ export default function HabitsScreen() {
                   <span className="h-px flex-1 bg-line" />
                 </div>
                 {items.map((h) => (
-                  <HabitRow key={h.Id} h={h} today={today} rules={rules} selected={h.Id === selected?.Id} onSelect={() => setSelectedId(h.Id)} />
+                  <HabitRow
+                    key={h.Id}
+                    h={h}
+                    today={today}
+                    rules={rules}
+                    selected={h.Id === selected?.Id}
+                    onSelect={() => setSelectedId(h.Id)}
+                    onMenu={(e) => menuAt(e, habitMenu(h, today, { edit: () => setEditing({ habit: h, isNew: false }), remove: () => setDeleting(h), select: setSelectedId }))}
+                  />
                 ))}
               </div>
             );
@@ -206,7 +225,7 @@ export default function HabitsScreen() {
         </div>
       </main>
 
-      <HabitDetails h={selected} today={today} rules={rules} onEdit={() => selected && setEditing({ habit: selected, isNew: false })} />
+      <HabitDetails h={selected} today={today} rules={rules} openMenu={openMenu} onEdit={() => selected && setEditing({ habit: selected, isNew: false })} />
 
       {editing && (
         <HabitEditPopup
@@ -229,7 +248,11 @@ export default function HabitsScreen() {
           </PopupHeader>
           <div className="flex max-h-[480px] flex-col overflow-y-auto p-3">
             {archived.map((h) => (
-              <div key={h.Id} className="flex min-h-[58px] items-center gap-3 border-b border-line px-2 last:border-b-0">
+              <div
+                key={h.Id}
+                onContextMenu={(e) => menuAt(e, archivedMenu(h, { edit: () => setEditing({ habit: h, isNew: false }), remove: () => setDeleting(h) }))}
+                className="flex min-h-[58px] items-center gap-3 border-b border-line px-2 last:border-b-0"
+              >
                 <span className="flex h-9 w-9 items-center justify-center rounded-[10px]" style={{ background: hueSoft(h.Hue), color: hueColor(h.Hue) }}>
                   <HabitIcon id={h.Icon} size={17} />
                 </span>
@@ -246,6 +269,16 @@ export default function HabitsScreen() {
           </div>
         </Popup>
       )}
+      {deleting && (
+        <ConfirmDialog
+          {...deleteConfirm(deleting)}
+          onResult={(ok) => {
+            setDeleting(null);
+            if (ok) deleteHabit(deleting);
+          }}
+        />
+      )}
+      <ContextMenu menu={menu} onClose={() => setMenu(null)} />
     </>
   );
 }

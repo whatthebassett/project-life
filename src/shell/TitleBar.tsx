@@ -1,9 +1,11 @@
 import clsx from "clsx";
 import { useEffect, useState, type ReactNode } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Copy, LayoutGrid, Minus, Square, X } from "lucide-react";
+import { Copy, LayoutGrid, Minus, Pin, Square, X } from "lucide-react";
+import { menuPoint } from "../components/ContextMenu";
 import { inTauri } from "../lib/api";
 import { runBeforeClose } from "../lib/closing";
+import { useNotes } from "../notes/NotesContext";
 import { eventStore } from "../schedule/useEvents";
 import { goalStore } from "../goals/useGoals";
 import { habitStore } from "../habits/useHabits";
@@ -18,9 +20,11 @@ interface Props {
 
 // The window draws its own 32px title bar in the theme's colors: the app and
 // screen name on the left, window controls on the right. Empty space drags
-// the window; double-clicking it maximizes.
+// the window; double-clicking it maximizes, and right-clicking it gives the
+// window's own menu.
 export default function TitleBar({ title, onGallery, galleryOpen }: Props) {
   const [maximized, setMaximized] = useState(false);
+  const { openMenu } = useNotes();
 
   useEffect(() => {
     if (!inTauri) return;
@@ -31,9 +35,27 @@ export default function TitleBar({ title, onGallery, galleryOpen }: Props) {
   }, []);
 
   const win = () => getCurrentWindow();
+  // Everything waiting to be saved goes to disk first.
+  const close = () => void Promise.all([taskStore().flush(), eventStore().flush(), habitStore().flush(), goalStore().flush(), runBeforeClose()]).finally(() => win().close());
+
+  const windowMenu = async (e: React.MouseEvent<HTMLElement>) => {
+    if (!inTauri || (e.target as Element).closest("button")) return;
+    e.preventDefault();
+    const { x, y } = menuPoint(e);
+    const onTop = await win().isAlwaysOnTop().catch(() => false);
+    openMenu(x, y, [
+      { label: "Minimize", icon: <Minus size={13} />, onSelect: () => void win().minimize() },
+      maximized
+        ? { label: "Restore", icon: <Copy size={13} className="-scale-x-100" />, onSelect: () => void win().toggleMaximize() }
+        : { label: "Maximize", icon: <Square size={13} />, onSelect: () => void win().toggleMaximize() },
+      { label: "Always on top", icon: <Pin size={13} />, checked: onTop, onSelect: () => void win().setAlwaysOnTop(!onTop) },
+      { type: "separator" },
+      { label: "Close", icon: <X size={13} />, onSelect: close },
+    ]);
+  };
 
   return (
-    <header data-tauri-drag-region className="flex h-8 shrink-0 items-stretch border-b border-line bg-side">
+    <header data-tauri-drag-region onContextMenu={(e) => void windowMenu(e)} className="flex h-8 shrink-0 items-stretch border-b border-line bg-side">
       <div data-tauri-drag-region className="flex min-w-0 items-center gap-2 pl-4 text-12 text-muted">
         <span className="pointer-events-none truncate">{title}</span>
         {onGallery && (
@@ -60,7 +82,7 @@ export default function TitleBar({ title, onGallery, galleryOpen }: Props) {
         <WinButton title={maximized ? "Restore" : "Maximize"} onClick={() => inTauri && void win().toggleMaximize()}>
           {maximized ? <Copy size={13} className="-scale-x-100" /> : <Square size={13} />}
         </WinButton>
-        <WinButton title="Close" close onClick={() => inTauri && void Promise.all([taskStore().flush(), eventStore().flush(), habitStore().flush(), goalStore().flush(), runBeforeClose()]).finally(() => win().close())}>
+        <WinButton title="Close" close onClick={() => inTauri && close()}>
           <X size={17} />
         </WinButton>
       </div>

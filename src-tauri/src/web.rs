@@ -148,6 +148,17 @@ pub(crate) fn web_agent(timeout_secs: u64, user_agent: &str) -> ureq::Agent {
 // capped at `limit` bytes. Returns where it ended up, its content type, and
 // the bytes.
 pub(crate) fn fetch_public(url: &str, accept: &str, limit: u64, timeout_secs: u64) -> Result<(url::Url, String, Vec<u8>), String> {
+    fetch_from(url, accept, limit, timeout_secs, false)
+}
+
+// The same, for a web page's <head> only: reading stops once it has come by,
+// or at `limit` bytes without it. Titles and previews are all in the head,
+// and some pages (YouTube's) are over a megabyte with the head half way down.
+pub(crate) fn fetch_public_head(url: &str, limit: u64, timeout_secs: u64) -> Result<(url::Url, String, Vec<u8>), String> {
+    fetch_from(url, "text/html,*/*;q=0.5", limit, timeout_secs, true)
+}
+
+fn fetch_from(url: &str, accept: &str, limit: u64, timeout_secs: u64, head_only: bool) -> Result<(url::Url, String, Vec<u8>), String> {
     let agent = web_agent(timeout_secs, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ProjectLife/0.1");
     let mut current = url::Url::parse(url).map_err(err)?;
     for _ in 0..5 {
@@ -181,6 +192,9 @@ pub(crate) fn fetch_public(url: &str, accept: &str, limit: u64, timeout_secs: u6
             return Err(format!("{host} answered {status}."));
         }
         let kind = response.headers().get("content-type").and_then(|v| v.to_str().ok()).unwrap_or("").to_lowercase();
+        if head_only {
+            return Ok((current, kind, read_head(response.body_mut().as_reader(), limit)?));
+        }
         // One byte past the limit tells a page that's too big from one that fits.
         let mut reader = std::io::Read::take(response.body_mut().as_reader(), limit + 1);
         let mut bytes = Vec::new();
@@ -191,6 +205,26 @@ pub(crate) fn fetch_public(url: &str, accept: &str, limit: u64, timeout_secs: u6
         return Ok((current, kind, bytes));
     }
     Err("Too many redirects.".into())
+}
+
+// Up to the end of </head>, or `limit` bytes.
+fn read_head(mut reader: impl std::io::Read, limit: u64) -> Result<Vec<u8>, String> {
+    let mut bytes = Vec::new();
+    let mut chunk = [0u8; 16 * 1024];
+    loop {
+        let n = reader.read(&mut chunk).map_err(err)?;
+        if n == 0 {
+            break;
+        }
+        // Look again from just before this chunk, in case the tag was split.
+        let from = bytes.len().saturating_sub(6);
+        bytes.extend_from_slice(&chunk[..n]);
+        if bytes[from..].windows(7).any(|w| w.eq_ignore_ascii_case(b"</head>")) || bytes.len() as u64 >= limit {
+            break;
+        }
+    }
+    bytes.truncate(limit as usize);
+    Ok(bytes)
 }
 
 // Text from a public web address: RSS/Atom news feeds and weather JSON for
@@ -250,4 +284,36 @@ pub(crate) fn fetch_plain(url: &str, timeout_secs: u64) -> Result<String, String
 
 pub(crate) fn fetch_bytes(url: &str, limit: u64) -> Result<Vec<u8>, String> {
     plain_get(url, limit, 40)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::read_head;
+
+    #[test]
+    fn stops_after_the_head() {
+        // </head> split across the first two 16 KB reads.
+        let mut page = vec![b' '; 16 * 1024 - 3];
+        page.extend_from_slice(b"</HEAD><body>");
+        page.extend(vec![b'x'; 100 * 1024]);
+        let head = read_head(&page[..], 1024 * 1024).unwrap();
+        assert!(head.len() < 64 * 1024);
+        assert!(String::from_utf8_lossy(&head).contains("</HEAD>"));
+    }
+
+    #[test]
+    fn keeps_the_start_of_a_page_with_no_head() {
+        let page = vec![b'x'; 100 * 1024];
+        assert_eq!(read_head(&page[..], 40 * 1024).unwrap().len(), 40 * 1024);
+    }
+
+    // Needs the internet: cargo test live_youtube_title -- --ignored
+    #[test]
+    #[ignore]
+    fn live_youtube_title() {
+        let (_, _, bytes) = super::fetch_public_head("https://www.youtube.com/watch?v=ejjBbaq9RmY", 3 * 1024 * 1024, 8).unwrap();
+        let html = String::from_utf8_lossy(&bytes);
+        assert!(html.contains("og:title"), "got {} bytes", bytes.len());
+        println!("read {} bytes", bytes.len());
+    }
 }

@@ -41,7 +41,10 @@ import { api, openUrl } from "../lib/api";
 import { Callout } from "../editor/callout";
 import { Spoiler } from "../editor/spoiler";
 import { SlashCommands, type SlashState } from "../editor/slash";
-import { LinkCards, refreshLinkCards } from "../editor/linkCards";
+import LinkHoverCard from "./LinkHoverCard";
+import { VideoEmbeds, refreshVideoEmbeds } from "../editor/videoEmbeds";
+import { LinkTitles } from "../editor/linkTitles";
+import { currentSettings } from "../lib/settings";
 import { NotedImage, insertDataImages, insertImageFiles } from "../editor/images";
 import { NotedCodeBlock } from "../editor/code";
 import { NotedUnderline } from "../editor/underline";
@@ -77,8 +80,9 @@ interface Props {
   onEditor?: (editor: Editor | null) => void;
   // The note's cover and title, scrolling with the text above it.
   header?: React.ReactNode;
-  // Settings → Editing → Link previews.
+  // Settings → Notes → Link previews, and YouTube videos.
   linkPreviews: boolean;
+  videoEmbeds: boolean;
   // Where the cursor and scroll were last time (read once, on mount), and
   // where they are now as they change.
   spot?: EditorSpot;
@@ -100,7 +104,7 @@ export interface EditorCommands {
 
 // The formatted editor. Mount it with a key per note: it takes the note's
 // Markdown once and reports Markdown back on every change.
-export default function VisualEditor({ initial, readable, caret, keys, keyFor, onChange, openMenu, onEmoji, onEditor, header, linkPreviews, spot, onSpot, commands, todoLinks, onOpenTodo, todoMenu }: Props) {
+export default function VisualEditor({ initial, readable, caret, keys, keyFor, onChange, openMenu, onEmoji, onEditor, header, linkPreviews, videoEmbeds, spot, onSpot, commands, todoLinks, onOpenTodo, todoMenu }: Props) {
   const todoLinksRef = useRef(todoLinks);
   todoLinksRef.current = todoLinks;
   const onOpenTodoRef = useRef(onOpenTodo);
@@ -120,8 +124,8 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
   caretRef.current = caret;
   const keysRef = useRef(keys);
   keysRef.current = keys;
-  const linkPreviewsRef = useRef(linkPreviews);
-  linkPreviewsRef.current = linkPreviews;
+  const videoEmbedsRef = useRef(videoEmbeds);
+  videoEmbedsRef.current = videoEmbeds;
   const onEmojiRef = useRef(onEmoji);
   onEmojiRef.current = onEmoji;
   const startSpot = useRef(spot);
@@ -189,7 +193,8 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
         onEmoji: () => onEmojiRef.current(),
       }),
       TaskLinks.configure({ links: () => todoLinksRef.current ?? new Map(), open: (id) => onOpenTodoRef.current?.(id) }),
-      LinkCards.configure({ fetch: api.fetchLinkPreview, open: (url) => void openUrl(url), enabled: () => linkPreviewsRef.current }),
+      VideoEmbeds.configure({ enabled: () => videoEmbedsRef.current }),
+      LinkTitles.configure({ fetch: api.fetchLinkPreview, enabled: () => currentSettings().LinkTitles !== false }),
     ],
     content: initial,
     contentType: "markdown",
@@ -268,11 +273,15 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
   editorRef.current = editor;
 
   useEffect(() => {
-    if (editor && !editor.isDestroyed) refreshLinkCards(editor.view);
-  }, [editor, linkPreviews]);
+    if (editor && !editor.isDestroyed) refreshVideoEmbeds(editor.view);
+  }, [editor, videoEmbeds]);
+
+  // The editor's element, for the link hover card.
+  const [linkRoot, setLinkRoot] = useState<HTMLElement | null>(null);
+  useEffect(() => setLinkRoot(editor ? editor.view.dom : null), [editor]);
 
   // Back to where you were: the cursor, then the scroll once the page has
-  // laid out (again a moment later, as pictures and link cards arrive, unless
+  // laid out (again a moment later, as pictures arrive, unless
   // you've started scrolling). Then keep track as you go.
   useEffect(() => {
     if (!editor) return;
@@ -437,6 +446,7 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
       {slash && slash.rect && <SlashMenu state={slash} />}
       {emoji && emoji.rect && <EmojiMenu state={emoji} />}
 
+      <LinkHoverCard root={linkRoot} enabled={linkPreviews} />
       {linkDialog && <LinkDialog href={linkDialog.href} onApply={applyLink} onClose={() => setLinkDialog(null)} />}
       {datePick && (
         <Calendar

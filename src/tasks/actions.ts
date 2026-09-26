@@ -160,6 +160,49 @@ export function applyLater(task: Task, choice: LaterChoice) {
   );
 }
 
+// ----- several at once -----
+
+const howMany = (tasks: Task[]) => (tasks.length === 1 ? `“${tasks[0].Title}”` : `${tasks.length} tasks`);
+
+// A group's Complete all: one change and one toast. Undo also takes back the
+// next repeats it made.
+export function completeTasks(tasks: Task[]) {
+  const open = tasks.filter((t) => !t.Completed);
+  if (!open.length) return;
+  const ids = open.map((t) => t.Id);
+  const now = new Date();
+  let made = new Set<string>();
+  store().update((ts) => {
+    const had = new Set(ts.map((t) => t.Id));
+    const out = ids.reduce((acc, id) => setCompleted(acc, id, true, now), ts);
+    made = new Set(out.filter((t) => !had.has(t.Id)).map((t) => t.Id));
+    return out;
+  });
+  announce(`Completed ${howMany(open)}`);
+  toast(`Completed ${howMany(open)}`, () =>
+    store().update((ts) =>
+      ids.reduce((acc, id) => {
+        const out = setCompleted(acc, id, false, new Date());
+        const next = out.find((t) => t.Id === id)?.NextId;
+        return next && made.has(next) ? patchTask(out, id, { NextId: null }) : out;
+      }, ts.filter((t) => !made.has(t.Id))),
+    ),
+  );
+}
+
+// A group's Move all to tomorrow. Each keeps its time of day, as with Later.
+export function moveTasksToTomorrow(tasks: Task[]) {
+  const open = tasks.filter((t) => !t.Completed);
+  if (!open.length) return;
+  const due = ymd(addDays(startOfDay(new Date()), 1));
+  const was = open.map((t) => ({ id: t.Id, due: t.Due ?? null, time: t.DueTime ?? null }));
+  store().update((ts) =>
+    open.reduce((acc, t) => patchTask(setDue(acc, t.Id, due, tomorrowTime(t.DueTime ?? null)), t.Id, {}, { text: "Moved to tomorrow", kind: "edit" }), ts),
+  );
+  announce(`Moved ${howMany(open)} to tomorrow`);
+  toast(`Moved ${howMany(open)} to tomorrow`, () => store().update((ts) => was.reduce((acc, w) => setDue(acc, w.id, w.due, w.time), ts)));
+}
+
 // ----- deleting -----
 
 export function deleteTasks(tasks: Task[]) {
@@ -217,6 +260,34 @@ export function renameSubtask(task: Task, sub: Subtask, text: string) {
 
 export function removeSubtask(task: Task, sub: Subtask) {
   editSubs(task, (subs) => subs.filter((s) => s.Id !== sub.Id));
+}
+
+const putBack = (subs: Subtask[], sub: Subtask, at: number) => (subs.some((s) => s.Id === sub.Id) ? subs : [...subs.slice(0, at < 0 ? subs.length : at), sub, ...subs.slice(at < 0 ? subs.length : at)]);
+
+// Removed from the right-click menu, with Undo putting it back in its place.
+export function deleteSubtask(task: Task, sub: Subtask) {
+  const at = (task.Subtasks ?? []).findIndex((s) => s.Id === sub.Id);
+  removeSubtask(task, sub);
+  toast(`Deleted “${sub.Text}”`, () => editSubs(task, (subs) => putBack(subs, sub, at)));
+}
+
+// A subtask grown into a task of its own, in the same list, due on its own
+// date or else the task's.
+export function subtaskToTask(task: Task, sub: Subtask): Task {
+  const at = (task.Subtasks ?? []).findIndex((s) => s.Id === sub.Id);
+  const made = newTask({ title: sub.Text, due: sub.Due ?? task.Due ?? null, time: null, list: task.List, how: `Made from a subtask of “${task.Title}”` }, new Date());
+  store().update((ts) => {
+    const t = ts.find((x) => x.Id === task.Id);
+    return [...(t ? patchTask(ts, task.Id, { Subtasks: (t.Subtasks ?? []).filter((s) => s.Id !== sub.Id) }) : ts), made];
+  });
+  toast(`Made “${sub.Text}” a task`, () =>
+    store().update((ts) => {
+      const t = ts.find((x) => x.Id === task.Id);
+      const rest = ts.filter((x) => x.Id !== made.Id);
+      return t ? patchTask(rest, task.Id, { Subtasks: putBack(t.Subtasks ?? [], sub, at) }) : rest;
+    }),
+  );
+  return made;
 }
 
 export function moveSubtask(task: Task, id: string, before: string | null) {

@@ -1,10 +1,12 @@
 import clsx from "clsx";
+import { MapPin, RefreshCw, Thermometer } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { MenuItem } from "../components/ContextMenu";
 import { useSettings } from "../lib/SettingsContext";
 import { Icon } from "../ui/icons";
 import { Card, Empty } from "./parts";
 import { shortPlace, temperatureUnit, weatherPlace, type Place } from "./prefs";
-import { cachedWeather, dayName, describe, loadWeather, searchPlaces, weatherIsFresh, type Weather } from "./weather";
+import { cachedWeather, clearWeatherCache, dayName, describe, loadWeather, searchPlaces, weatherIsFresh, type Weather } from "./weather";
 import type { HomeData } from "./useHome";
 
 const REFRESH = 30 * 60_000;
@@ -25,6 +27,8 @@ export default function WeatherCard({ home }: { home: HomeData }) {
   const [picking, setPicking] = useState(false);
   const [weather, setWeather] = useState<Weather | undefined>(() => (place ? cachedWeather(place, unit) : undefined));
   const [error, setError] = useState<string | null>(null);
+  // Bumped by Refresh: the cache is emptied and the effect runs again.
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     if (!place || home.sample) return;
@@ -44,7 +48,7 @@ export default function WeatherCard({ home }: { home: HomeData }) {
       alive = false;
       window.clearInterval(timer);
     };
-  }, [place, unit, home.sample]);
+  }, [place, unit, home.sample, reload]);
 
   const w = home.sample ? home.sample.weather(unit) : place ? weather : undefined;
   const label = home.sample ? "Yarmouth Port, MA" : place ? shortPlace(place) : null;
@@ -56,8 +60,22 @@ export default function WeatherCard({ home }: { home: HomeData }) {
     setPicking(false);
   };
 
+  const menu: MenuItem[] = [
+    { label: "Change place…", icon: <MapPin size={13} />, disabled: picking, onSelect: () => setPicking(true) },
+    { label: unit === "F" ? "Show in °C" : "Show in °F", icon: <Thermometer size={13} />, onSelect: () => update({ TemperatureUnit: unit === "F" ? "C" : "F" }) },
+    {
+      label: "Refresh",
+      icon: <RefreshCw size={13} />,
+      disabled: !place || Boolean(home.sample),
+      onSelect: () => {
+        clearWeatherCache();
+        setReload((n) => n + 1);
+      },
+    },
+  ];
+
   return (
-    <Card label="Weather" className="gap-[14px] px-6 py-[22px]" style={style}>
+    <Card id="weather" menu={menu} label="Weather" className="gap-[14px] px-6 py-[22px]" style={style}>
       <div className="flex items-center justify-between">
         <div className="flex min-w-0 flex-col gap-0.5">
           <h2 className="m-0 text-16 font-semibold">Weather</h2>

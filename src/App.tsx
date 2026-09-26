@@ -29,6 +29,7 @@ import { useSettings } from "./lib/SettingsContext";
 import TasksScreen from "./tasks/TasksScreen";
 import { TASKS_OPEN } from "./tasks/TasksWindow";
 import { Toaster } from "./ui/Toast";
+import AppMenu from "./components/AppMenu";
 import GuidePopup from "./shell/GuidePopup";
 import Celebration from "./goals/Celebration";
 import { useAccountSync } from "./accounts/sync";
@@ -163,6 +164,7 @@ export default function App() {
           {guideOpen && <GuidePopup onClose={() => setGuideOpen(false)} />}
           <Celebration />
           <Toaster />
+          <AppMenu />
         </div>
       </div>
     </NotesProvider>

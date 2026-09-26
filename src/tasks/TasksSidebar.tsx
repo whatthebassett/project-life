@@ -1,14 +1,17 @@
 import clsx from "clsx";
-import { ExternalLink, Plus } from "lucide-react";
+import { ExternalLink, Maximize2, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import ConfirmDialog from "../components/ConfirmDialog";
-import type { MenuItem } from "../components/ContextMenu";
+import { menuPoint, type MenuItem } from "../components/ContextMenu";
 import { ProgressRing } from "../ui/Progress";
 import { SectionLabel } from "../ui/bits";
-import { listColors, newListId, type ListColor, type ListRecord } from "./lists";
+import { deleteTasks } from "./actions";
+import { DeleteListDialog, listActionsMenu, renameList } from "./listMenu";
+import { listColors, newListId, type ListRecord } from "./lists";
 import { isOverdue, todaysTasks, type Task } from "./model";
+import { requestTasks } from "./nav";
 import type { TaskStore } from "./store";
-import { baseViews, viewCount, type ViewId } from "./views";
+import { baseViews, viewCount, type BaseView, type ViewId } from "./views";
 
 interface Props {
   tasks: Task[];
@@ -23,10 +26,11 @@ interface Props {
 
 // Tasks' list panel (Tasks.dc.html): the views with their counts, your lists,
 // and the Today ring. Lists open as views of their own; right-click one to
-// rename, recolor or delete it.
+// rename, recolor or delete it, or right-click a view to start a task there.
 export default function TasksSidebar({ tasks, lists, now, view, onView, onPopOut, openMenu, store }: Props) {
   const [editing, setEditing] = useState<string | "new" | null>(null);
   const [confirm, setConfirm] = useState<ListRecord | null>(null);
+  const [clearing, setClearing] = useState(false);
 
   const todays = todaysTasks(tasks, now);
   const done = todays.filter((t) => t.Completed).length;
@@ -44,37 +48,30 @@ export default function TasksSidebar({ tasks, lists, now, view, onView, onPopOut
       store.change((f) => ({ ...f, Lists: [...f.Lists, record] }));
       onView(`list:${record.Id}`);
     } else {
-      store.change((f) => ({ ...f, Lists: f.Lists.map((l) => (l.Id === id ? { ...l, Name: text } : l)) }));
+      renameList(id, text);
     }
   };
 
-  const recolor = (id: string, color: ListColor) => store.change((f) => ({ ...f, Lists: f.Lists.map((l) => (l.Id === id ? { ...l, Color: color } : l)) }));
+  const listMenu = (list: ListRecord): MenuItem[] => listActionsMenu(list, lists, { rename: () => setEditing(list.Id), remove: () => setConfirm(list) });
 
-  const remove = (list: ListRecord) => {
-    const rest = lists.filter((l) => l.Id !== list.Id);
-    const to = rest.find((l) => l.Id === "personal") ?? rest[0];
-    store.change((f) => ({ ...f, Lists: f.Lists.filter((l) => l.Id !== list.Id), Tasks: f.Tasks.map((t) => (t.List === list.Id ? { ...t, List: to.Id } : t)) }));
-    if (view === `list:${list.Id}`) onView("today");
-  };
-
-  const listMenu = (list: ListRecord): MenuItem[] => [
-    { label: "Rename", onSelect: () => setEditing(list.Id) },
-    {
-      label: "Color",
-      children: listColors.map((c) => ({
-        label: c.name,
-        checked: list.Color === c.id,
-        icon: <span className="h-[9px] w-[9px] rounded-[3px]" style={{ background: `var(--${c.id})` }} />,
-        onSelect: () => recolor(list.Id, c.id),
-      })),
-    },
-    { type: "separator" },
-    { label: "Delete list…", danger: true, disabled: lists.length <= 1, onSelect: () => setConfirm(list) },
+  const completed = tasks.filter((t) => t.Completed);
+  // A view: open it, or open it and start a task there (quick add fills in
+  // the view's date). Completed has nothing to add, but can be cleared.
+  const viewMenu = (id: BaseView): MenuItem[] => [
+    { label: "Open", icon: <Maximize2 size={13} />, onSelect: () => onView(id) },
+    id === "completed"
+      ? { label: "Clear completed…", icon: <Trash2 size={13} />, danger: true, disabled: !completed.length, onSelect: () => setClearing(true) }
+      : {
+          label: "New task",
+          icon: <Plus size={13} />,
+          onSelect: () => {
+            onView(id);
+            requestTasks({ kind: "new" });
+          },
+        },
   ];
 
   const dayNumber = String(now.getDate());
-  const confirmCount = confirm ? tasks.filter((t) => t.List === confirm.Id).length : 0;
-  const moveTo = confirm ? (lists.filter((l) => l.Id !== confirm.Id).find((l) => l.Id === "personal") ?? lists.find((l) => l.Id !== confirm.Id)) : null;
 
   return (
     <aside className="flex w-64 shrink-0 flex-col gap-[22px] overflow-y-auto border-r border-line bg-side px-4 pt-[22px] pb-[18px]">
@@ -100,6 +97,11 @@ export default function TasksSidebar({ tasks, lists, now, view, onView, onPopOut
               key={v.id}
               aria-current={cur ? "page" : undefined}
               onClick={() => onView(v.id)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                const { x, y } = menuPoint(e);
+                openMenu(x, y, viewMenu(v.id));
+              }}
               data-row="nav"
               className={clsx("flex h-[42px] items-center gap-3 rounded-[12px] px-2.5 text-left text-14 font-medium", cur ? "bg-panel text-text" : "text-muted hover:text-text")}
             >
@@ -125,7 +127,8 @@ export default function TasksSidebar({ tasks, lists, now, view, onView, onPopOut
               onClick={() => onView(`list:${l.Id}`)}
               onContextMenu={(e) => {
                 e.preventDefault();
-                openMenu(e.clientX, e.clientY, listMenu(l));
+                const { x, y } = menuPoint(e);
+                openMenu(x, y, listMenu(l));
               }}
               onDoubleClick={() => setEditing(l.Id)}
               className={clsx("flex h-[38px] items-center gap-3 rounded-[10px] px-2.5 text-left text-14", view === `list:${l.Id}` ? "bg-panel text-text" : "text-muted hover:text-text")}
@@ -161,16 +164,27 @@ export default function TasksSidebar({ tasks, lists, now, view, onView, onPopOut
         </div>
       </div>
 
-      {confirm && moveTo && (
+      {confirm && (
+        <DeleteListDialog
+          list={confirm}
+          lists={lists}
+          tasks={tasks}
+          onDone={(deleted) => {
+            if (deleted && view === `list:${confirm.Id}`) onView("today");
+            setConfirm(null);
+          }}
+        />
+      )}
+      {clearing && (
         <ConfirmDialog
-          title={`Delete “${confirm.Name}”?`}
-          message={confirmCount ? `Its ${confirmCount} ${confirmCount === 1 ? "task moves" : "tasks move"} to ${moveTo.Name}.` : "It has no tasks."}
-          okLabel="Delete list"
+          title="Clear completed tasks?"
+          message={`${completed.length} completed ${completed.length === 1 ? "task moves" : "tasks move"} to the Recycle Bin.`}
+          okLabel="Clear completed"
           cancelLabel="Cancel"
           danger
           onResult={(ok) => {
-            if (ok) remove(confirm);
-            setConfirm(null);
+            if (ok) deleteTasks(completed);
+            setClearing(false);
           }}
         />
       )}

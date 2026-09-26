@@ -1,7 +1,13 @@
 import clsx from "clsx";
+import { AlarmClock, Check, CheckSquare, Copy, Flag, Maximize2, RotateCcw, Trash2 } from "lucide-react";
+import { menuPoint, type MenuItem } from "../components/ContextMenu";
+import { useNotes } from "../notes/NotesContext";
+import { go } from "../shell/go";
+import { applyLater, deleteTasks, duplicateTask, laterChoices } from "../tasks/actions";
 import { addDays, daysBetween, formatDue, startOfDay, ymd } from "../tasks/dates";
 import { listFor } from "../tasks/lists";
 import { byDue, isOverdue, openCount, setCompleted, todaysTasks, type Task } from "../tasks/model";
+import { priorityMenu } from "../tasks/menus";
 import { requestTasks } from "../tasks/nav";
 import { Checkbox } from "../ui/Checkbox";
 import { Card, CardHeader, Empty } from "./parts";
@@ -20,9 +26,34 @@ export default function TasksCard({ home }: { home: HomeData }) {
   const left = openCount(todays);
 
   const toggle = (t: Task) => home.updateTasks((tasks) => setCompleted(tasks, t.Id, !t.Completed, new Date()));
+  const { openMenu } = useNotes();
+
+  // Like the Tasks screen's row menu, less what needs the list at hand.
+  // Sample tasks aren't in the real list, so only ticking them works.
+  const taskMenu = (t: Task): MenuItem[] => {
+    const done = Boolean(t.Completed);
+    const off = Boolean(home.sample);
+    return [
+      { label: "Open", icon: <Maximize2 size={13} />, disabled: off, onSelect: () => requestTasks({ kind: "open", id: t.Id, popup: true }) },
+      done
+        ? { label: "Mark not done", icon: <RotateCcw size={13} />, onSelect: () => toggle(t) }
+        : { label: "Complete", icon: <Check size={13} />, onSelect: () => toggle(t) },
+      { type: "separator" },
+      {
+        label: "Later",
+        icon: <AlarmClock size={13} />,
+        disabled: done || off,
+        children: laterChoices(t, new Date()).map<MenuItem>((c) => ({ label: c.label, hint: c.hint, onSelect: () => applyLater(t, c) })),
+      },
+      { label: "Priority", icon: <Flag size={13} />, disabled: off, children: priorityMenu(t) },
+      { label: "Duplicate", icon: <Copy size={13} />, disabled: off, onSelect: () => duplicateTask(t) },
+      { type: "separator" },
+      { label: "Move to Recycle Bin", icon: <Trash2 size={13} />, danger: true, disabled: off, onSelect: () => deleteTasks([t]) },
+    ];
+  };
 
   return (
-    <Card label="Tasks" className="flex-1 gap-[14px] p-6">
+    <Card id="tasks" menu={[{ label: "Open Tasks", icon: <CheckSquare size={13} />, onSelect: () => go("tasks") }]} label="Tasks" className="flex-1 gap-[14px] p-6">
       <CardHeader title="Tasks">
         <span className="font-mono text-12 text-muted">{left} left</span>
       </CardHeader>
@@ -32,7 +63,16 @@ export default function TasksCard({ home }: { home: HomeData }) {
           const dueToday = t.Due ? daysBetween(ymd(today), t.Due) === 0 : false;
           const dueColor = done ? "text-muted" : isOverdue(t, home.now) ? "text-danger" : dueToday ? "text-warn" : "text-muted";
           return (
-            <div key={t.Id} className="flex min-h-[58px] items-center gap-3 border-b border-line px-1 py-1.5">
+            <div
+              key={t.Id}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const { x, y } = menuPoint(e);
+                openMenu(x, y, taskMenu(t));
+              }}
+              className="flex min-h-[58px] items-center gap-3 border-b border-line px-1 py-1.5"
+            >
               <Checkbox
                 shape="square"
                 checked={done}
