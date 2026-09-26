@@ -11,6 +11,7 @@ import { useAccounts } from "../../accounts/useAccounts";
 import { accountsApi, inTauri, system, type DataInfo, type ProviderId } from "../../lib/api";
 import { clockText, dateText } from "../../lib/format";
 import { backupNow, flushAll } from "../../lib/jobs";
+import { checkForUpdate, installUpdate, useUpdateState } from "../../lib/updates";
 import { useSettings } from "../../lib/SettingsContext";
 import { fromYmd, ymd } from "../../tasks/dates";
 import { parseFile, type Task } from "../../tasks/model";
@@ -297,7 +298,7 @@ export function Privacy() {
   return (
     <>
       <ListGroup>
-        <Info label="What goes online" desc="Only what you ask for: weather, news feeds, link previews, fonts and connected calendars" />
+        <Info label="What goes online" desc="Only what you ask for: weather, news feeds, link previews, fonts, connected calendars, and a daily look for updates on GitHub" />
         <Toggle
           label="Save crash reports"
           desc="Kept on this PC in Data\Logs, never sent anywhere. Includes no note or task content."
@@ -379,6 +380,8 @@ const licenses: [string, string][] = [
 ];
 
 export function About() {
+  const { settings, update } = useSettings();
+  const updates = useUpdateState();
   const [version, setVersion] = useState("0.1.0");
   const [open, setOpen] = useState<"notes" | "licenses" | null>(null);
   useEffect(() => {
@@ -388,7 +391,29 @@ export function About() {
     <>
       <ListGroup>
         <Info label="Version" value={`${version} beta · codename Project Life`} />
-        <Action label="Check for updates" desc="Updates start with the first release" action="Check now" disabled onClick={() => {}} />
+        {updates.kind === "ready" ? (
+          <Action label={`Project Life ${updates.release.version} is ready`} desc="Restart to finish updating. Your data stays as it is." action="Restart now" tone="primary" onClick={() => void installUpdate()} />
+        ) : (
+          <Action
+            label="Check for updates"
+            desc={
+              updates.kind === "checking"
+                ? "Checking…"
+                : updates.kind === "downloading"
+                  ? `Downloading ${updates.release.version}…`
+                  : updates.kind === "error"
+                    ? updates.message
+                    : updates.kind === "current"
+                      ? "You have the newest version"
+                      : settings.LastUpdateCheck
+                        ? `Last checked ${dateText(new Date(settings.LastUpdateCheck), new Date()).toLowerCase()}`
+                        : "Not checked yet"
+            }
+            action="Check now"
+            disabled={!inTauri || updates.kind === "checking" || updates.kind === "downloading"}
+            onClick={() => void checkForUpdate(update)}
+          />
+        )}
         <Action label="What’s new" action="Release notes" onClick={() => setOpen("notes")} />
         <Info label="Made by" value="Ultima, with Checkpoint at its heart" />
         <Action label="Open-source licenses" action="View" onClick={() => setOpen("licenses")} />
@@ -396,6 +421,9 @@ export function About() {
       {open === "notes" && (
         <Dialog title="What’s new" width={560} onClose={() => setOpen(null)}>
           <div className="flex flex-col gap-4">
+            <p className="m-0 leading-[1.5] text-muted">
+              <span className="font-semibold text-text">{version} beta</span> is the first release: notes, schedule, tasks, habits and goals in one place, built on Checkpoint.
+            </p>
             {releaseNotes.map((r) => (
               <div key={r.title} className="flex flex-col gap-1.5">
                 <h3 className="m-0 text-15 font-semibold">{r.title}</h3>

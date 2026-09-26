@@ -65,6 +65,8 @@ export interface Settings {
   Language?: "en-US" | "en-GB";
   AutoUpdate?: boolean;
   UpdateChannel?: "stable" | "beta";
+  // ISO; when updates were last looked for.
+  LastUpdateCheck?: string | null;
   // Appearance.
   MatchWindows?: boolean;
   Accent?: "theme" | "violet" | "mint" | "orange" | "sky" | "pink";

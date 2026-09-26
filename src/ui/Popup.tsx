@@ -42,19 +42,28 @@ export function Popup({ onClose, onSubmit, width, height, labelledBy, label, chi
   const panel = useRef<HTMLDivElement>(null);
   const handlers = useRef({ onClose, onSubmit });
   handlers.current = { onClose, onSubmit };
+  // What had focus before, noted on the first render: by the time effects
+  // run, a field inside (a title with autoFocus) has already taken it.
+  const opener = useRef<HTMLElement | null | undefined>(undefined);
+  if (opener.current === undefined) opener.current = document.activeElement as HTMLElement | null;
 
   // Join the stack, take focus, and give it back where it was on the way out.
   useLayoutEffect(() => {
-    const before = document.activeElement as HTMLElement | null;
+    const before = opener.current;
     stack.push(id);
     syncBackground();
     if (!panel.current?.contains(document.activeElement)) panel.current?.focus();
     const el = overlay.current;
+    const box = panel.current;
     return () => {
       stack.splice(stack.indexOf(id), 1);
       syncBackground();
       zoomOut(el);
-      if (before?.isConnected) before.focus();
+      // Once it's really gone: in development React runs this and then the
+      // effect again, and focus should stay where the pop-up put it.
+      setTimeout(() => {
+        if (!box?.isConnected && before?.isConnected) before.focus();
+      });
     };
   }, [id]);
 
@@ -132,7 +141,7 @@ interface HeaderProps {
 // 60px: tag and subtitle on the left, close on the right.
 export function PopupHeader({ tag, children, onClose, closeLabel = "Close" }: HeaderProps) {
   return (
-    <header className="flex h-[60px] shrink-0 items-center justify-between gap-4 border-b border-line bg-side pr-4 pl-6">
+    <div className="flex h-[60px] shrink-0 items-center justify-between gap-4 border-b border-line bg-side pr-4 pl-6">
       <div className="flex min-w-0 items-center gap-3">
         <span className="flex h-[30px] shrink-0 items-center rounded-[9px] border border-line bg-panel px-[10px] font-mono text-11 tracking-[0.08em] text-muted">
           {tag}
@@ -140,7 +149,7 @@ export function PopupHeader({ tag, children, onClose, closeLabel = "Close" }: He
         {typeof children === "string" ? <span className="truncate text-13 text-muted">{children}</span> : children}
       </div>
       <IconButton icon="close" label={closeLabel} title={`${closeLabel} (Esc)`} iconStroke={2.2} onClick={onClose} />
-    </header>
+    </div>
   );
 }
 

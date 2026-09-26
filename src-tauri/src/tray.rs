@@ -33,6 +33,31 @@ fn fs_settings() -> Option<serde_json::Value> {
     serde_json::from_str(text.trim_start_matches('\u{feff}')).ok()
 }
 
+// A portable exe isn't installed, so Windows doesn't know its app id and
+// drops its toasts. Tell Windows about it (name and icon, under the user's own
+// registry keys) every start, so the icon's path follows the folder if it moves.
+#[cfg(windows)]
+pub fn register_toast_identity(app: &tauri::App) {
+    use std::os::windows::process::CommandExt;
+    let exe_dir = std::env::current_exe().ok().and_then(|e| e.parent().map(|p| p.to_path_buf()));
+    let dev = exe_dir.map(|d| d.ends_with("target\\debug") || d.ends_with("target\\release")).unwrap_or(true);
+    if dev {
+        return;
+    }
+    let icon = data_dir().join("app-icon.png");
+    if !icon.exists() {
+        let _ = std::fs::create_dir_all(data_dir());
+        let _ = std::fs::write(&icon, include_bytes!("../icons/128x128@2x.png"));
+    }
+    let key = format!("HKCU\\Software\\Classes\\AppUserModelId\\{}", app.config().identifier);
+    for (name, value) in [("DisplayName", "Project Life".to_string()), ("IconUri", icon.to_string_lossy().to_string())] {
+        let _ = std::process::Command::new("reg")
+            .args(["add", &key, "/v", name, "/t", "REG_SZ", "/d", &value, "/f"])
+            .creation_flags(0x0800_0000) // CREATE_NO_WINDOW
+            .status();
+    }
+}
+
 pub fn setup(app: &tauri::App) -> tauri::Result<()> {
     let open = MenuItem::with_id(app, "open", "Open Project Life", true, None::<&str>)?;
     let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;

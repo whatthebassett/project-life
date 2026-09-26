@@ -51,7 +51,7 @@ export default function TaskRow({ task, kind, now, selected, tabbable, settling,
       data-task-id={task.Id}
       tabIndex={tabbable ? 0 : -1}
       aria-label={`${task.Title}${due ? `, due ${due}` : ""}${checked ? ", completed" : ""}`}
-      aria-selected={selected}
+      aria-current={selected ? "true" : undefined}
       onFocus={(e) => e.target === e.currentTarget && onSelect()}
       onKeyDown={onKeyDown}
       onContextMenu={(e) => {

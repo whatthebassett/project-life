@@ -147,7 +147,7 @@ export default function HabitsScreen() {
         )}
       </aside>
 
-      <section className="flex min-w-0 flex-1 flex-col gap-5 px-8 pt-[26px]">
+      <main className="flex min-w-0 flex-1 flex-col gap-5 px-8 pt-[26px]">
         <header className="flex items-end justify-between">
           <div className="flex flex-col gap-1.5">
             <span className="font-mono text-12 tracking-[0.14em] text-muted">{dayLabel(fromYmd(today))}</span>
@@ -204,7 +204,7 @@ export default function HabitsScreen() {
             )
           )}
         </div>
-      </section>
+      </main>
 
       <HabitDetails h={selected} today={today} rules={rules} onEdit={() => selected && setEditing({ habit: selected, isNew: false })} />
 

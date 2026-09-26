@@ -211,11 +211,11 @@ export default function TasksScreen() {
     <>
       <TasksSidebar tasks={tasks} lists={lists} now={now} view={view} onView={setView} onPopOut={inTauri ? () => void openTasksWindow() : undefined} openMenu={openMenu} store={store} />
 
-      <section className="flex min-w-0 flex-1 flex-col gap-[18px] px-8 pt-[26px]">
+      <main className="flex min-w-0 flex-1 flex-col gap-[18px] px-8 pt-[26px]">
         <header className="flex items-end justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-1.5">
             <span className="font-mono text-12 tracking-[0.14em] text-muted">{dayLabel(now)}</span>
-            <h2 className="m-0 truncate font-head text-40 leading-none font-bold tracking-[-0.02em]">{viewHeading(view)}</h2>
+            <h2 className="m-0 -mb-[0.15em] truncate pb-[0.15em] font-head text-40 leading-none font-bold tracking-[-0.02em]">{viewHeading(view)}</h2>
           </div>
           {!listView && (
             <div className="flex items-center gap-2">
@@ -340,7 +340,7 @@ export default function TasksScreen() {
             </button>
           )}
         </div>
-      </section>
+      </main>
 
       <TaskDetails
         task={selected}

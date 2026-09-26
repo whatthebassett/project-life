@@ -179,7 +179,7 @@ export default function GoalPopup({ goal, isNew, areas, habits, tasks, events, t
 
   return (
     <Popup onClose={onClose} onSubmit={save} width={1060} height={920} labelledBy="pl-g-title">
-      <header className="flex h-[60px] shrink-0 items-center justify-between border-b border-line bg-side pr-4 pl-6">
+      <div className="flex h-[60px] shrink-0 items-center justify-between border-b border-line bg-side pr-4 pl-6">
         <div className="flex items-center gap-3">
           <span className="flex h-[30px] items-center rounded-[9px] border border-line bg-panel px-2.5 font-mono text-11 tracking-[0.08em] text-muted">{isNew ? "NEW GOAL" : "EDIT GOAL"}</span>
           <span className="text-13 text-muted">Something you want to get done, and a way to know you got there.</span>
@@ -187,7 +187,7 @@ export default function GoalPopup({ goal, isNew, areas, habits, tasks, events, t
         <button aria-label="Close" title="Close (Esc)" onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-line text-muted hover:text-text">
           <X size={16} strokeWidth={2.2} />
         </button>
-      </header>
+      </div>
 
       <div className="flex min-h-0 flex-1">
         <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto px-7 py-[22px]">
@@ -265,9 +265,9 @@ export default function GoalPopup({ goal, isNew, areas, habits, tasks, events, t
                   <ArrowRight size={16} />
                 </span>
                 <NumberField label="Target" value={targetText} onChange={setTargetText} accent={color} />
-                <label className="flex flex-1 flex-col gap-1.5 text-12 text-muted">
+                <label className="flex min-w-0 flex-1 flex-col gap-1.5 text-12 text-muted">
                   Unit
-                  <input value={g.Unit} onChange={(e) => set({ Unit: e.target.value })} placeholder="miles" className="h-11 rounded-[12px] border border-line bg-panel px-3.5 text-15 text-text outline-none focus:border-faint" />
+                  <input value={g.Unit} onChange={(e) => set({ Unit: e.target.value })} placeholder="miles" className="h-11 w-full min-w-0 rounded-[12px] border border-line bg-panel px-3.5 text-15 text-text outline-none focus:border-faint" />
                 </label>
                 <NumberField label="Log adds" value={String(g.Step)} onChange={(v) => set({ Step: Math.max(0.1, Number(v) || 1) })} width={96} />
               </div>

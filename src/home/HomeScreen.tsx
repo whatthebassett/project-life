@@ -112,7 +112,7 @@ function Row({ height, cards }: { height: number; cards: (RowCard | false)[] }) 
   return (
     <div className="grid shrink-0 grid-cols-3 gap-5" style={{ height }}>
       {shown.map((c, i) => (
-        <div key={i} className={c.column && !c.alone ? "flex min-h-0 min-w-0 flex-col gap-5" : c.column ? "flex min-h-0 min-w-0 flex-col *:flex-1" : "flex min-h-0 min-w-0 *:flex-1"} style={{ gridColumn: `span ${spans[i]}` }}>
+        <div key={i} className={c.column && !c.alone ? "flex min-h-0 min-w-0 flex-col gap-5" : c.column ? "flex min-h-0 min-w-0 flex-col *:flex-1" : "flex min-h-0 min-w-0 *:min-w-0 *:flex-1"} style={{ gridColumn: `span ${spans[i]}` }}>
           {c.node}
         </div>
       ))}

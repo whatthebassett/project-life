@@ -199,7 +199,7 @@ export default function TaskPopup({ task, onClose, openMenu }: Props) {
 
   return (
     <Popup onClose={onClose} width={1140} height={920} labelledBy={titleId}>
-      <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-line bg-side pr-4 pl-6">
+      <div className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-line bg-side pr-4 pl-6">
         <div className="flex min-w-0 items-center gap-3.5">
           <span className="flex h-[30px] items-center rounded-[9px] border border-line bg-panel px-2.5 font-mono text-11 tracking-[0.08em] text-muted">TASK</span>
           <div className="flex min-w-0 items-center gap-2 text-13 text-muted">
@@ -245,7 +245,7 @@ export default function TaskPopup({ task, onClose, openMenu }: Props) {
             <X size={16} strokeWidth={2.2} />
           </button>
         </div>
-      </header>
+      </div>
 
       <div className="flex min-h-0 flex-1">
         <main className="min-w-0 flex-1 overflow-y-auto" style={{ background: "radial-gradient(900px 480px at 0% -10%, var(--glow), transparent 60%), var(--bg)" }}>

@@ -19,10 +19,10 @@ interface Props {
 export default function Dialog({ title, onClose, children, footer, width = 420, className }: Props) {
   return (
     <Popup onClose={onClose} width={width} label={title} className={className}>
-      <header className="flex shrink-0 items-center justify-between gap-4 pt-5 pr-4 pb-3 pl-6">
+      <div className="flex shrink-0 items-center justify-between gap-4 pt-5 pr-4 pb-3 pl-6">
         <h2 className="m-0 font-head text-22 font-bold tracking-[-0.01em]">{title}</h2>
         <IconButton icon="close" label="Close" title="Close (Esc)" iconStroke={2.2} onClick={onClose} />
-      </header>
+      </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-5 text-14">{children}</div>
       {footer && <footer className="flex shrink-0 justify-end gap-[10px] border-t border-line bg-side px-6 py-4">{footer}</footer>}
     </Popup>

@@ -196,6 +196,8 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
     autofocus: false,
     onUpdate: ({ editor }) => onChange(editor.getMarkdown()),
     editorProps: {
+      // A name for screen readers (the note's own title is above it).
+      attributes: { role: "textbox", "aria-label": "Note", "aria-multiline": "true" },
       // Formatting shortcuts come from Settings. These props run before the
       // extensions' own keymaps, so a default the writer moved elsewhere is
       // swallowed here rather than still toggling its old format.

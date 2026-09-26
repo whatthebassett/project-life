@@ -1,6 +1,7 @@
 // Work that runs in the background while Project Life is open: the daily
 // backup (Settings → Storage and backup) and saving crash reports (Settings →
 // Privacy).
+import { enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { useEffect } from "react";
 import { goalStore } from "../goals/useGoals";
 import { habitStore } from "../habits/useHabits";
@@ -41,6 +42,15 @@ export function useBackgroundJobs() {
       window.removeEventListener("error", onError);
       window.removeEventListener("unhandledrejection", onRejection);
     };
+  }, []);
+
+  // Open when Windows starts: the portable folder may have moved since it was
+  // turned on, so point Windows at this copy again.
+  useEffect(() => {
+    if (!inTauri || !currentSettings().StartWithWindows) return;
+    void isEnabled()
+      .then((on) => (on ? enable() : undefined))
+      .catch(() => {});
   }, []);
 
   // One backup a day: a minute after starting, then checked every hour.

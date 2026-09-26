@@ -298,7 +298,7 @@ export default function WeekView({ days, timed, allDay, now, selectedKey, calend
                           <span className="flex-1 truncate">{o.event.Title || "Untitled event"}</span>
                           {o.event.Call && <Video size={11} strokeWidth={2} className="shrink-0 opacity-80" />}
                         </span>
-                        {tall && p.first && <span className="pl-3 font-mono text-10 opacity-85">{rangeLabel(o)}</span>}
+                        {tall && p.first && <span className="truncate pl-3 font-mono text-10 whitespace-nowrap opacity-85">{rangeLabel(o)}</span>}
                         <span
                           aria-hidden="true"
                           onPointerDown={(e) => startEventDrag(e, o, "resize")}

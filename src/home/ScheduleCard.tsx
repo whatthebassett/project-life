@@ -14,7 +14,7 @@ export default function ScheduleCard({ home, onNavigate }: { home: HomeData; onN
   const lineBefore = events.findIndex((e) => e.start > now);
   const nowLine = (
     <div className="flex h-[26px] items-center gap-[10px]" aria-label={`Now, ${clock(now)}`}>
-      <span className="w-16 font-mono text-11 tracking-[0.1em] text-accent2">NOW {clock(now).slice(0, -3)}</span>
+      <span className="min-w-16 font-mono text-11 tracking-[0.1em] whitespace-nowrap text-accent2">NOW {clock(now).slice(0, -3)}</span>
       <span className="h-2 w-2 rounded-full bg-accent2" />
       <span className="h-[1.5px] flex-1 bg-accent2" />
     </div>
@@ -33,7 +33,7 @@ export default function ScheduleCard({ home, onNavigate }: { home: HomeData; onN
             <Fragment key={e.id}>
               {i === lineBefore && nowLine}
               <div className={clsx("flex min-h-[58px] items-center gap-[10px] rounded-[14px] py-2 pr-[10px]", next && "bg-accent-soft")}>
-                <div className={clsx("w-16 shrink-0 pr-0.5 text-right font-mono text-12", next ? "text-accent" : "text-muted")}>{clock(e.start)}</div>
+                <div className={clsx("min-w-16 shrink-0 pr-0.5 text-right font-mono text-12 whitespace-nowrap", next ? "text-accent" : "text-muted")}>{clock(e.start)}</div>
                 <span className={clsx("mx-1 my-1 w-1 self-stretch rounded-[4px]", past ? "bg-panel2" : next ? "bg-accent" : "bg-accent2")} />
                 <div className="flex min-w-0 flex-col gap-[3px]">
                   <div className={clsx("truncate text-14 font-medium", past ? "text-muted" : "text-text")}>{e.title}</div>

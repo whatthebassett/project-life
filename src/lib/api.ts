@@ -339,3 +339,22 @@ export const accountsApi = {
   deleteEvent: (account: string, calendar: string, id: string) => invoke<void>("account_delete_event", { account, calendar, id }),
   meeting: (account: string, title: string, start: string, end: string) => invoke<string>("account_meeting", { account, title, start, end }),
 };
+
+// ----- Updates (update.rs) -----
+
+export interface Release {
+  version: string;
+  name: string;
+  notes: string;
+  page: string;
+  download: string;
+  prerelease: boolean;
+  published: string;
+}
+
+export const updatesApi = {
+  check: (beta: boolean) => (inTauri ? invoke<Release | null>("update_check", { beta }) : Promise.resolve(null)),
+  download: (download: string) => invoke<void>("update_download", { download }),
+  install: () => invoke<void>("update_install"),
+  ready: () => tauriOnly(false, () => invoke<boolean>("update_ready")),
+};

@@ -10,6 +10,7 @@ mod notes;
 mod oauth_ids;
 mod system;
 mod tray;
+mod update;
 mod web;
 
 use std::{
@@ -203,6 +204,9 @@ pub fn run() {
                 fit_to_monitor(&win);
             }
             tray::setup(app)?;
+            update::clean_up();
+            #[cfg(windows)]
+            tray::register_toast_identity(app);
             Ok(())
         })
         // Closing the main window closes Tasks' own window too (it saves first,
@@ -257,6 +261,10 @@ pub fn run() {
             accounts::account_save_event,
             accounts::account_delete_event,
             accounts::account_meeting,
+            update::update_check,
+            update::update_download,
+            update::update_install,
+            update::update_ready,
             tray::show_toast,
             attachments::attach_file,
             attachments::open_attachment,

@@ -183,13 +183,13 @@ export default function GoalsScreen() {
         </div>
       </aside>
 
-      <section className="flex min-w-0 flex-1 flex-col gap-5 px-8 pt-[26px]">
-        <header className="flex items-end justify-between">
-          <div className="flex flex-col gap-1.5">
+      <main className="flex min-w-0 flex-1 flex-col gap-5 px-8 pt-[26px]">
+        <header className="flex items-end justify-between gap-4">
+          <div className="flex min-w-0 flex-col gap-1.5">
             <span className="font-mono text-12 tracking-[0.14em] text-muted">{yearProgressLabel(now)}</span>
             <h2 className="m-0 font-head text-40 leading-none font-bold tracking-[-0.02em]">{heading}</h2>
           </div>
-          <div role="group" aria-label="Sort" className="flex rounded-[12px] border border-line bg-panel p-[3px]">
+          <div role="group" aria-label="Sort" className="flex shrink-0 rounded-[12px] border border-line bg-panel p-[3px]">
             {(
               [
                 ["due", "By due date"],
@@ -200,7 +200,7 @@ export default function GoalsScreen() {
                 key={id}
                 aria-pressed={sort === id}
                 onClick={() => update({ GoalsSort: id })}
-                className={clsx("h-8 rounded-[9px] px-3.5 text-13 font-medium", sort === id ? "bg-panel2 text-text" : "text-muted hover:text-text")}
+                className={clsx("h-8 rounded-[9px] px-3.5 text-13 font-medium whitespace-nowrap", sort === id ? "bg-panel2 text-text" : "text-muted hover:text-text")}
               >
                 {label}
               </button>
@@ -232,7 +232,7 @@ export default function GoalsScreen() {
             )
           )}
         </div>
-      </section>
+      </main>
 
       <GoalDetails
         goal={selected?.g ?? null}

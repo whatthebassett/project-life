@@ -50,20 +50,22 @@ There are four themes. **Midnight is the base.** Every theme uses the same layou
 | `line` | Borders and dividers | `rgba(255,255,255,0.07)` | `rgba(220,255,245,0.08)` | `rgba(255,235,220,0.08)` | `rgba(20,22,30,0.09)` |
 | `text` | Main text | `#ECEEF5` | `#E8F4F0` | `#F6ECE6` | `#15171D` |
 | `muted` | Secondary text, labels | `#969DAF` | `#93ABA4` | `#B5A197` | `#5A5F6B` |
-| `faint` | Empty checkbox borders, future dots, scrollbar thumb (never body text) | `#5D6477` | `#4E6760` | `#6E5A50` | `#A9A69E` |
+| `faint` | Empty checkbox borders, future dots, scrollbar thumb (never body text) | `#5D6477` | `#526D65` | `#776156` | `#8D897F` |
 | `accent` | Primary buttons, selection, active nav | `#A092FF` | `#4FE0B0` | `#FF9A5C` | `#5A48E0` |
 | `accentInk` | Text/icons **on top of** accent fills | `#0A0C11` | `#06120F` | `#140C08` | `#FFFFFF` |
 | `accentSoft` | Selected rows, active nav background, tags | `rgba(160,146,255,0.16)` | `rgba(79,224,176,0.16)` | `rgba(255,154,92,0.16)` | `rgba(90,72,224,0.12)` |
 | `accent2` | "Live" and secondary accent: now line, habits, progress | `#5CE1C6` | `#7CB8FF` | `#F2CF6A` | `#0B8A6D` |
 | `accent2Soft` | Soft fill for accent2 things | `rgba(92,225,198,0.14)` | `rgba(124,184,255,0.14)` | `rgba(242,207,106,0.14)` | `rgba(11,138,109,0.12)` |
-| `warn` | Due today, medium priority, "Behind" | `#FFB36B` | `#FFC37A` | `#FFC37A` | `#B4501A` |
-| `warnSoft` | Warning banners (event clash) | `rgba(255,179,107,0.14)` | `rgba(255,195,122,0.14)` | `rgba(255,195,122,0.14)` | `rgba(180,80,26,0.12)` |
+| `warn` | Due today, medium priority, "Behind" | `#FFB36B` | `#FFC37A` | `#F58FA6` | `#B4501A` |
+| `warnSoft` | Warning banners (event clash) | `rgba(255,179,107,0.14)` | `rgba(255,195,122,0.14)` | `rgba(245,143,166,0.14)` | `rgba(180,80,26,0.12)` |
 | `danger` | Overdue, high priority, delete | `#FF7A85` | `#FF8590` | `#FF7A7A` | `#C62F3D` |
 | `glow` | Soft radial glow in hero areas | `rgba(160,146,255,0.20)` | `rgba(79,224,176,0.18)` | `rgba(255,154,92,0.18)` | `rgba(90,72,224,0.10)` |
 | `scrim` | Dimmed backdrop behind pop-ups | `rgba(4,5,9,0.62)` | `rgba(2,8,7,0.62)` | `rgba(8,5,4,0.62)` | `rgba(20,22,30,0.38)` |
 | `todayTint` | Today's column in the calendar | `rgba(160,146,255,0.05)` | `rgba(79,224,176,0.05)` | `rgba(255,154,92,0.05)` | `rgba(90,72,224,0.04)` |
 
-> Note: the Home and Schedule mockups used `#FF8A7A` as Ember's `warn`. Use `#FFC37A` everywhere, as above.
+> Note: `faint` in Aurora, Ember and Daylight was nudged in Phase 9 (from `#4E6760`, `#6E5A50`, `#A9A69E`) so empty checkboxes and habit circles reach 3:1 against `bg` and `panel`, as WCAG asks of control outlines.
+>
+> Note: the mockups give Ember's `warn` as `#FF8A7A` or `#FFC37A`. It is rose `#F58FA6` (Phase 9): amber sat between Ember's orange accent and yellow accent2, so warnings didn't stand out.
 
 ### Color picks (habits and goals)
 

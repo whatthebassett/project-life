@@ -121,7 +121,7 @@ export default function SourceEditor({ initial, lineNumbers: gutter, wordWrap, b
           emojiGlyphs,
           ...(wordWrap ? [EditorView.lineWrapping] : []),
           // Settings → Notes → Spell check (CodeMirror turns it off by default).
-          EditorView.contentAttributes.of(() => ({ spellcheck: currentSettings().SpellCheck === false ? "false" : "true" })),
+          EditorView.contentAttributes.of(() => ({ spellcheck: currentSettings().SpellCheck === false ? "false" : "true", "aria-label": "Note, in Markdown" })),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) change.current(update.state.doc.toString());
             if (update.selectionSet) report(update.view);

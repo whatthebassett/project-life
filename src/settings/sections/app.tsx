@@ -216,10 +216,10 @@ export function General() {
         />
       </ListGroup>
       <ListGroup title="UPDATES">
-        <Toggle label="Check for updates automatically" desc="Checks start with the first release" value={settings.AutoUpdate !== false} onChange={(v) => update({ AutoUpdate: v })} />
+        <Toggle label="Check for updates automatically" desc="Once a day; a new version downloads in the background and waits for a restart" value={settings.AutoUpdate !== false} onChange={(v) => update({ AutoUpdate: v })} />
         <Seg
           label="Update channel"
-          desc="Beta gets new features first"
+          desc="Beta gets new features first, from pre-releases"
           value={settings.UpdateChannel ?? "stable"}
           onChange={(v) => update({ UpdateChannel: v })}
           options={[

@@ -45,7 +45,7 @@ export default function NotesScreen() {
   return (
     <>
       <NotesSidebar trashCount={trash} />
-      <section className="flex min-w-0 flex-1 flex-col bg-bg">
+      <main className="flex min-w-0 flex-1 flex-col bg-bg">
         <Tabs />
         {n.current ? (
           <>
@@ -61,7 +61,7 @@ export default function NotesScreen() {
             </button>
           </div>
         )}
-      </section>
+      </main>
       <RightPanel />
     </>
   );
@@ -81,59 +81,70 @@ function Tabs() {
   };
 
   return (
-    <div role="tablist" aria-label="Open notes" className="flex h-[50px] shrink-0 items-end gap-1 overflow-x-auto border-b border-line bg-side px-[14px]">
-      {tabs.map((name) => {
-        const on = name === current;
-        return (
-          <div
-            key={name}
-            draggable
-            onDragStart={(e) => {
-              e.dataTransfer.effectAllowed = "move";
-              e.dataTransfer.setData("text/plain", name);
-              setDragging(name);
-            }}
-            onDragEnd={() => {
-              setDragging(null);
-              setDrop(null);
-            }}
-            onDragOver={(e) => over(e, name)}
-            onDrop={(e) => {
-              e.preventDefault();
-              if (dragging && drop) reorderTab(dragging, drop.name, drop.before);
-              setDragging(null);
-              setDrop(null);
-            }}
-            onAuxClick={(e) => {
-              if (e.button === 1) void closeTab(name);
-            }}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              openMenu(e.clientX, e.clientY, tabMenu(name));
-            }}
-            className={clsx(
-              "-mb-px flex h-10 max-w-[220px] shrink-0 items-center gap-1 rounded-t-[12px] border border-b-0 pr-1.5 pl-[14px]",
-              on ? "border-line bg-bg text-text" : "border-transparent text-muted hover:text-text",
-              dragging === name && "opacity-40",
-              drop?.name === name && (drop.before ? "shadow-[inset_2px_0_0_var(--accent)]" : "shadow-[inset_-2px_0_0_var(--accent)]"),
-            )}
-          >
-            <button role="tab" aria-selected={on} onMouseDown={() => !on && void activate(name)} className="h-full truncate text-13 font-medium">
-              {titleOf(name)}
-            </button>
-            <button
-              aria-label={`Close ${titleOf(name)}`}
-              title={`Close (${keyFor("app.closeTab")})`}
-              onClick={() => void closeTab(name)}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] text-muted hover:bg-panel hover:text-text"
+    <div className="flex h-[50px] shrink-0 items-end gap-1 overflow-x-auto border-b border-line bg-side px-[14px]">
+      <div role="tablist" aria-label="Open notes" className="contents">
+        {tabs.map((name) => {
+          const on = name === current;
+          return (
+            <div
+              key={name}
+              role="presentation"
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.effectAllowed = "move";
+                e.dataTransfer.setData("text/plain", name);
+                setDragging(name);
+              }}
+              onDragEnd={() => {
+                setDragging(null);
+                setDrop(null);
+              }}
+              onDragOver={(e) => over(e, name)}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (dragging && drop) reorderTab(dragging, drop.name, drop.before);
+                setDragging(null);
+                setDrop(null);
+              }}
+              onAuxClick={(e) => {
+                if (e.button === 1) void closeTab(name);
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                openMenu(e.clientX, e.clientY, tabMenu(name));
+              }}
+              className={clsx(
+                "-mb-px flex h-10 max-w-[220px] shrink-0 items-center gap-1 rounded-t-[12px] border border-b-0 pr-1.5 pl-[14px]",
+                on ? "border-line bg-bg text-text" : "border-transparent text-muted hover:text-text",
+                dragging === name && "opacity-40",
+                drop?.name === name && (drop.before ? "shadow-[inset_2px_0_0_var(--accent)]" : "shadow-[inset_-2px_0_0_var(--accent)]"),
+              )}
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
-                <path d="M6 6l12 12M18 6 6 18" />
-              </svg>
-            </button>
-          </div>
-        );
-      })}
+              <button
+                role="tab"
+                aria-selected={on}
+                aria-description={`${keyFor("app.closeTab")} closes it`}
+                onMouseDown={() => !on && void activate(name)}
+                className="h-full truncate text-13 font-medium"
+              >
+                {titleOf(name)}
+              </button>
+              {/* For the mouse; the keyboard closes tabs with the shortcut or the tab's menu. */}
+              <button
+                aria-hidden="true"
+                tabIndex={-1}
+                title={`Close (${keyFor("app.closeTab")})`}
+                onClick={() => void closeTab(name)}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] text-muted hover:bg-panel hover:text-text"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+                  <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+              </button>
+            </div>
+          );
+        })}
+      </div>
       <button
         aria-label={`New tab (${keyFor("app.newTab")})`}
         title={`Open a note in a new tab (${keyFor("app.newTab")})`}

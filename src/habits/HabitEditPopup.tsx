@@ -76,7 +76,7 @@ export default function HabitEditPopup({ habit, isNew, today, rules, onSave, onC
 
   return (
     <Popup onClose={onClose} onSubmit={save} width={1060} height={920} labelledBy="pl-hb-name">
-      <header className="flex h-[60px] shrink-0 items-center justify-between border-b border-line bg-side pr-4 pl-6">
+      <div className="flex h-[60px] shrink-0 items-center justify-between border-b border-line bg-side pr-4 pl-6">
         <div className="flex items-center gap-3">
           <span className="flex h-[30px] items-center rounded-[9px] border border-line bg-panel px-2.5 font-mono text-11 tracking-[0.08em] text-muted">{isNew ? "NEW HABIT" : "EDIT HABIT"}</span>
           <span className="text-13 text-muted">{isNew ? "Something small you want to do regularly." : "Changes apply from today. Your streak and history stay."}</span>
@@ -84,7 +84,7 @@ export default function HabitEditPopup({ habit, isNew, today, rules, onSave, onC
         <button aria-label="Close" title="Close (Esc)" onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-line text-muted hover:text-text">
           <X size={16} strokeWidth={2.2} />
         </button>
-      </header>
+      </div>
 
       <div className="flex min-h-0 flex-1">
         <div className="flex min-w-0 flex-1 flex-col gap-5 overflow-y-auto px-7 py-6">
