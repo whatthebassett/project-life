@@ -62,11 +62,20 @@ export function allDayRange(day: string, days = 1): Pick<CalEvent, "Start" | "En
 // day Saturday; "#stream" picks the calendar. No day means today (tomorrow
 // once the time has gone by).
 export function parseQuickEvent(text: string, now: Date): CalEvent | null {
+  // "every year", "yearly" or "annually" make it repeat, and come out of the title.
+  const yearlyWords = /\s*\b(every year|yearly|annually)\b/i;
+  const saysYearly = yearlyWords.test(text);
+  text = text.replace(yearlyWords, "");
   if (!text.trim()) return null;
   const p = parseCapture(text, now, { undated: "today", readDates: true });
   const day = p.due ?? ymd(now);
+  // Birthdays and anniversaries come round every year too.
+  const yearly = saysYearly || /\b(birthday|bday|anniversary)\b/i.test(p.title);
   // A #list picks the calendar; otherwise the one from Settings → Schedule.
-  const base = /\s#[\w-]+/.test(` ${text}`) && p.list ? { Title: p.title, Calendar: p.list } : { Title: p.title };
+  const base: Partial<CalEvent> = {
+    ...(/\s#[\w-]+/.test(` ${text}`) && p.list ? { Title: p.title, Calendar: p.list } : { Title: p.title }),
+    ...(yearly ? { Repeat: "yearly" as const } : {}),
+  };
   if (p.time) {
     const [h, m] = p.time.split(":").map(Number);
     const d = fromYmd(day);
@@ -89,6 +98,8 @@ function removeEvents(match: (e: CalEvent) => boolean) {
 // Saves an event, new or edited. `occ` is the day it was opened from; for a
 // repeating event, `scope` says whether the change is for that day only.
 export function saveEvent(draft: CalEvent, occ: Occurrence | null, scope: Scope) {
+  // Subscribed calendars are changed where they come from.
+  if (draft.Feed) return;
   // Connected calendars: Outlook or Google Calendar has the event.
   const before = draft.Remote ? draft : (store().getState().file.Events.find((e) => e.Id === draft.Id) ?? null);
   if (splitKey(draft.Calendar)) {
@@ -122,6 +133,7 @@ export function saveEvent(draft: CalEvent, occ: Occurrence | null, scope: Scope)
 // Dragged to a new time (and maybe day).
 export function moveOccurrence(occ: Occurrence, start: Date, end: Date, scope: Scope) {
   const e = occ.event;
+  if (e.Feed) return;
   if (e.Remote) {
     void moveRemote(e, localStamp(start), localStamp(end));
     return;
@@ -141,6 +153,7 @@ export function moveOccurrence(occ: Occurrence, start: Date, end: Date, scope: S
 
 export function deleteOccurrence(occ: Occurrence, scope: Scope) {
   const e = occ.event;
+  if (e.Feed) return;
   if (e.Remote) {
     void deleteRemote(e);
     return;

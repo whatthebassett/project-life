@@ -1,9 +1,10 @@
+import { useRef } from "react";
 import { useEditorState, type Editor } from "@tiptap/react";
 import {
   Bold,
+  ChevronDown,
   Code,
   Eye,
-  Heading,
   Image as ImageIcon,
   Italic,
   Link as LinkIcon,
@@ -13,11 +14,13 @@ import {
   MessageSquareWarning,
   Minus,
   Quote,
+  Redo2,
   Smile,
   SquareCode,
   Strikethrough,
   Table as TableIcon,
   Underline as UnderlineIcon,
+  Undo2,
 } from "lucide-react";
 import clsx from "clsx";
 import type { MenuItem } from "./ContextMenu";
@@ -84,10 +87,18 @@ export function tableMenuItems(editor: Editor): MenuItem[] {
   ];
 }
 
+// Notes' format bar, under the note's bar in Visual mode: undo and redo, the
+// text style, inline formatting, blocks, and tables, pictures and emoji. The
+// buttons follow the writer's own shortcuts in their tooltips. Arrow keys
+// move along it (one Tab stop for the whole bar), and its menus open under
+// their button, so it works from the keyboard as well as the mouse.
 export default function Toolbar({ editor, openMenu, keyFor, onEmoji, onLink, onImage }: Props) {
+  const bar = useRef<HTMLDivElement>(null);
   const state = useEditorState({
     editor,
     selector: ({ editor: e }) => ({
+      undo: e?.can().undo() ?? false,
+      redo: e?.can().redo() ?? false,
       bold: e?.isActive("bold") ?? false,
       italic: e?.isActive("italic") ?? false,
       underline: e?.isActive("underline") ?? false,
@@ -110,83 +121,139 @@ export default function Toolbar({ editor, openMenu, keyFor, onEmoji, onLink, onI
   const c = () => editor.chain().focus();
   // "Bold (Ctrl+B)", following the writer's own shortcuts.
   const tip = (name: string, id: string) => (keyFor(id) ? `${name} (${keyFor(id)})` : name);
+  // Menus open under their button.
+  const under = (e: React.MouseEvent<HTMLElement>, items: MenuItem[]) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    openMenu(r.left, r.bottom + 4, items);
+  };
 
-  const headingMenu = (x: number, y: number) =>
-    openMenu(x, y, [
-      { label: "Paragraph", icon: commandIcon("markdown.Paragraph"), hint: keyFor("markdown.Paragraph"), checked: state.heading === 0, onSelect: () => c().setParagraph().run() },
-      ...([1, 2, 3, 4, 5, 6] as const).map<MenuItem>((level) => ({
-        label: `Heading ${level}`,
-        icon: commandIcon(`markdown.Heading ${level}`),
-        hint: keyFor(`markdown.Heading ${level}`),
-        checked: state.heading === level,
-        onSelect: () => c().toggleHeading({ level }).run(),
-      })),
-    ]);
+  const styleMenu: MenuItem[] = [
+    { label: "Text", icon: commandIcon("markdown.Paragraph"), hint: keyFor("markdown.Paragraph"), checked: state.heading === 0, onSelect: () => c().setParagraph().run() },
+    ...([1, 2, 3, 4, 5, 6] as const).map<MenuItem>((level) => ({
+      label: `Heading ${level}`,
+      icon: commandIcon(`markdown.Heading ${level}`),
+      hint: keyFor(`markdown.Heading ${level}`),
+      checked: state.heading === level,
+      onSelect: () => c().toggleHeading({ level }).run(),
+    })),
+  ];
 
-  const calloutMenu = (x: number, y: number) =>
-    openMenu(x, y, [
-      ...notedCallouts.map<MenuItem>((kind) => ({
-        label: capitalize(kind),
-        icon: calloutIcon(kind, calloutColor(kind)),
-        checked: state.callout === kind,
-        onSelect: () => c().setCallout(kind).run(),
-      })),
-      { type: "separator" },
-      { label: "Remove callout", icon: <XIcon size={15} />, disabled: !state.callout, onSelect: () => c().unsetCallout().run() },
-    ]);
+  const calloutMenu: MenuItem[] = [
+    ...notedCallouts.map<MenuItem>((kind) => ({
+      label: capitalize(kind),
+      icon: calloutIcon(kind, calloutColor(kind)),
+      checked: state.callout === kind,
+      onSelect: () => c().setCallout(kind).run(),
+    })),
+    { type: "separator" },
+    { label: "Remove callout", icon: <XIcon size={15} />, disabled: !state.callout, onSelect: () => c().unsetCallout().run() },
+  ];
 
-  const tableMenu = (x: number, y: number) => openMenu(x, y, tableMenuItems(editor));
+  // Left and Right (Home, End) move along the bar.
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    const buttons = Array.from(bar.current?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)") ?? []);
+    const at = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    const to = e.key === "ArrowRight" ? at + 1 : e.key === "ArrowLeft" ? at - 1 : e.key === "Home" ? 0 : e.key === "End" ? buttons.length - 1 : null;
+    if (to === null || !buttons.length) return;
+    e.preventDefault();
+    buttons[(to + buttons.length) % buttons.length].focus();
+  };
 
   return (
-    <div className="flex h-8 shrink-0 items-center gap-0.5 border-b border-line px-2 text-muted">
-      <Btn icon={<Bold size={14} />} title={tip("Bold", "markdown.Bold")} active={state.bold} onClick={() => c().toggleBold().run()} />
-      <Btn icon={<Italic size={14} />} title={tip("Italic", "markdown.Italic")} active={state.italic} onClick={() => c().toggleItalic().run()} />
-      <Btn icon={<UnderlineIcon size={14} />} title={tip("Underline", "markdown.Underline")} active={state.underline} onClick={() => c().toggleUnderline().run()} />
-      <Btn icon={<Strikethrough size={14} />} title={tip("Strikethrough", "markdown.Strikethrough")} active={state.strike} onClick={() => c().toggleStrike().run()} />
-      <Btn icon={<Code size={14} />} title={tip("Inline code", "markdown.Inline code")} active={state.code} onClick={() => c().toggleCode().run()} />
-      <Btn icon={<Eye size={14} />} title={tip("Spoiler", "markdown.Spoiler")} active={state.spoiler} onClick={() => c().toggleSpoiler().run()} />
-      <Btn icon={<LinkIcon size={14} />} title={tip("Link", "markdown.Link")} active={state.link} onClick={onLink} />
-      <Sep />
-      <Btn
-        icon={
-          <span className="flex items-center gap-0.5">
-            <Heading size={14} />
-            {state.heading > 0 && <span className="text-[10px] font-semibold">{state.heading}</span>}
-          </span>
-        }
-        title="Heading"
-        active={state.heading > 0}
-        onClick={(e) => headingMenu(e.clientX, e.clientY)}
-      />
-      <Btn icon={<List size={14} />} title={tip("Bullet list", "markdown.Bullet list")} active={state.bullet} onClick={() => c().toggleBulletList().run()} />
-      <Btn icon={<ListOrdered size={14} />} title={tip("Numbered list", "markdown.Numbered list")} active={state.ordered} onClick={() => c().toggleOrderedList().run()} />
-      <Btn icon={<ListChecks size={14} />} title={tip("Task list", "markdown.Task list")} active={state.task} onClick={() => c().toggleTaskList().run()} />
-      <Btn icon={<Quote size={14} />} title={tip("Blockquote", "markdown.Blockquote")} active={state.quote} onClick={() => c().toggleBlockquote().run()} />
-      <Btn icon={<MessageSquareWarning size={14} />} title="Callout" active={Boolean(state.callout)} onClick={(e) => calloutMenu(e.clientX, e.clientY)} />
-      <Btn icon={<SquareCode size={14} />} title={tip("Code block", "markdown.Code block")} active={state.codeBlock} onClick={() => c().toggleCodeBlock({ language: codeLanguage() }).run()} />
-      <Btn icon={<Minus size={14} />} title={tip("Divider", "markdown.Divider")} onClick={() => c().setHorizontalRule().run()} />
-      <Sep />
-      <Btn icon={<TableIcon size={14} />} title="Table" active={state.table} onClick={(e) => tableMenu(e.clientX, e.clientY)} />
-      <Btn icon={<ImageIcon size={14} />} title="Image" onClick={onImage} />
-      <Btn
-        icon={<Smile size={14} />}
-        title={tip("Emoji", "app.emoji")}
-        onClick={(e) => {
-          const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-          onEmoji(r.left, r.bottom + 4);
-        }}
-      />
+    <div className="shrink-0 border-b border-line bg-bg">
+      <div
+        ref={bar}
+        role="toolbar"
+        aria-label="Formatting"
+        onKeyDown={onKeyDown}
+        // A narrow window wraps it onto a second line rather than hiding buttons.
+        className="mx-auto flex min-h-12 w-full max-w-[calc(var(--note-width)+80px)] flex-wrap items-center gap-x-0.5 gap-y-1 px-10 py-2 text-muted"
+      >
+        <Btn label="Undo" icon={<Undo2 size={16} />} title="Undo (Ctrl+Z)" disabled={!state.undo} onClick={() => c().undo().run()} />
+        <Btn label="Redo" icon={<Redo2 size={16} />} title="Redo (Ctrl+Y)" disabled={!state.redo} onClick={() => c().redo().run()} />
+        <Sep />
+        <button
+          type="button"
+          // The bar's one Tab stop (Undo can be disabled).
+          tabIndex={0}
+          aria-haspopup="menu"
+          title="Text style"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={(e) => under(e, styleMenu)}
+          className="flex h-8 w-[112px] shrink-0 items-center justify-between gap-1 rounded-[9px] px-2.5 text-13 font-medium text-text hover:bg-panel"
+        >
+          <span className="truncate">{state.heading ? `Heading ${state.heading}` : "Text"}</span>
+          <ChevronDown size={14} className="shrink-0 text-muted" />
+        </button>
+        <Sep />
+        <Btn label="Bold" icon={<Bold size={16} />} title={tip("Bold", "markdown.Bold")} pressed={state.bold} onClick={() => c().toggleBold().run()} />
+        <Btn label="Italic" icon={<Italic size={16} />} title={tip("Italic", "markdown.Italic")} pressed={state.italic} onClick={() => c().toggleItalic().run()} />
+        <Btn label="Underline" icon={<UnderlineIcon size={16} />} title={tip("Underline", "markdown.Underline")} pressed={state.underline} onClick={() => c().toggleUnderline().run()} />
+        <Btn label="Strikethrough" icon={<Strikethrough size={16} />} title={tip("Strikethrough", "markdown.Strikethrough")} pressed={state.strike} onClick={() => c().toggleStrike().run()} />
+        <Btn label="Inline code" icon={<Code size={16} />} title={tip("Inline code", "markdown.Inline code")} pressed={state.code} onClick={() => c().toggleCode().run()} />
+        <Btn label="Spoiler" icon={<Eye size={16} />} title={tip("Spoiler", "markdown.Spoiler")} pressed={state.spoiler} onClick={() => c().toggleSpoiler().run()} />
+        <Btn label="Link" icon={<LinkIcon size={16} />} title={tip("Link", "markdown.Link")} pressed={state.link} onClick={onLink} />
+        <Sep />
+        <Btn label="Bullet list" icon={<List size={16} />} title={tip("Bullet list", "markdown.Bullet list")} pressed={state.bullet} onClick={() => c().toggleBulletList().run()} />
+        <Btn label="Numbered list" icon={<ListOrdered size={16} />} title={tip("Numbered list", "markdown.Numbered list")} pressed={state.ordered} onClick={() => c().toggleOrderedList().run()} />
+        <Btn label="To-do list" icon={<ListChecks size={16} />} title={tip("To-do list", "markdown.Task list")} pressed={state.task} onClick={() => c().toggleTaskList().run()} />
+        <Btn label="Quote" icon={<Quote size={16} />} title={tip("Quote", "markdown.Blockquote")} pressed={state.quote} onClick={() => c().toggleBlockquote().run()} />
+        <Btn label="Callout" icon={<MessageSquareWarning size={16} />} title="Callout" menu pressed={Boolean(state.callout)} onClick={(e) => under(e, calloutMenu)} />
+        <Btn label="Code block" icon={<SquareCode size={16} />} title={tip("Code block", "markdown.Code block")} pressed={state.codeBlock} onClick={() => c().toggleCodeBlock({ language: codeLanguage() }).run()} />
+        <Btn label="Divider" icon={<Minus size={16} />} title={tip("Divider", "markdown.Divider")} onClick={() => c().setHorizontalRule().run()} />
+        <Sep />
+        <Btn label="Table" icon={<TableIcon size={16} />} title="Table" menu pressed={state.table} onClick={(e) => under(e, tableMenuItems(editor))} />
+        <Btn label="Picture" icon={<ImageIcon size={16} />} title="Picture" onClick={onImage} />
+        <Btn
+          label="Emoji"
+          icon={<Smile size={16} />}
+          title={tip("Emoji", "app.emoji")}
+          onClick={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            onEmoji(r.left, r.bottom + 4);
+          }}
+        />
+        <span className="ml-auto shrink-0 pl-4 font-mono text-11 whitespace-nowrap text-muted">Type / for blocks</span>
+      </div>
     </div>
   );
 }
 
-function Btn({ icon, title, active, onClick }: { icon: React.ReactNode; title: string; active?: boolean; onClick: (e: React.MouseEvent) => void }) {
+function Btn({
+  label,
+  icon,
+  title,
+  pressed,
+  menu,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  title: string;
+  // A format that's on where the cursor is.
+  pressed?: boolean;
+  // Opens a menu rather than acting.
+  menu?: boolean;
+  disabled?: boolean;
+  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
+}) {
   return (
     <button
-      className={clsx("flex h-6 min-w-6 items-center justify-center rounded px-1 hover:bg-hover hover:text-fg", active && "bg-active text-fg")}
+      type="button"
+      aria-label={label}
+      aria-pressed={menu ? undefined : pressed}
+      aria-haspopup={menu ? "menu" : undefined}
       title={title}
+      disabled={disabled}
+      tabIndex={-1}
+      // Clicking keeps the cursor (and selection) in the note.
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
+      className={clsx(
+        "flex h-8 min-w-8 shrink-0 items-center justify-center rounded-[9px] px-1.5 transition-colors disabled:opacity-40",
+        pressed ? "bg-accent-soft text-accent" : "hover:bg-panel hover:text-text",
+      )}
     >
       {icon}
     </button>
@@ -194,5 +261,5 @@ function Btn({ icon, title, active, onClick }: { icon: React.ReactNode; title: s
 }
 
 function Sep() {
-  return <span className="mx-1 h-4 w-px bg-line" />;
+  return <span aria-hidden="true" className="mx-1.5 h-5 w-px shrink-0 bg-line" />;
 }

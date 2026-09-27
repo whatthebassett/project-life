@@ -1,4 +1,4 @@
-import { EyeOff } from "lucide-react";
+import { EyeOff, LayoutGrid } from "lucide-react";
 import clsx from "clsx";
 import type { CSSProperties, MouseEvent, ReactNode } from "react";
 import { menuPoint, type MenuItem } from "../components/ContextMenu";
@@ -6,6 +6,7 @@ import { clockText } from "../lib/format";
 import { currentSettings } from "../lib/settings";
 import { useSettings } from "../lib/SettingsContext";
 import { useNotes } from "../notes/NotesContext";
+import { useLayoutMenu } from "./HomeGrid";
 import { toast } from "../ui/Toast";
 
 interface CardProps {
@@ -19,17 +20,12 @@ interface CardProps {
   children: ReactNode;
 }
 
-// A Home card: panel, 1px line border, radius 24 (DESIGN.md §4).
-export function Card({ className, style, label, id, menu, children }: CardProps) {
-  const { openMenu } = useNotes();
+// What a card itself offers: Size and Move (HomeGrid.tsx), then Hide.
+function useCardItems(id: string | undefined, label: string | undefined): () => MenuItem[] {
   const { update } = useSettings();
-
-  const onContextMenu = (e: MouseEvent<HTMLElement>) => {
-    // Rows with menus of their own stop the event; text boxes keep the app's
-    // edit menu, and popups portalled out of the card aren't part of it.
-    if (!id || e.defaultPrevented || !e.currentTarget.contains(e.target as Node)) return;
-    if ((e.target as Element).closest("input, textarea")) return;
-    e.preventDefault();
+  const layout = useLayoutMenu();
+  return () => {
+    if (!id) return [];
     const hide: MenuItem = {
       label: "Hide this card",
       icon: <EyeOff size={13} />,
@@ -41,8 +37,36 @@ export function Card({ className, style, label, id, menu, children }: CardProps)
         );
       },
     };
+    const place = layout?.itemsFor(id) ?? [];
+    return place.length ? [...place, { type: "separator" }, hide] : [hide];
+  };
+}
+
+// For the rows inside a card (a task, a habit, a headline): opens the row's
+// own menu with the card's items at the end, under Card ▸, so resizing and
+// moving work from anywhere on a card, not just its edges and header.
+export function useRowMenu(id: string, label: string) {
+  const { openMenu } = useNotes();
+  const cardItems = useCardItems(id, label);
+  return (x: number, y: number, items: MenuItem[]) => {
+    const card = cardItems();
+    openMenu(x, y, card.length ? [...items, { type: "separator" }, { label: "Card", icon: <LayoutGrid size={13} />, children: card }] : items);
+  };
+}
+
+// A Home card: panel, 1px line border, radius 24 (DESIGN.md §4).
+export function Card({ className, style, label, id, menu, children }: CardProps) {
+  const { openMenu } = useNotes();
+  const cardItems = useCardItems(id, label);
+
+  const onContextMenu = (e: MouseEvent<HTMLElement>) => {
+    // Rows with menus of their own stop the event; text boxes keep the app's
+    // edit menu, and popups portalled out of the card aren't part of it.
+    if (!id || e.defaultPrevented || !e.currentTarget.contains(e.target as Node)) return;
+    if ((e.target as Element).closest("input, textarea")) return;
+    e.preventDefault();
     const { x, y } = menuPoint(e);
-    openMenu(x, y, menu?.length ? [...menu, { type: "separator" }, hide] : [hide]);
+    openMenu(x, y, [...(menu?.length ? [...menu, { type: "separator" } as MenuItem] : []), ...cardItems()]);
   };
 
   return (

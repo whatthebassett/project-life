@@ -4,7 +4,8 @@ import { Apple, Car, Clock, Flag, Heart, Lightbulb, PawPrint, Search, Smile, Tro
 import clsx from "clsx";
 import { loadEmoji, nativeOf, recentEmoji, searchEmoji, type Emoji, type EmojiData } from "../lib/emoji";
 
-// Every emoji, to pick from at the cursor (Ctrl+; or the / menu's Emoji).
+// Every emoji, to pick from at the cursor (Ctrl+; or the / menu's Emoji), or
+// for a note's icon.
 // Checkpoint's emoji window, as a pop-over: search, jump by category, arrow
 // keys and Enter, recently used first, and the skin tone.
 const icons: Record<string, LucideIcon> = {
@@ -48,11 +49,13 @@ interface Props {
   y: number;
   tone: number;
   onTone: (tone: number) => void;
+  // The line at the bottom before one is pointed at.
+  hint?: string;
   onPick: (native: string) => void;
   onClose: () => void;
 }
 
-export default function EmojiPicker({ x, y, tone, onTone, onPick, onClose }: Props) {
+export default function EmojiPicker({ x, y, tone, onTone, hint = "Pick as many as you like.", onPick, onClose }: Props) {
   const [data, setData] = useState<EmojiData | null>(null);
   const [recents, setRecents] = useState<string[]>(() => recentEmoji());
   const [query, setQuery] = useState("");
@@ -240,7 +243,7 @@ export default function EmojiPicker({ x, y, tone, onTone, onPick, onClose }: Pro
             </span>
           </>
         ) : (
-          <span className="flex-1 text-muted">Pick as many as you like.</span>
+          <span className="flex-1 text-muted">{hint}</span>
         )}
         <div className="flex shrink-0 items-center gap-1" role="radiogroup" aria-label="Skin tone">
           {tones.map((t, i) => (

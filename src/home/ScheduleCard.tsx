@@ -5,13 +5,14 @@ import { menuPoint } from "../components/ContextMenu";
 import { useNotes } from "../notes/NotesContext";
 import type { Screen } from "../shell/nav";
 import { eventMenu } from "./menus";
-import { Card, CardHeader, CardLink, clock, Empty } from "./parts";
+import { Card, CardHeader, CardLink, clock, Empty, useRowMenu } from "./parts";
 import type { HomeData } from "./useHome";
 
 // Today's timeline, with a "now" line between what's done and what's next.
 // Past events dim; the next one is highlighted; later ones get the live color.
 export default function ScheduleCard({ home, onNavigate }: { home: HomeData; onNavigate: (s: Screen) => void }) {
-  const { openMenu, activate } = useNotes();
+  const { activate } = useNotes();
+  const openMenu = useRowMenu("schedule", "Schedule");
   const now = home.now;
   const events = home.events.filter((e) => e.start.toDateString() === now.toDateString()).sort((a, b) => a.start.getTime() - b.start.getTime());
   const nextIndex = events.findIndex((e) => e.end > now);

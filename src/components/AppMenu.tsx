@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { EditorView } from "@codemirror/view";
-import { ExternalLink, Link2 } from "lucide-react";
+import type { EditorView as NoteView } from "@tiptap/pm/view";
+import { ExternalLink, Link2, PanelTop } from "lucide-react";
 import ContextMenu, { type MenuItem, type MenuState } from "./ContextMenu";
+import { linkSpanAt, setLinkView } from "../editor/linkTitles";
+import type { LinkView } from "../editor/smartLinks";
+import { youTubeEmbed } from "../editor/videoEmbeds";
 import { openUrl, system } from "../lib/api";
 import { clipboardIcons } from "../lib/menuIcons";
 import { toast } from "../ui/Toast";
@@ -47,6 +51,7 @@ function itemsAt(target: Element | null): MenuItem[] {
     items.push(
       { label: "Open link", icon: <ExternalLink size={15} />, onSelect: () => void openUrl(href) },
       { label: "Copy link", icon: <Link2 size={15} />, onSelect: () => void copyText(href, "Copied the link") },
+      ...noteLinkItems(link!),
       { type: "separator" },
     );
   }
@@ -62,6 +67,35 @@ function itemsAt(target: Element | null): MenuItem[] {
   const selected = window.getSelection()?.toString() ?? "";
   if (selected.trim()) return [...items, { label: "Copy", icon: clipboardIcons.copy, hint: "Ctrl+C", onSelect: () => void copyText(selected) }];
   return items[items.length - 1]?.type === "separator" ? items.slice(0, -1) : items;
+}
+
+// A web link in a note: how it shows, as Confluence's smart links do.
+const views: { id: LinkView; label: string }[] = [
+  { id: "url", label: "URL" },
+  { id: "inline", label: "Inline" },
+  { id: "card", label: "Card" },
+  { id: "embed", label: "Embed" },
+];
+
+function noteLinkItems(link: Element): MenuItem[] {
+  const note = link.closest(".ProseMirror") as (HTMLElement & { editor?: { view: NoteView } }) | null;
+  const view = note?.editor?.view;
+  if (!view || !/^https?:/i.test(link.getAttribute("href") ?? "")) return [];
+  const span = linkSpanAt(view, link);
+  if (!span) return [];
+  return [
+    {
+      label: "Display as",
+      icon: <PanelTop size={15} />,
+      children: views.map((v) => ({
+        label: v.label,
+        checked: span.view === v.id,
+        // Only videos play in a note (YouTube, for now).
+        disabled: v.id === "embed" && !youTubeEmbed(span.href),
+        onSelect: () => setLinkView(view, span, v.id),
+      })),
+    },
+  ];
 }
 
 // A text box: what was selected is kept, since picking from the menu moves

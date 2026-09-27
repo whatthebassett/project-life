@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Gallery from "./dev/Gallery";
 import HomeScreen from "./home/HomeScreen";
+import CommandPalette from "./palette/CommandPalette";
+import { onOpenPalette, type PaletteRequest } from "./palette/open";
 import { NotesProvider } from "./notes/NotesContext";
 import NotesScreen from "./notes/NotesScreen";
 import GoalsScreen from "./goals/GoalsScreen";
@@ -33,6 +35,7 @@ import AppMenu from "./components/AppMenu";
 import GuidePopup from "./shell/GuidePopup";
 import Celebration from "./goals/Celebration";
 import { useAccountSync } from "./accounts/sync";
+import { useFeedSync } from "./schedule/feeds";
 import { useAutoUpdate } from "./lib/updates";
 import { useBackgroundJobs } from "./lib/jobs";
 import { keyMap, keyOf } from "./lib/shortcuts";
@@ -59,12 +62,15 @@ export default function App() {
   const { settings, update } = useSettings();
   const [screen, setScreen] = useState<Screen>(() => startScreen(settings));
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [captureSignal, setCaptureSignal] = useState(0);
+  // The command palette (Ctrl+K), and what it opened with.
+  const [palette, setPalette] = useState<PaletteRequest | null>(null);
+  useEffect(() => onOpenPalette((req) => setPalette(req)), []);
   const [guideOpen, setGuideOpen] = useState(false);
   const showNotes = useCallback(() => setScreen("notes"), []);
   useTaskReminders();
   useBackgroundJobs();
   useAccountSync();
+  useFeedSync();
   useAutoUpdate();
   const shortcutsRef = useRef(settings.Shortcuts);
   shortcutsRef.current = settings.Shortcuts;
@@ -125,10 +131,8 @@ export default function App() {
       if (blocked && id !== "app.settings") return;
       e.preventDefault();
       if (id === "app.settings") setSettingsOpen((open) => !open);
-      else if (id === "app.capture") {
-        setScreen("home");
-        setCaptureSignal((n) => n + 1);
-      } else if (id === "app.home") setScreen("home");
+      else if (id === "app.capture") setPalette((open) => (open ? null : {}));
+      else if (id === "app.home") setScreen("home");
       else if (id === "app.guide") setGuideOpen(true);
       else if (id === "app.newTask") requestTasks({ kind: "new" });
       else if (id === "app.newEvent") requestSchedule({ kind: "new" });
@@ -156,12 +160,21 @@ export default function App() {
             ) : (
               <IconRail screen={screen} onNavigate={setScreen} onSettings={openSettings} />
             )}
-            {Current ? <Current /> : <HomeScreen onNavigate={setScreen} captureSignal={captureSignal} />}
+            {Current ? <Current /> : <HomeScreen onNavigate={setScreen} />}
           </div>
           {/* Pop-ups draw here, over the screen but under the title bar. */}
           <div id="popup-layer" className="pointer-events-none absolute inset-0 z-40" />
           {settingsOpen && <SettingsPopup onClose={() => setSettingsOpen(false)} />}
           {guideOpen && <GuidePopup onClose={() => setGuideOpen(false)} />}
+          {palette && (
+            <CommandPalette
+              initial={palette}
+              onClose={() => setPalette(null)}
+              onNavigate={setScreen}
+              onSettings={() => setSettingsOpen(true)}
+              onGuide={() => setGuideOpen(true)}
+            />
+          )}
           <Celebration />
           <Toaster />
           <AppMenu />

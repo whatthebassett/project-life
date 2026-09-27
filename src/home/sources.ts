@@ -34,6 +34,8 @@ export interface HomeNote {
   // Milliseconds since 1970.
   edited: number;
   snippet: string;
+  // The note's emoji icon, when it has one.
+  icon?: string | null;
 }
 
 export const callNames: Record<CallKind, string> = { teams: "Teams", meet: "Meet", zoom: "Zoom" };

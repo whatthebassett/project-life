@@ -41,6 +41,7 @@ import type { MenuItem } from "../components/ContextMenu";
 import { Icon } from "../ui/icons";
 import { SectionLabel } from "../ui/bits";
 import { useSettings } from "../lib/SettingsContext";
+import NoteIcon from "./NoteIcon";
 import { useNotes, type NotesFilter } from "./NotesContext";
 
 const DAY = 86_400_000;
@@ -52,7 +53,7 @@ const DAY = 86_400_000;
 // a new search or filter clears what's picked, so hidden notes can't be
 // deleted along with it.
 export default function NotesSidebar({ trashCount }: { trashCount: number }) {
-  const { notes, notebook, current, filter, setFilter, openMenu, actions, renaming, finishRename, keyFor, stats } = useNotes();
+  const { notes, notebook, current, filter, setFilter, openMenu, actions, renaming, finishRename, keyFor, stats, iconFor } = useNotes();
   const [query, setQuery] = useState("");
   const [dragging, setDragging] = useState<string | null>(null);
   const [drop, setDrop] = useState<{ name: string; where: DropWhere } | null>(null);
@@ -474,6 +475,7 @@ export default function NotesSidebar({ trashCount }: { trashCount: number }) {
             <SectionLabel className="px-2 pb-1.5">Pinned</SectionLabel>
             {pinned.map((note) => {
               const active = note.name === current;
+              const icon = iconFor(note.name);
               const dropping = pinDrop && pinDrop !== "end" && pinDrop.name === note.name ? pinDrop.where : null;
               return (
                 <div
@@ -505,6 +507,7 @@ export default function NotesSidebar({ trashCount }: { trashCount: number }) {
                   onDrop={dropOnPins}
                 >
                   <Pin size={14} strokeWidth={1.8} className="shrink-0 text-accent" />
+                  {icon && <NoteIcon icon={icon} className="-mr-1" />}
                   {renaming === note.name ? (
                     <RenameField initial={titleOf(note.name)} onDone={(t) => finishRename(note.name, t)} />
                   ) : (
@@ -577,6 +580,7 @@ export default function NotesSidebar({ trashCount }: { trashCount: number }) {
               const active = note.name === current;
               const dropping = drop?.name === note.name ? drop.where : null;
               const pinnedHere = pinnedNames.has(note.name.toLowerCase());
+              const icon = iconFor(note.name);
               return (
                 <div
                   key={note.name}
@@ -628,6 +632,7 @@ export default function NotesSidebar({ trashCount }: { trashCount: number }) {
                   >
                     <ChevronRight size={12} strokeWidth={2.4} className={clsx("transition-transform", !collapsed && "rotate-90")} />
                   </button>
+                  {icon && <NoteIcon icon={icon} />}
                   {renaming === note.name ? (
                     <RenameField initial={titleOf(note.name)} onDone={(t) => finishRename(note.name, t)} />
                   ) : (

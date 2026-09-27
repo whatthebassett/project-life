@@ -276,7 +276,7 @@ export function Shortcuts() {
 
 export function ScheduleSettings() {
   const { settings, update } = useSettings();
-  const { lists } = useTasks();
+  const { allLists: lists } = useTasks();
   const here = localZone();
   const zones = [...new Set([here, ...commonZones])];
   return (

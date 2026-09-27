@@ -1,7 +1,8 @@
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet, type EditorView } from "@tiptap/pm/view";
-import type { Node as PMNode } from "@tiptap/pm/model";
+import type { Mark, Node as PMNode } from "@tiptap/pm/model";
+import { viewOf } from "./smartLinks";
 
 export interface VideoEmbedOptions {
   // Settings → Notes → YouTube videos, read live.
@@ -10,10 +11,11 @@ export interface VideoEmbedOptions {
 
 const key = new PluginKey("videoEmbeds");
 
-// A YouTube link on a line of its own plays right in the note, in a player
-// beneath the line. The player is a decoration: the note keeps saving the
-// plain link, so it reads the same in any other app. A link in the middle of
-// a sentence stays a link.
+// A YouTube link shown as Embed (smartLinks.ts) plays right in the note, in a
+// player beneath its line. So does one on a line of its own that has no view
+// chosen yet, while Settings → Notes → YouTube videos is on. The player is a
+// decoration: the note keeps saving the link, so it reads the same in any
+// other app.
 export const VideoEmbeds = Extension.create<VideoEmbedOptions>({
   name: "videoEmbeds",
 
@@ -25,14 +27,22 @@ export const VideoEmbeds = Extension.create<VideoEmbedOptions>({
     const options = this.options;
 
     const build = (doc: PMNode) => {
-      if (!options.enabled()) return DecorationSet.empty;
       const decos: Decoration[] = [];
       doc.descendants((node, pos) => {
         if (!node.isTextblock) return true;
-        if (node.type.name !== "paragraph") return false;
-        const href = soleLink(node);
-        const embed = href ? youTubeEmbed(href) : null;
-        if (embed) {
+        if (node.type.spec.code) return false;
+        const players: string[] = [];
+        node.forEach((child) => {
+          const link = child.isText ? child.marks.find((m) => m.type.name === "link") : undefined;
+          const embed = link && viewOf(link) === "embed" ? youTubeEmbed(String(link.attrs.href)) : null;
+          if (embed && !players.includes(embed)) players.push(embed);
+        });
+        if (!players.length && node.type.name === "paragraph" && options.enabled()) {
+          const link = soleLink(node);
+          const embed = link && !viewOf(link) ? youTubeEmbed(String(link.attrs.href)) : null;
+          if (embed) players.push(embed);
+        }
+        for (const embed of players) {
           // Keyed by the address, so typing elsewhere keeps the same player
           // (and whatever it's playing) rather than loading it again.
           decos.push(Decoration.widget(pos + node.nodeSize, () => player(embed), { side: 1, key: `video:${embed}`, ignoreSelection: true, stopEvent: () => true }));
@@ -63,18 +73,17 @@ export function refreshVideoEmbeds(view: EditorView) {
 }
 
 // The link, when a line is nothing but one link.
-function soleLink(node: PMNode): string | null {
-  let href: string | null = null;
+function soleLink(node: PMNode): Mark | null {
+  let found: Mark | null = null;
   let only = node.childCount > 0;
   node.forEach((child) => {
     if (!only) return;
     if (child.isText && !child.text!.trim()) return;
     const link = child.marks.find((m) => m.type.name === "link");
-    const h = link?.attrs.href as string | undefined;
-    if (!child.isText || !h || (href && h !== href) || child.marks.some((m) => m.type.name === "code")) only = false;
-    else href = h;
+    if (!child.isText || !link || (found && link.attrs.href !== found.attrs.href) || child.marks.some((m) => m.type.name === "code")) only = false;
+    else found = link;
   });
-  return only ? href : null;
+  return only ? found : null;
 }
 
 // The player's address for a YouTube video, Short, live stream or playlist

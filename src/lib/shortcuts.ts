@@ -15,7 +15,7 @@ export interface ShortcutCommand {
 }
 
 export const shortcutCommands: ShortcutCommand[] = [
-  { id: "app.capture", name: "Quick capture", group: "Everywhere", keys: "Ctrl+K" },
+  { id: "app.capture", name: "Command palette", group: "Everywhere", keys: "Ctrl+K" },
   { id: "app.home", name: "Go to Home", group: "Everywhere", keys: "Alt+Home" },
   { id: "app.settings", name: "Settings", group: "Everywhere", keys: "Ctrl+," },
   { id: "app.guide", name: "Guide", group: "Everywhere", keys: "F1" },
@@ -44,6 +44,8 @@ export const shortcutCommands: ShortcutCommand[] = [
   { id: "app.tag", name: "New tag", group: "Notes", keys: "" },
   { id: "app.tags", name: "Manage tags", group: "Notes", keys: "" },
   { id: "app.mode", name: "Switch Visual / Markdown", group: "Notes", keys: "Ctrl+/" },
+  { id: "app.sidebar", name: "Show or hide the notebook", group: "Notes", keys: "Ctrl+\\" },
+  { id: "app.details", name: "Show or hide About this note", group: "Notes", keys: "Ctrl+Shift+\\" },
   { id: "app.wrap", name: "Word wrap (Markdown mode)", group: "Notes", keys: "" },
   { id: "app.lines", name: "Line numbers (Markdown mode)", group: "Notes", keys: "" },
 

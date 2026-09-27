@@ -3,7 +3,7 @@
 // and delete them. Colors are theme colors, so every theme suits them.
 import { currentSettings } from "../lib/settings";
 
-export type ListColor = "accent" | "accent2" | "warn" | "danger" | "muted";
+export type ListColor = "accent" | "accent2" | "warn" | "danger" | "muted" | "hue-4" | "hue-5";
 
 export const listColors: { id: ListColor; name: string }[] = [
   { id: "accent", name: "Accent" },
@@ -11,6 +11,8 @@ export const listColors: { id: ListColor; name: string }[] = [
   { id: "warn", name: "Amber" },
   { id: "danger", name: "Red" },
   { id: "muted", name: "Gray" },
+  { id: "hue-4", name: "Blue" },
+  { id: "hue-5", name: "Pink" },
 ];
 
 // As saved in the file.
@@ -18,6 +20,8 @@ export interface ListRecord {
   Id: string;
   Name: string;
   Color: ListColor;
+  // False for a calendar that isn't also a list in Tasks (made in Schedule).
+  InTasks?: boolean;
   [key: string]: unknown;
 }
 
@@ -28,6 +32,7 @@ export interface TaskList {
   // A CSS color: var(--accent) …
   color: string;
   tone: ListColor;
+  inTasks: boolean;
 }
 
 export const defaultListRecords: ListRecord[] = [
@@ -49,7 +54,7 @@ export function parseLists(raw: unknown): ListRecord[] {
   return lists.length ? lists : defaultListRecords;
 }
 
-const view = (l: ListRecord): TaskList => ({ id: l.Id, name: l.Name, color: `var(--${l.Color})`, tone: l.Color });
+const view = (l: ListRecord): TaskList => ({ id: l.Id, name: l.Name, color: `var(--${l.Color})`, tone: l.Color, inTasks: l.InTasks !== false });
 
 // The lists as last read or changed; the task store keeps this up to date, so
 // code outside React (quick add, Home) sees the same lists as the views.
@@ -67,11 +72,23 @@ export function currentLists(): TaskList[] {
 // first list once Personal is gone.
 export function defaultListId(): string {
   const picked = currentSettings().DefaultList;
-  return current.find((l) => l.id === picked)?.id ?? current.find((l) => l.id === "personal")?.id ?? current[0]?.id ?? "personal";
+  const lists = taskLists();
+  return lists.find((l) => l.id === picked)?.id ?? lists.find((l) => l.id === "personal")?.id ?? lists[0]?.id ?? current[0]?.id ?? "personal";
+}
+
+// The lists Tasks shows; the rest are calendars only.
+export function taskLists(): TaskList[] {
+  return current.filter((l) => l.inTasks);
 }
 
 export function listFor(id: string | undefined): TaskList {
-  return current.find((l) => l.id === id) ?? synced.find((l) => l.id === id) ?? current.find((l) => l.id === defaultListId()) ?? current[0];
+  return (
+    current.find((l) => l.id === id) ??
+    synced.find((l) => l.id === id) ??
+    subscribed.find((l) => l.id === id) ??
+    current.find((l) => l.id === defaultListId()) ??
+    current[0]
+  );
 }
 
 // Calendars from connected accounts (accounts/model.ts), so their events get
@@ -81,6 +98,13 @@ let synced: TaskList[] = [];
 
 export function setSyncedCalendars(calendars: TaskList[]) {
   synced = calendars;
+}
+
+// Calendars subscribed to by link (schedule/feeds.ts), the same way.
+let subscribed: TaskList[] = [];
+
+export function setSubscribedCalendars(calendars: TaskList[]) {
+  subscribed = calendars;
 }
 
 // "#personal", "#stream", "#youtube", "#errands": a list by its id, its whole

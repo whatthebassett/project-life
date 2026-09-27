@@ -1,7 +1,7 @@
 import { weekLetters } from "../lib/format";
 import { locale } from "../lib/format";
 import clsx from "clsx";
-import { ArrowRight, Check, ChevronLeft, ChevronRight, Copy, FileText, Plus, Sparkles, Video } from "lucide-react";
+import { ArrowRight, Check, ChevronLeft, ChevronRight, Copy, FileText, Plus, Sparkles, TriangleAlert, Video } from "lucide-react";
 import { Fragment, useState } from "react";
 import { openUrl, titleOf } from "../lib/api";
 import { useNotes } from "../notes/NotesContext";
@@ -11,7 +11,7 @@ import { SectionLabel } from "../ui/bits";
 import { toast } from "../ui/Toast";
 import { addMeetingLink } from "../accounts/actions";
 import { patchEvent, saveEvent } from "./actions";
-import { fromStamp, type CalEvent, type CallKind, type Occurrence } from "./events";
+import { fromStamp, isReadOnly, repeatLabels, type CalEvent, type CallKind, type Occurrence } from "./events";
 import { joinState, rangeLabel } from "./look";
 import { monthGrid } from "./MonthView";
 
@@ -21,8 +21,11 @@ export interface CalendarRow {
   color: string;
   count: number;
   on: boolean;
-  // The connected account it comes from.
+  // The connected account it comes from, or "Subscribed".
   group?: string;
+  kind?: "list" | "tasks" | "account" | "feed";
+  // Why a subscribed calendar didn't refresh.
+  error?: string | null;
 }
 
 export interface SyncStatus {
@@ -51,6 +54,8 @@ interface Props {
   // Right-clicks on a calendar row and on the selected event's card.
   onCalendarMenu: (e: React.MouseEvent, c: CalendarRow) => void;
   onEventMenu: (e: React.MouseEvent, o: Occurrence) => void;
+  // + Add calendar: new, subscribe or import.
+  onAddCalendar: (e: React.MouseEvent<HTMLElement>) => void;
 }
 
 // Schedule's left panel (Calendar.dc.html): quick add, the mini month, the
@@ -73,7 +78,8 @@ export default function ScheduleSidebar(props: Props) {
   const whenOf = (e: CalEvent) => {
     const day = fromYmd(e.Start.slice(0, 10));
     const d = day.toLocaleDateString(locale(), { weekday: "long", month: "short", day: "numeric" });
-    return e.AllDay ? `${d} · All day` : `${d} · ${rangeLabel({ start: fromStamp(e.Start), end: fromStamp(e.End) })}`;
+    const when = e.AllDay ? `${d} · All day` : `${d} · ${rangeLabel({ start: fromStamp(e.Start), end: fromStamp(e.End) })}`;
+    return e.Repeat ? `${when} · ${repeatLabels[e.Repeat]}` : when;
   };
 
   return (
@@ -180,11 +186,20 @@ export default function ScheduleSidebar(props: Props) {
               >
                 {c.on && <Check size={11} strokeWidth={3.4} />}
               </span>
-              <span className="min-w-0 flex-1 truncate">{c.name}</span>
+              <span className="min-w-0 flex-1 truncate" title={c.error ? `Couldn't refresh: ${c.error}` : undefined}>
+                {c.name}
+              </span>
+              {c.error && <TriangleAlert size={13} className="shrink-0 text-warn" aria-label="Couldn't refresh" />}
               <span className="font-mono text-11 text-muted">{c.count}</span>
             </button>
           </Fragment>
         ))}
+        <button onClick={props.onAddCalendar} className="flex h-9 items-center gap-3 rounded-[10px] px-1.5 text-left text-13 text-muted hover:bg-panel hover:text-text">
+          <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center">
+            <Plus size={14} strokeWidth={2} />
+          </span>
+          Add calendar
+        </button>
         {props.syncStatus && (
           <div className={clsx("flex items-center gap-2 px-1.5 pt-1.5 text-11", props.syncStatus.error ? "text-warn" : "text-muted")} aria-live="polite">
             <span className="min-w-0 flex-1 truncate" title={props.syncStatus.text}>
@@ -294,7 +309,7 @@ function SelectedCard({
                   key={p.id}
                   role="radio"
                   aria-checked={on}
-                  disabled={Boolean(e.Remote && !e.Remote.Editable)}
+                  disabled={isReadOnly(e)}
                   onClick={() => {
                     const call = p.id === "none" ? null : p.id;
                     // On a connected calendar the change goes there; either way,

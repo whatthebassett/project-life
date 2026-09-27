@@ -37,7 +37,7 @@ The reference window size is **1440 x 1000** (Home is 1440 x 1320 because it scr
 
 ## 2. Themes
 
-There are four themes. **Midnight is the base.** Every theme uses the same layout and only swaps these tokens. Build them as CSS variables (for example `--bg`, `--panel`) on the root and switch the whole set when the theme changes.
+There are five themes. **Midnight is the base.** The fifth, **Peach**, comes from Checkpoint and was added later (its tokens are in `src/styles/tokens.css`; it is not in the mockups or the table below). Every theme uses the same layout and only swaps these tokens. Build them as CSS variables (for example `--bg`, `--panel`) on the root and switch the whole set when the theme changes.
 
 ### Core tokens
 
@@ -300,7 +300,7 @@ Build these once and use them everywhere:
   - **App:** General, Appearance, Home screen, Notifications, Keyboard shortcuts, Accessibility
   - **Features:** Notes, Schedule, Tasks, Habits and goals
   - **Data:** Connected accounts, Storage and backup, Privacy, About
-- **Appearance:** 4 theme preview cards (clicking one reskins the app live), match Windows light/dark, accent override, Mica or Acrylic, headline font, text size, density, and sidebar style.
+- **Appearance:** 5 theme preview cards (clicking one reskins the app live), match Windows light/dark, accent override, Mica or Acrylic, headline font, text size, density, and sidebar style.
 - **Every row is one of:** switch, segmented control, dropdown, button, path with Change, key caps, color swatches, or account (Connect / Disconnect).
 - Changes save immediately (no Save button).
 

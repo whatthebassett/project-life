@@ -35,7 +35,7 @@ import {
 } from "../lib/notebook";
 import { flushStats, forgetStats, loadStats, onStatsChange, recordEdit, recordOpen, renameStats, statsSnapshot, type NoteStats } from "../lib/stats";
 import { flushSpots, forgetSpot, renameSpot } from "../lib/positions";
-import { splitFront, withCover, withCoverPosition } from "../lib/frontmatter";
+import { iconOf, splitFront, withCover, withCoverPosition, withIcon } from "../lib/frontmatter";
 import { todoText } from "../editor/taskLinks";
 import { accountStore } from "../accounts/useAccounts";
 import { eventStore } from "../schedule/useEvents";
@@ -71,6 +71,9 @@ export interface Actions {
   open: (name: string) => void;
   openInTab: (name: string) => void;
   newNote: () => void;
+  // A note made from the command palette: titled, first in the notebook,
+  // with the #tags that name note tags, then opened in Notes. Gives its file name.
+  capture: (title: string, tags: string[]) => Promise<string | null>;
   rename: (name: string) => void;
   newPageInside: (name: string) => void;
   moveTo: (name: string) => void;
@@ -104,7 +107,8 @@ type DialogState =
   | { kind: "recycle" }
   | { kind: "move"; name: string }
   | { kind: "pick"; newTab: boolean }
-  | { kind: "emoji"; x: number; y: number };
+  // `icon`: picking the note's icon rather than typing emoji.
+  | { kind: "emoji"; x: number; y: number; icon?: boolean };
 
 interface NotesValue {
   ready: boolean;
@@ -135,6 +139,11 @@ interface NotesValue {
   onBodyChange: (body: string) => void;
   setCover: (src: string | null) => void;
   setCoverPosition: (pos: string | null) => void;
+  // The note's emoji icon (null removes it), and the picker for choosing one.
+  setIcon: (icon: string | null) => void;
+  chooseIcon: (x: number, y: number) => void;
+  // A note's icon for the lists: the open note's as it is now, others' as saved.
+  iconFor: (name: string) => string | null;
   // Right-clicking a to-do in the open note: Send to Tasks, or open its task.
   todoMenu: (todo: { text: string; checked: boolean }) => MenuItem[];
   chooseCover: () => Promise<void>;
@@ -211,6 +220,14 @@ export function NotesProvider({ visible, onShow, children }: Props) {
   const [tabs, setTabs] = useState<string[]>([]);
   const [text, setText] = useState("");
   const [loaded, setLoaded] = useState(false);
+  // Settles once the notebook has loaded at startup, so a note made from
+  // another screen straight after launch waits for it instead of being lost.
+  const started = useRef<{ promise: Promise<void>; resolve: () => void } | null>(null);
+  if (!started.current) {
+    let resolve = () => {};
+    const promise = new Promise<void>((r) => (resolve = r));
+    started.current = { promise, resolve };
+  }
   const [opening, setOpening] = useState(0);
   const [editing, setEditing] = useState<string | null>(null);
   const [filter, setFilterState] = useState<NotesFilter>("all");
@@ -306,6 +323,15 @@ export function NotesProvider({ visible, onShow, children }: Props) {
   // Set or remove the cover, or move the picture in its frame.
   const setCover = useCallback((src: string | null) => editFront((md) => withCover(md, src)), [editFront]);
   const setCoverPosition = useCallback((pos: string | null) => editFront((md) => withCoverPosition(md, pos)), [editFront]);
+  const setIcon = useCallback((icon: string | null) => editFront((md) => withIcon(md, icon)), [editFront]);
+
+  // The open note's icon shows in the lists right away, before it saves.
+  const editingIcon = useMemo(() => iconOf(text), [text]);
+  const savedIcons = useMemo(() => new Map(notes.map((n) => [n.name, n.icon ?? null])), [notes]);
+  const iconFor = useCallback(
+    (name: string) => (name === editing ? editingIcon : (savedIcons.get(name) ?? null)),
+    [savedIcons, editing, editingIcon],
+  );
 
   // A task sent from a to-do was ticked (or unticked) in Tasks: tick the
   // to-do. In the open note that goes through the editor, so the change shows
@@ -505,6 +531,7 @@ export function NotesProvider({ visible, onShow, children }: Props) {
       setTabs(initialTabs);
       await open(active, true);
       setReady(true);
+      started.current?.resolve();
       const folder = await api.notesFolderInfo().catch(() => null);
       if (folder?.unavailable)
         void notify(
@@ -545,6 +572,7 @@ export function NotesProvider({ visible, onShow, children }: Props) {
 
   const createNote = useCallback(
     async (parent: string | null) => {
+      if (!notebookRef.current) await started.current?.promise;
       const nb = notebookRef.current;
       if (!nb) return;
       const name = await api.createNote("Untitled");
@@ -565,6 +593,26 @@ export function NotesProvider({ visible, onShow, children }: Props) {
       window.setTimeout(() => titleInput.current?.select(), 0);
     },
     [filter, commit, refreshNotes, activate],
+  );
+
+  const captureNote = useCallback(
+    async (title: string, tags: string[]): Promise<string | null> => {
+      if (!notebookRef.current) await started.current?.promise;
+      const nb = notebookRef.current;
+      if (!nb) return null;
+      const name = await api.createNote(title.trim() || "Untitled");
+      const wanted = tags.map((t) => t.toLowerCase());
+      // "#getting-started" names the tag "Getting started".
+      const ids = nb.tags.Tags.filter((t) => wanted.includes(t.Name.toLowerCase().replace(/^#/, "").trim().replace(/\s+/g, "-"))).map((t) => t.Id);
+      let next: Notebook = { ...nb, order: [name, ...nb.order] };
+      if (ids.length) next = withTags(next, name, ids);
+      await commit(next);
+      await refreshNotes();
+      // Straight to it, in Notes, ready to write.
+      await activate(name, true);
+      return name;
+    },
+    [commit, refreshNotes, activate],
   );
 
   // Rename any note, open or not: the file, then its order, tags, priority,
@@ -787,6 +835,7 @@ export function NotesProvider({ visible, onShow, children }: Props) {
       open: (name) => void activate(name),
       openInTab: (name) => void activate(name, true),
       newNote: () => void createNote(null),
+      capture: captureNote,
       rename: (name) => setRenaming(name),
       newPageInside: (name) => void createNote(name),
       moveTo: (name) => setDialog({ kind: "move", name }),
@@ -861,7 +910,7 @@ export function NotesProvider({ visible, onShow, children }: Props) {
       recycleBin: () => setDialog({ kind: "recycle" }),
       setSort: (byPriority) => update({ SortByPriority: byPriority }),
     }),
-    [activate, createNote, commit, flush, refreshNotes, recycle, deleteForever, removeMany, update, confirm],
+    [activate, createNote, captureNote, commit, flush, refreshNotes, recycle, deleteForever, removeMany, update, confirm],
   );
   const actionsRef = useRef(actions);
   actionsRef.current = actions;
@@ -890,6 +939,18 @@ export function NotesProvider({ visible, onShow, children }: Props) {
     const at = caretPoint();
     setDialog({ kind: "emoji", ...at });
   }, [caretPoint]);
+
+  const chooseIcon = useCallback((x: number, y: number) => setDialog({ kind: "emoji", x, y, icon: true }), []);
+
+  // Closing the icon picker puts the keyboard back on the note's icon (or its
+  // Add icon button), unless a click already moved it somewhere else.
+  const closeIconPicker = useCallback(() => {
+    setDialog(null);
+    requestAnimationFrame(() => {
+      if (document.activeElement && document.activeElement !== document.body) return;
+      document.querySelector<HTMLElement>("[data-note-icon]")?.focus();
+    });
+  }, []);
 
   const insertEmoji = useCallback((native: string) => {
     if (settingsRef.current.EditorMode === "Markdown") {
@@ -974,6 +1035,19 @@ export function NotesProvider({ visible, onShow, children }: Props) {
       { label: "Send all to-dos to Tasks", disabled: !name, onSelect: () => name && void sendAllTodos(name, textRef.current) },
       { type: "separator" },
       { label: "Link previews", checked: s.LinkPreviews !== false, onSelect: () => update({ LinkPreviews: s.LinkPreviews === false }) },
+      { label: "Show the format bar", checked: s.NotesFormatBar !== false, onSelect: () => update({ NotesFormatBar: s.NotesFormatBar === false }) },
+      { label: "Show the notebook", checked: !s.NotesListHidden, hint: keyFor("app.sidebar"), onSelect: () => update({ NotesListHidden: !s.NotesListHidden }) },
+      { label: "Show About this note", checked: !s.NotesDetailsHidden, hint: keyFor("app.details"), onSelect: () => update({ NotesDetailsHidden: !s.NotesDetailsHidden }) },
+      {
+        label: "Page width",
+        children: (
+          [
+            ["narrow", "Narrow"],
+            ["wide", "Wide"],
+            ["full", "Full width"],
+          ] as const
+        ).map(([value, label]) => ({ label, checked: (s.NoteWidth ?? "wide") === value, onSelect: () => update({ NoteWidth: value }) })),
+      },
       { label: "Word wrap (Markdown)", checked: s.WordWrap !== false, disabled: !markdown, onSelect: () => update({ WordWrap: s.WordWrap === false }) },
       { label: "Line numbers (Markdown)", checked: Boolean(s.LineNumbers), disabled: !markdown, onSelect: () => update({ LineNumbers: !s.LineNumbers }) },
       { type: "separator" },
@@ -1036,6 +1110,8 @@ export function NotesProvider({ visible, onShow, children }: Props) {
       "app.tag": () => a().newTag(),
       "app.tags": () => a().manageTags(),
       "app.mode": () => update({ EditorMode: s().EditorMode === "Markdown" ? "Visual" : "Markdown" }),
+      "app.sidebar": () => update({ NotesListHidden: !s().NotesListHidden }),
+      "app.details": () => update({ NotesDetailsHidden: !s().NotesDetailsHidden }),
       "app.wrap": () => update({ WordWrap: s().WordWrap === false }),
       "app.lines": () => update({ LineNumbers: !s().LineNumbers }),
       "app.emoji": () => openEmoji(),
@@ -1147,6 +1223,9 @@ export function NotesProvider({ visible, onShow, children }: Props) {
     onBodyChange,
     setCover,
     setCoverPosition,
+    setIcon,
+    chooseIcon,
+    iconFor,
     todoMenu,
     chooseCover,
     commitTitle,
@@ -1235,8 +1314,14 @@ export function NotesProvider({ visible, onShow, children }: Props) {
             setSkinTone(t);
             update({ EmojiSkinTone: t });
           }}
-          onPick={insertEmoji}
-          onClose={closeDialog}
+          hint={dialog.icon ? "Pick an icon for the note." : undefined}
+          onPick={(native) => {
+            if (!dialog.icon) return insertEmoji(native);
+            setIcon(native);
+            rememberEmoji(native);
+            closeIconPicker();
+          }}
+          onClose={dialog.icon ? closeIconPicker : closeDialog}
         />
       )}
       {confirmation && (

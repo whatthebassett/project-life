@@ -1,10 +1,12 @@
 import { useLayoutEffect, useRef, useState, type Ref } from "react";
 import clsx from "clsx";
-import { ImagePlus, ImageUp, Move, Trash2 } from "lucide-react";
+import { ImagePlus, ImageUp, Move, Smile, Trash2 } from "lucide-react";
 import { titleOf } from "../lib/api";
+import { menuPoint, type MenuItem } from "./ContextMenu";
 import { priorityColor, priorityLabel, type PriorityValue, type Tag } from "../lib/notebook";
 import { resolveAsset } from "../editor/images";
 import { ago } from "../home/time";
+import { emojiFont } from "../notes/NoteIcon";
 
 interface Props {
   title: string;
@@ -21,6 +23,11 @@ interface Props {
   // Where the picture sits in its frame ("50% 30%"); null is the middle.
   coverPosition: string | null;
   onCoverPosition: (pos: string | null) => void;
+  // The note's emoji, above the title. The picker opens at the given point.
+  icon: string | null;
+  onChooseIcon: (x: number, y: number) => void;
+  onRemoveIcon: () => void;
+  onMenu: (x: number, y: number, items: MenuItem[]) => void;
   // The notebooks it sits in, outermost first.
   path: string[];
   onOpenParent: (name: string) => void;
@@ -30,11 +37,11 @@ interface Props {
   modified?: number;
 }
 
-// The top of a note, inside the editor (Notes.dc.html): the cover, then the
-// title, then chips for its notebook, priority and tags, and when it was
+// The top of a note, inside the editor (Notes.dc.html): the cover, the icon,
+// then the title, then chips for its notebook, priority and tags, and when it was
 // edited. Ported from Checkpoint's; laid out in the note's 660px column.
 export default function NoteHeader(props: Props) {
-  const { title, titleRef, cover } = props;
+  const { title, titleRef, cover, icon } = props;
   const [dropping, setDropping] = useState(false);
   const [broken, setBroken] = useState(false);
   const [box, setBox] = useState<HTMLTextAreaElement | null>(null);
@@ -121,6 +128,28 @@ export default function NoteHeader(props: Props) {
     else if (titleRef) (titleRef as { current: HTMLTextAreaElement | null }).current = el;
   };
 
+  // The picker opens just below the icon, or the Add icon button.
+  const chooseIcon = (e: React.MouseEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    props.onChooseIcon(r.left, r.bottom + 6);
+  };
+  const removeIcon = (keyboard: boolean) => {
+    props.onRemoveIcon();
+    // From the keyboard, carry on from the Add icon button that takes its place.
+    if (keyboard) requestAnimationFrame(() => document.querySelector<HTMLElement>(".note-header [data-note-icon]")?.focus());
+  };
+  const iconMenu = (e: React.MouseEvent<HTMLElement>) => {
+    e.preventDefault();
+    const { x, y } = menuPoint(e);
+    const r = e.currentTarget.getBoundingClientRect();
+    props.onMenu(x, y, [
+      { label: "Change icon", icon: <Smile size={13} />, onSelect: () => props.onChooseIcon(r.left, r.bottom + 6) },
+      { label: "Remove icon", icon: <Trash2 size={13} />, danger: true, onSelect: () => removeIcon(false) },
+    ]);
+  };
+
+  const addCover = !cover && !dropping;
+
   const drop = (e: React.DragEvent) => {
     const file = Array.from(e.dataTransfer.files).find((f) => f.type.startsWith("image/"));
     setDropping(false);
@@ -140,7 +169,7 @@ export default function NoteHeader(props: Props) {
       onDragLeave={() => setDropping(false)}
       onDrop={drop}
     >
-      {cover || dropping ? (
+      {!addCover && (
         <div
           ref={frame}
           className={clsx(
@@ -194,13 +223,49 @@ export default function NoteHeader(props: Props) {
             </div>
           )}
         </div>
-      ) : (
-        <div className="-mb-3 flex h-7 items-end">
+      )}
+
+      {(addCover || !icon) && (
+        <div className="-mb-3 flex h-7 items-end gap-1">
+          {!icon && (
+            <button data-note-icon className={addButton} onClick={chooseIcon}>
+              <Smile size={13} /> Add icon
+            </button>
+          )}
+          {addCover && (
+            <button className={addButton} onClick={props.onChooseCover}>
+              <ImagePlus size={13} /> Add cover
+            </button>
+          )}
+        </div>
+      )}
+
+      {icon && (
+        <div className="group/icon -mb-2 flex items-end gap-1">
           <button
-            className="flex h-7 items-center gap-1.5 rounded-[8px] px-2 text-12 text-muted opacity-0 transition-opacity hover:bg-panel hover:text-text focus:opacity-100 group-hover/header:opacity-100"
-            onClick={props.onChooseCover}
+            data-note-icon
+            className="-ml-1.5 flex h-[58px] w-[58px] items-center justify-center rounded-[14px] text-[46px] leading-none transition-colors hover:bg-panel"
+            style={{ fontFamily: emojiFont }}
+            aria-label={`Note icon: ${icon}`}
+            aria-description="Enter changes it, Delete removes it"
+            title="Change icon"
+            onClick={chooseIcon}
+            onContextMenu={iconMenu}
+            onKeyDown={(e) => {
+              if (e.key !== "Delete" && e.key !== "Backspace") return;
+              e.preventDefault();
+              e.stopPropagation();
+              removeIcon(true);
+            }}
           >
-            <ImagePlus size={13} /> Add cover
+            {icon}
+          </button>
+          <button
+            className={clsx(quietButton, "group-hover/icon:opacity-100")}
+            aria-label="Remove icon"
+            onClick={(e) => removeIcon(e.detail === 0)}
+          >
+            <Trash2 size={13} /> Remove
           </button>
         </div>
       )}
@@ -265,6 +330,11 @@ export default function NoteHeader(props: Props) {
     </div>
   );
 }
+
+// Add icon and Add cover show when the pointer is over the header, the icon's
+// Remove when it's over the icon; any of them when the keyboard reaches it.
+const quietButton = "flex h-7 items-center gap-1.5 rounded-[8px] px-2 text-12 text-muted opacity-0 transition-opacity hover:bg-panel hover:text-text focus:opacity-100";
+const addButton = clsx(quietButton, "group-hover/header:opacity-100");
 
 function CoverButton({ icon, label, primary, onClick }: { icon?: React.ReactNode; label: string; primary?: boolean; onClick: () => void }) {
   return (

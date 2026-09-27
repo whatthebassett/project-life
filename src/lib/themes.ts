@@ -1,8 +1,8 @@
-// The four themes (DESIGN.md §2). The colors themselves live in
+// The five themes (DESIGN.md §2). The colors themselves live in
 // styles/tokens.css; this list carries what the pickers show: the name, the
 // mood line, and the colors a swatch or preview card paints no matter which
 // theme is on.
-export type ThemeId = "midnight" | "aurora" | "ember" | "daylight";
+export type ThemeId = "midnight" | "aurora" | "ember" | "daylight" | "peach";
 
 export interface Theme {
   id: ThemeId;
@@ -49,6 +49,14 @@ export const themes: Theme[] = [
     mood: "Bright, clean",
     scheme: "light",
     preview: { bg: "#F3F2EE", side: "#ECEAE4", panel: "#FFFFFF", line: "rgba(20,22,30,0.09)", text: "#15171D", muted: "#5A5F6B", accent: "#5A48E0", accent2: "#0B8A6D" },
+  },
+  {
+    // Checkpoint's Peach.
+    id: "peach",
+    name: "Peach",
+    mood: "Soft, warm",
+    scheme: "light",
+    preview: { bg: "#FFF7F5", side: "#F5D7D0", panel: "#FFFCFB", line: "rgba(175,95,100,0.17)", text: "#40292B", muted: "#765657", accent: "#A84A73", accent2: "#2F7D6D" },
   },
 ];
 

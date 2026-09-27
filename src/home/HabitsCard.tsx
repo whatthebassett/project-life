@@ -4,11 +4,10 @@ import { Check, EyeOff, Maximize2, Repeat, RotateCcw } from "lucide-react";
 import { menuPoint, type MenuItem } from "../components/ContextMenu";
 import { saveHabit } from "../habits/actions";
 import { habitStore, useHabits } from "../habits/useHabits";
-import { useNotes } from "../notes/NotesContext";
 import { showHabit } from "../shell/go";
 import type { Screen } from "../shell/nav";
 import { toast } from "../ui/Toast";
-import { Card, CardHeader, CardLink, Empty } from "./parts";
+import { Card, CardHeader, CardLink, Empty, useRowMenu } from "./parts";
 import type { HomeData } from "./useHome";
 import type { HomeHabit } from "./sources";
 
@@ -18,7 +17,7 @@ export default function HabitsCard({ home, onNavigate }: { home: HomeData; onNav
   const todayIdx = dayOfWeek(home.now);
   const letters = weekLetters();
   const { habits } = useHabits();
-  const { openMenu } = useNotes();
+  const openMenu = useRowMenu("habits", "Habits");
 
   // Sample habits aren't real ones, so they can't be opened or hidden.
   const habitMenu = (h: HomeHabit): MenuItem[] => {

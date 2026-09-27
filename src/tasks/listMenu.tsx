@@ -5,6 +5,7 @@ import { Palette, Pencil, Trash2 } from "lucide-react";
 import ConfirmDialog from "../components/ConfirmDialog";
 import type { MenuItem } from "../components/ContextMenu";
 import Dialog, { Button, Field, inputClass } from "../components/Dialog";
+import { eventStore } from "../schedule/useEvents";
 import { listColors, type ListColor, type ListRecord } from "./lists";
 import type { Task } from "./model";
 import { taskStore } from "./useTasks";
@@ -25,11 +26,19 @@ export function listHeir(list: ListRecord, lists: ListRecord[]): ListRecord | un
   return rest.find((l) => l.Id === "personal") ?? rest[0];
 }
 
+// Lists are calendars too: its events move along with its tasks.
 export function deleteList(list: ListRecord) {
+  const to = listHeir(list, taskStore().getState().file.Lists);
+  if (!to) return;
+  taskStore().change((f) => ({ ...f, Lists: f.Lists.filter((l) => l.Id !== list.Id), Tasks: f.Tasks.map((t) => (t.List === list.Id ? { ...t, List: to.Id } : t)) }));
+  eventStore().change((f) => ({ ...f, Events: f.Events.map((e) => (e.Calendar === list.Id ? { ...e, Calendar: to.Id } : e)) }));
+}
+
+// Whether a calendar is also a list in Tasks. The last list Tasks shows stays.
+export function setListInTasks(id: string, on: boolean) {
   taskStore().change((f) => {
-    const to = listHeir(list, f.Lists);
-    if (!to) return f;
-    return { ...f, Lists: f.Lists.filter((l) => l.Id !== list.Id), Tasks: f.Tasks.map((t) => (t.List === list.Id ? { ...t, List: to.Id } : t)) };
+    if (!on && f.Lists.filter((l) => l.InTasks !== false && l.Id !== id).length === 0) return f;
+    return { ...f, Lists: f.Lists.map((l) => (l.Id === id ? { ...l, InTasks: on } : l)) };
   });
 }
 
@@ -57,10 +66,12 @@ export function DeleteListDialog({ list, lists, tasks, onDone }: { list: ListRec
   const moveTo = listHeir(list, lists);
   if (!moveTo) return null;
   const count = tasks.filter((t) => t.List === list.Id).length;
+  const events = eventStore().getState().file.Events.filter((e) => e.Calendar === list.Id).length;
+  const what = [count && `${count} ${count === 1 ? "task" : "tasks"}`, events && `${events} ${events === 1 ? "event" : "events"}`].filter(Boolean).join(" and ");
   return (
     <ConfirmDialog
       title={`Delete “${list.Name}”?`}
-      message={count ? `Its ${count} ${count === 1 ? "task moves" : "tasks move"} to ${moveTo.Name}.` : "It has no tasks."}
+      message={what ? `Its ${what} move to ${moveTo.Name}.` : "Nothing is on it."}
       okLabel="Delete list"
       cancelLabel="Cancel"
       danger

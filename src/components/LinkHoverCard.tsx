@@ -19,6 +19,8 @@ interface Hover {
   rect: DOMRect;
 }
 
+const modifierKeys = new Set(["Control", "Alt", "AltGraph", "Shift", "Meta", "CapsLock"]);
+
 const SHOW_MS = 400;
 const HIDE_MS = 250;
 const WIDTH = 340;
@@ -73,7 +75,10 @@ export default function LinkHoverCard({ root, enabled }: Props) {
     const onScroll = (e: Event) => {
       if (!card.current?.contains(e.target as Node)) hideNow();
     };
+    // Holding Ctrl (to Ctrl+click the link), Alt or Shift leaves it open;
+    // other keys mean you're typing again.
     const onKey = (e: KeyboardEvent) => {
+      if (modifierKeys.has(e.key)) return;
       if (e.key === "Escape" || !card.current?.contains(e.target as Node)) hideNow();
     };
     root.addEventListener("mouseover", over);

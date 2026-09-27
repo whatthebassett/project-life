@@ -1,13 +1,16 @@
-import type { ReactNode } from "react";
+import { Lock, LockOpen } from "lucide-react";
 import { dayLabel, greeting, timeLabel } from "../lib/dates";
 import { useSettings } from "../lib/SettingsContext";
 import type { Screen } from "../shell/nav";
 import Capture from "./Capture";
 import GoalsCard from "./GoalsCard";
 import HabitsCard from "./HabitsCard";
+import HomeGrid from "./HomeGrid";
 import NewsCard from "./NewsCard";
 import NotesCard from "./NotesCard";
 import ScheduleCard from "./ScheduleCard";
+import SportsCard from "./SportsCard";
+import StocksCard from "./StocksCard";
 import TasksCard from "./TasksCard";
 import TodayCard from "./TodayCard";
 import UpNext from "./UpNext";
@@ -16,15 +19,15 @@ import WeatherCard from "./WeatherCard";
 
 interface Props {
   onNavigate: (screen: Screen) => void;
-  // Bumped by Ctrl+K to focus quick capture.
-  captureSignal: number;
 }
 
-// Home (Main.dc.html): a bit of everything. Three rows of cards at the
-// mockup's heights; the page scrolls when the window is shorter.
-export default function HomeScreen({ onNavigate, captureSignal }: Props) {
+// Home (Main.dc.html): a bit of everything. The cards start in the mockup's
+// three rows and can be moved and resized (HomeGrid.tsx); the page scrolls
+// when they don't fit.
+export default function HomeScreen({ onNavigate }: Props) {
   const home = useHome();
-  const { settings } = useSettings();
+  const { settings, update } = useSettings();
+  const locked = settings.HomeLocked === true;
   const name = settings.DisplayName.trim();
   // Settings → Home screen can hide any card; the rest spread out.
   const hidden = new Set(settings.HiddenCards ?? []);
@@ -54,68 +57,40 @@ export default function HomeScreen({ onNavigate, captureSignal }: Props) {
             </h1>
           )}
         </div>
-        <Capture home={home} focusSignal={captureSignal} />
+        <div className="flex items-center gap-3">
+          <Capture />
+          <button
+            type="button"
+            aria-pressed={locked}
+            aria-label={locked ? "Unlock the layout" : "Lock the layout"}
+            title={locked ? "Cards are locked. Unlock to move and resize them" : "Lock the cards where they are"}
+            onClick={() => update({ HomeLocked: !locked })}
+            className={
+              locked
+                ? "flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] border border-transparent bg-accent-soft text-accent"
+                : "flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] border border-line bg-panel text-muted hover:text-text"
+            }
+          >
+            {locked ? <Lock size={18} strokeWidth={2} /> : <LockOpen size={18} strokeWidth={2} />}
+          </button>
+        </div>
       </header>
 
-      <Row height={208} cards={[show("up") && { span: 2, node: <UpNext home={home} onNavigate={onNavigate} /> }, show("today") && { span: 1, node: <TodayCard home={home} /> }]} />
-
-      <Row
-        height={560}
+      <HomeGrid
         cards={[
-          show("schedule") && { span: 1, node: <ScheduleCard home={home} onNavigate={onNavigate} /> },
-          (show("tasks") || show("goals")) && {
-            span: 1,
-            column: true,
-            alone: !(show("tasks") && show("goals")),
-            node: (
-              <>
-                {show("tasks") && <TasksCard home={home} />}
-                {show("goals") && <GoalsCard home={home} onNavigate={onNavigate} />}
-              </>
-            ),
-          },
-          (show("habits") || show("notes")) && {
-            span: 1,
-            column: true,
-            alone: !(show("habits") && show("notes")),
-            node: (
-              <>
-                {show("habits") && <HabitsCard home={home} onNavigate={onNavigate} />}
-                {show("notes") && <NotesCard home={home} onNavigate={onNavigate} />}
-              </>
-            ),
-          },
-        ]}
+          { id: "up", node: <UpNext home={home} onNavigate={onNavigate} /> },
+          { id: "today", node: <TodayCard home={home} /> },
+          { id: "schedule", node: <ScheduleCard home={home} onNavigate={onNavigate} /> },
+          { id: "tasks", node: <TasksCard home={home} /> },
+          { id: "goals", node: <GoalsCard home={home} onNavigate={onNavigate} /> },
+          { id: "habits", node: <HabitsCard home={home} onNavigate={onNavigate} /> },
+          { id: "notes", node: <NotesCard home={home} onNavigate={onNavigate} /> },
+          { id: "news", node: <NewsCard home={home} /> },
+          { id: "weather", node: <WeatherCard home={home} /> },
+          { id: "sports", node: <SportsCard home={home} /> },
+          { id: "stocks", node: <StocksCard home={home} /> },
+        ].filter((c) => show(c.id))}
       />
-
-      <Row height={324} cards={[show("news") && { span: 2, node: <NewsCard home={home} /> }, show("weather") && { span: 1, node: <WeatherCard home={home} /> }]} />
     </main>
-  );
-}
-
-interface RowCard {
-  span: number;
-  // Two cards stacked in one column; one left alone fills it.
-  column?: boolean;
-  alone?: boolean;
-  node: ReactNode;
-}
-
-// A row of cards on the three-column grid. When some are hidden, the ones
-// left take their space; a row with none left isn't shown.
-function Row({ height, cards }: { height: number; cards: (RowCard | false)[] }) {
-  const shown = cards.filter((c): c is RowCard => Boolean(c));
-  if (!shown.length) return null;
-  const total = shown.reduce((n, c) => n + c.span, 0);
-  // The first card takes up whatever the hidden ones left.
-  const spans = shown.map((c, i) => (i === 0 ? c.span + 3 - total : c.span));
-  return (
-    <div className="grid shrink-0 grid-cols-3 gap-5" style={{ height }}>
-      {shown.map((c, i) => (
-        <div key={i} className={c.column && !c.alone ? "flex min-h-0 min-w-0 flex-col gap-5" : c.column ? "flex min-h-0 min-w-0 flex-col *:flex-1" : "flex min-h-0 min-w-0 *:min-w-0 *:flex-1"} style={{ gridColumn: `span ${spans[i]}` }}>
-          {c.node}
-        </div>
-      ))}
-    </div>
   );
 }

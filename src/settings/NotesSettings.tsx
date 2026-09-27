@@ -77,12 +77,23 @@ export default function NotesSettings() {
         <ListRow label="Link previews" description="Point at a link to see the page's title and description">
           <Switch label="Link previews" checked={settings.LinkPreviews !== false} onChange={(v) => update({ LinkPreviews: v })} />
         </ListRow>
-        <ListRow label="Link titles" description="A pasted web address turns into its page's title">
-          <Switch label="Link titles" checked={settings.LinkTitles !== false} onChange={(v) => update({ LinkTitles: v })} />
+        <ListRow label="Smart links" description="A pasted or typed web address turns into a chip with the page's title. Right-click one to show it another way">
+          <Switch label="Smart links" checked={settings.LinkTitles !== false} onChange={(v) => update({ LinkTitles: v })} />
         </ListRow>
         <ListRow label="YouTube videos" description="A YouTube link on a line of its own plays in the note">
           <Switch label="YouTube videos" checked={settings.VideoEmbeds !== false} onChange={(v) => update({ VideoEmbeds: v })} />
         </ListRow>
+        <Seg
+          label="Page width"
+          value={settings.NoteWidth ?? "wide"}
+          onChange={(v) => update({ NoteWidth: v })}
+          options={[
+            { value: "narrow", label: "Narrow" },
+            { value: "wide", label: "Wide" },
+            { value: "full", label: "Full width" },
+          ]}
+        />
+        <Toggle label="Format bar" desc="Formatting buttons above a note in Visual mode" value={settings.NotesFormatBar !== false} onChange={(v) => update({ NotesFormatBar: v })} />
         <Toggle label="Spell check" value={settings.SpellCheck !== false} onChange={(v) => update({ SpellCheck: v })} />
         <Seg
           label="Cursor"

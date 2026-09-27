@@ -5,6 +5,7 @@ import { FileStore } from "../lib/fileStore";
 import { currentSettings } from "../lib/settings";
 import { useSettings } from "../lib/SettingsContext";
 import { parseEvents, serializeEvents, type CalEvent, type EventFile } from "./events";
+import { feedStore, useFeeds } from "./feeds";
 
 let store: FileStore<EventFile> | null = null;
 
@@ -39,15 +40,20 @@ export function useEvents() {
   return { events: state.file.Events, loaded: state.loaded, error: state.error, store: s };
 }
 
-// Project Life's own events and the ones synced from connected calendars,
-// for everything that shows events. Declined invitations stay out unless
-// Settings → Connected accounts says otherwise.
+// Project Life's own events, the ones synced from connected calendars and
+// the ones on subscribed calendars, for everything that shows events.
+// Declined invitations stay out unless Settings → Connected accounts says
+// otherwise.
 export function useAllEvents() {
   const own = useEvents();
   const { synced } = useAccounts();
+  const { events: subscribed } = useFeeds();
   const { settings } = useSettings();
   const showDeclined = settings.ShowDeclined === true;
-  const events = useMemo(() => (synced.length ? [...own.events, ...synced.filter((e) => showDeclined || !e.Remote?.Declined)] : own.events), [own.events, synced, showDeclined]);
+  const events = useMemo(
+    () => (synced.length || subscribed.length ? [...own.events, ...synced.filter((e) => showDeclined || !e.Remote?.Declined), ...subscribed] : own.events),
+    [own.events, synced, subscribed, showDeclined],
+  );
   return { ...own, events };
 }
 
@@ -55,5 +61,5 @@ export function useAllEvents() {
 export function allEvents(): CalEvent[] {
   const synced = accountStore().getState().file.Events;
   const showDeclined = currentSettings().ShowDeclined === true;
-  return [...eventStore().getState().file.Events, ...synced.filter((e) => showDeclined || !e.Remote?.Declined)];
+  return [...eventStore().getState().file.Events, ...synced.filter((e) => showDeclined || !e.Remote?.Declined), ...feedStore().getState().file.Events];
 }

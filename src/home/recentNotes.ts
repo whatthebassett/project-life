@@ -29,7 +29,7 @@ const snippets = new Map<string, string>();
 // The three most recently edited notes, for Home (Checkpoint's "recent":
 // a note's last edit is its file's time or its own record, whichever is later).
 export function useRecentNotes(): HomeNote[] {
-  const { notes, stats } = useNotes();
+  const { notes, stats, iconFor } = useNotes();
   const recent = useMemo(
     () =>
       notes
@@ -58,5 +58,11 @@ export function useRecentNotes(): HomeNote[] {
     };
   }, [recent]);
 
-  return recent.map((r) => ({ id: r.name, title: titleOf(r.name), edited: r.edited, snippet: snippets.get(`${r.name}:${r.edited}`) ?? "" }));
+  return recent.map((r) => ({
+    id: r.name,
+    title: titleOf(r.name),
+    edited: r.edited,
+    snippet: snippets.get(`${r.name}:${r.edited}`) ?? "",
+    icon: iconFor(r.name),
+  }));
 }

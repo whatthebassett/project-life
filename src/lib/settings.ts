@@ -23,6 +23,13 @@ export interface Settings {
   ActiveTab?: string | null;
   SortByPriority?: boolean;
   LinkPreviews?: boolean;
+  // How wide a note's page is: 660px, 900px (the default), or the whole area.
+  NoteWidth?: "narrow" | "wide" | "full";
+  // Notes' side panels, hidden for more room (Ctrl+\ and Ctrl+Shift+\).
+  NotesListHidden?: boolean;
+  NotesDetailsHidden?: boolean;
+  // The format bar above a note in Visual mode (shown unless false).
+  NotesFormatBar?: boolean;
   LinkTitles?: boolean;
   VideoEmbeds?: boolean;
   WordWrap?: boolean;
@@ -79,6 +86,17 @@ export interface Settings {
   SidebarStyle?: "full" | "icons";
   // Home screen: cards turned off.
   HiddenCards?: string[];
+  // Where Home's cards sit and how big they are (home/HomeGrid.tsx), and
+  // whether that's locked.
+  HomeLayout?: unknown;
+  HomeLocked?: boolean;
+  // Home's Sports card: the leagues shown (nfl, nba, mlb, nhl), the one
+  // picked, and teams followed ("nfl:BUF").
+  SportsLeagues?: string[];
+  SportsLeague?: string;
+  SportsTeams?: string[];
+  // Home's Markets card: the watchlist, as Yahoo Finance symbols.
+  StockSymbols?: string[];
   // Notifications.
   NotifyEvents?: boolean;
   NotifyCalls?: boolean;

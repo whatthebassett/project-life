@@ -67,7 +67,7 @@ fn write_settings(contents: String) -> Result<(), String> {
 
 // The data files the frontend may read and write, by name. Nothing else in
 // Data\ (or outside it) can be reached this way.
-const DATA_FILES: [&str; 5] = ["tasks.json", "events.json", "habits.json", "goals.json", "accounts.json"];
+const DATA_FILES: [&str; 6] = ["tasks.json", "events.json", "habits.json", "goals.json", "accounts.json", "calendars.json"];
 
 fn data_file(name: &str) -> Result<PathBuf, String> {
     if !DATA_FILES.contains(&name) {
@@ -237,6 +237,8 @@ pub fn run() {
             system::os_build,
             system::running_apps,
             system::read_clipboard,
+            web::fetch_calendar,
+            web::fetch_data,
             system::current_location,
             system::secret_get,
             system::secret_set,

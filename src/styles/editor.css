@@ -10,7 +10,8 @@
   --menu: var(--panel);
   --font-ui: "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
-  /* Notes.dc.html: 16px body text in a 660px column. */
+  /* Notes.dc.html: 16px body text in a 660px column. Settings → Notes →
+     Page width changes the column (NotesScreen.tsx: noteWidths). */
   --note-font: "Geist", ui-sans-serif, system-ui, sans-serif;
   --note-size: calc(16px * var(--text-scale));
   --note-width: 660px;
@@ -453,6 +454,109 @@
 .ProseMirror-focused .spoiler.spoiler-open {
   background: var(--code-bg);
   color: inherit;
+}
+
+/* Smart links (editor/smartLinks.ts): a chip with the site's icon and the
+   page's title, like Confluence's inline links. A link can be several text
+   runs (part of it bold), so the first and last runs round the ends. */
+.ProseMirror a:has(> .smart-link) {
+  text-decoration: none;
+}
+.ProseMirror .smart-link {
+  padding: 0.1em 0;
+  border-block: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.ProseMirror .smart-link.smart-first {
+  padding-left: 0.4em;
+  border-left: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  border-radius: 6px 0 0 6px;
+}
+.ProseMirror .smart-link.smart-last {
+  padding-right: 0.45em;
+  border-right: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  border-radius: 0 6px 6px 0;
+}
+.ProseMirror .smart-link.smart-first.smart-last {
+  border-radius: 6px;
+}
+.ProseMirror a:hover > .smart-link {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.ProseMirror .smart-link.smart-first::before {
+  content: "";
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.35em;
+  vertical-align: -0.15em;
+  /* Site icons are made for light browser tabs, so they sit on a small light
+     tile; a dark one would vanish on the dark themes. */
+  border-radius: 3px;
+  background: var(--smart-icon) center / 80% no-repeat, #fff;
+}
+/* No site icon that loads: a globe in the link's color. */
+.ProseMirror .smart-link.smart-generic.smart-first::before {
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20'/%3E%3Cpath d='M2 12h20'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20'/%3E%3Cpath d='M2 12h20'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* Cards beneath a line, for links shown as Card. */
+.ProseMirror .link-card {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  margin: 0.25em 0 1em;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  cursor: pointer;
+  user-select: none;
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
+.ProseMirror .link-card:hover {
+  border-color: var(--faint);
+}
+.ProseMirror .link-card-image {
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+  flex: 0 0 auto;
+  border-radius: 10px;
+}
+.ProseMirror .link-card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+}
+.ProseMirror .link-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ProseMirror .link-card-desc {
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ProseMirror .link-card-site {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* YouTube players beneath a line that's just a YouTube link (editor/videoEmbeds.ts). */
@@ -1151,11 +1255,14 @@ body.block-dragging * {
   padding-top: 2em;
 }
 
-/* Tables: rounded, bordered, a panel header row in small muted type. */
+/* Tables: rounded, bordered, a panel header row in small muted type. The
+   lines between rows and between columns are a touch stronger than --line,
+   which is too faint to follow across a wide table. */
 .ProseMirror table {
+  --table-line: color-mix(in srgb, var(--text) 13%, transparent);
   border-collapse: separate;
   border-spacing: 0;
-  border: 1px solid var(--line);
+  border: 1px solid var(--table-line);
   border-radius: 14px;
   overflow: hidden;
   font-size: 0.875em;
@@ -1163,8 +1270,12 @@ body.block-dragging * {
 .ProseMirror th,
 .ProseMirror td {
   border: 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--table-line);
   padding: 11px 16px;
+}
+/* Every cell after the first in its row gets a line on its left. */
+.ProseMirror :is(th, td) + :is(th, td) {
+  border-left: 1px solid var(--table-line);
 }
 .ProseMirror tr:last-child > td {
   border-bottom: 0;

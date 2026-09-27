@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { announceData, onDataChanged, readData, writeData } from "../lib/api";
 import { TaskStore } from "./store";
 
@@ -34,5 +34,7 @@ export function useTasks() {
     }, 4000);
     return () => window.clearInterval(retry);
   }, [s]);
-  return { tasks: state.file.Tasks, lists: state.file.Lists, recycled: state.file.Recycled, loaded: state.loaded, error: state.error, store: s };
+  // `lists` are the ones Tasks shows; `allLists` includes calendars that aren't lists there.
+  const lists = useMemo(() => state.file.Lists.filter((l) => l.InTasks !== false), [state.file.Lists]);
+  return { tasks: state.file.Tasks, lists, allLists: state.file.Lists, recycled: state.file.Recycled, loaded: state.loaded, error: state.error, store: s };
 }

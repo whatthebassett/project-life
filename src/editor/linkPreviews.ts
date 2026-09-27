@@ -6,6 +6,8 @@ export interface LinkPreview {
   description: string;
   site: string;
   image: string;
+  // The site's icon (older cached previews have none).
+  icon?: string;
 }
 
 const cache = new Map<string, Promise<LinkPreview | null>>();

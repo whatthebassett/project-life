@@ -1,7 +1,7 @@
 import { dayOfWeek } from "../lib/format";
 import { locale } from "../lib/format";
 import clsx from "clsx";
-import { CalendarDays, CalendarPlus, CalendarRange, Check, ChevronLeft, ChevronRight, Copy, Eye, EyeOff, FileText, Focus, Link, Maximize2, Pencil, Plus, RefreshCw, Trash2, Video } from "lucide-react";
+import { CalendarDays, CalendarPlus, CalendarRange, Check, ChevronLeft, ChevronRight, Copy, Eye, EyeOff, FileText, FileUp, Focus, Link, ListTodo, Maximize2, Palette, Pencil, Plus, RefreshCw, Rss, Trash2, Video } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { connectAccount } from "../accounts/actions";
 import { appName, calendarKey, splitKey } from "../accounts/model";
@@ -16,13 +16,16 @@ import { isoWeek, useNow, weekRangeLabel } from "../lib/dates";
 import { useSettings } from "../lib/SettingsContext";
 import { addDays, fromYmd, startOfDay, ymd } from "../tasks/dates";
 import { toggleTask } from "../tasks/actions";
-import { currentLists, listFor } from "../tasks/lists";
+import { currentLists, listColors, listFor, type ListColor, type ListRecord } from "../tasks/lists";
+import { DeleteListDialog, recolorList, renameList, setListInTasks } from "../tasks/listMenu";
 import { newId } from "../tasks/model";
 import { requestTasks } from "../tasks/nav";
 import { useTasks } from "../tasks/useTasks";
 import { addEvent, allDayRange, blankEvent, deleteOccurrence, eventLength, moveOccurrence, parseQuickEvent, patchEvent, saveEvent, type Scope } from "./actions";
+import { ImportDialog, NewCalendarDialog, RenameCalendarDialog, SubscribeDialog } from "./CalendarDialogs";
 import EventPopup from "./EventPopup";
-import { freeSlot, fromStamp, joinUrlOf, localStamp, occurrences, type CalEvent, type Occurrence } from "./events";
+import { freeSlot, fromStamp, isReadOnly, joinUrlOf, localStamp, occurrences, type CalEvent, type Occurrence } from "./events";
+import { feedKey, recolorFeed, refreshFeed, renameFeed, unsubscribe, useFeeds } from "./feeds";
 import { joinState, shortTime, softOf } from "./look";
 import MonthView, { monthGrid } from "./MonthView";
 import { subscribeScheduleRequests, takeScheduleRequest } from "./nav";
@@ -41,8 +44,12 @@ const weekStartOf = (d: Date) => addDays(startOfDay(d), -dayOfWeek(d));
 // (EventNew.dc.html), which also makes new ones.
 export default function ScheduleScreen() {
   const { events, error } = useAllEvents();
-  const { tasks, lists } = useTasks();
+  const { tasks, allLists: lists } = useTasks();
   const { accounts } = useAccounts();
+  const { feeds } = useFeeds();
+  // Adding, renaming and deleting calendars.
+  const [calDialog, setCalDialog] = useState<"new" | "subscribe" | "import" | { name: string; rename: (name: string) => void } | null>(null);
+  const [deletingList, setDeletingList] = useState<ListRecord | null>(null);
   // A fresh look at connected calendars when the Schedule opens.
   useEffect(() => syncIfStale(), []);
   const { settings, update } = useSettings();
@@ -89,28 +96,38 @@ export default function ScheduleScreen() {
   }, [visibleEvents, focus]);
 
   const calendars: CalendarRow[] = [
-    ...lists.map((l) => ({
+    ...lists.map<CalendarRow>((l) => ({
       id: l.Id,
       name: l.Name,
       color: `var(--${l.Color})`,
       on: !hidden.has(l.Id),
       count: all.filter((o) => o.event.Calendar === l.Id).length,
+      kind: "list",
     })),
-    { id: TASKS_CAL, name: "Tasks due", color: "var(--muted)", on: !hidden.has(TASKS_CAL), count: tasksDue.length },
+    { id: TASKS_CAL, name: "Tasks due", color: "var(--muted)", on: !hidden.has(TASKS_CAL), count: tasksDue.length, kind: "tasks" },
     // Connected accounts' calendars, under the account they come from.
     ...accounts.flatMap((a) =>
       a.Calendars.filter((c) => c.On).map((c) => {
         const key = calendarKey(a.Id, c.Id);
-        return { id: key, name: c.Name, color: listFor(key).color, on: !hidden.has(key), count: all.filter((o) => o.event.Calendar === key).length, group: `${appName[a.Provider]} · ${a.Email}` };
+        return { id: key, name: c.Name, color: listFor(key).color, on: !hidden.has(key), count: all.filter((o) => o.event.Calendar === key).length, group: `${appName[a.Provider]} · ${a.Email}`, kind: "account" as const };
       }),
     ),
+    // Calendars subscribed to by link.
+    ...feeds.map<CalendarRow>((f) => {
+      const key = feedKey(f.Id);
+      return { id: key, name: f.Name, color: `var(--${f.Color})`, on: !hidden.has(key), count: all.filter((o) => o.event.Calendar === key).length, group: "Subscribed", kind: "feed", error: f.Error };
+    }),
   ];
 
   // How the connected calendars are doing, under the list.
   const trouble = accounts.find((a) => a.NeedsSignIn || a.Error);
   const lastSync = accounts.map((a) => a.LastSync).filter(Boolean).sort().pop();
+  // A subscribed calendar that couldn't refresh says so when accounts have nothing to say.
+  const feedTrouble = feeds.find((f) => f.Error);
   const syncStatus = !accounts.length
-    ? null
+    ? feedTrouble
+      ? { text: `Couldn't refresh “${feedTrouble.Name}”: ${feedTrouble.Error}`, action: "Try again", onAction: () => void refreshFeed(feedTrouble.Id), error: true }
+      : null
     : trouble
       ? {
           text: trouble.NeedsSignIn ? `${appName[trouble.Provider]} needs you to sign in again` : `${appName[trouble.Provider]} didn't sync: ${trouble.Error}`,
@@ -160,6 +177,10 @@ export default function ScheduleScreen() {
   };
 
   const move = (occ: Occurrence, start: Date, end: Date) => {
+    if (occ.event.Feed) {
+      toast(`“${occ.event.Title}” is on a subscribed calendar, so it can't be moved here`);
+      return;
+    }
     const remote = occ.event.Remote;
     if (remote && !remote.Editable) {
       const where = appName[accounts.find((a) => a.Id === remote.Account)?.Provider ?? "microsoft"];
@@ -194,6 +215,10 @@ export default function ScheduleScreen() {
       Of: null,
       OnDate: null,
       Remote: null,
+      // A copy from a subscribed calendar is yours, on your usual calendar.
+      Feed: null,
+      Uid: null,
+      ...(o.event.Feed ? { Calendar: blankEvent(o.start, o.end).Calendar } : {}),
       Reminded: at,
       Created: at,
     };
@@ -219,7 +244,7 @@ export default function ScheduleScreen() {
 
   const eventMenu = (o: Occurrence): MenuItem[] => {
     const e = o.event;
-    const readOnly = Boolean(e.Remote && !e.Remote.Editable);
+    const readOnly = isReadOnly(e);
     const join = joinState(o, now);
     const link = join.url ?? joinUrlOf(e);
     const note = e.Note;
@@ -237,10 +262,12 @@ export default function ScheduleScreen() {
           ]
         : []),
       { type: "separator" },
-      { label: "Duplicate", icon: <Copy size={13} />, disabled: readOnly, onSelect: () => duplicate(o) },
+      e.Feed
+        ? { label: "Copy to my calendar", icon: <Copy size={13} />, onSelect: () => duplicate(o) }
+        : { label: "Duplicate", icon: <Copy size={13} />, disabled: readOnly, onSelect: () => duplicate(o) },
       // Synced events move between calendars in the pop-up, which knows
       // which of the account's calendars can take them.
-      ...(e.Remote
+      ...(e.Remote || e.Feed
         ? []
         : [
             {
@@ -325,6 +352,62 @@ export default function ScheduleScreen() {
         ? { label: "Hide this calendar", icon: <EyeOff size={13} />, onSelect: () => toggle(c.id) }
         : { label: "Show this calendar", icon: <Eye size={13} />, onSelect: () => toggle(c.id) },
       ...(account ? [{ type: "separator" } as MenuItem, { label: "Sync now", icon: <RefreshCw size={13} />, onSelect: () => void syncAccount(account) }] : []),
+      ...calendarActions(c),
+    ]);
+  };
+
+  const colorMenu = (current: string, pick: (c: ListColor) => void): MenuItem => ({
+    label: "Color",
+    icon: <Palette size={13} />,
+    children: listColors.map((c) => ({
+      label: c.name,
+      checked: current === c.id,
+      icon: <span className="h-[9px] w-[9px] rounded-[3px]" style={{ background: `var(--${c.id})` }} />,
+      onSelect: () => pick(c.id),
+    })),
+  });
+
+  // Renaming, recoloring and deleting: your own calendars (which are lists
+  // too) and subscribed ones.
+  const calendarActions = (c: CalendarRow): MenuItem[] => {
+    const list = c.kind === "list" ? lists.find((l) => l.Id === c.id) : null;
+    if (list) {
+      const inTasks = list.InTasks !== false;
+      const lastInTasks = inTasks && lists.filter((l) => l.InTasks !== false).length <= 1;
+      return [
+        { type: "separator" },
+        { label: "Rename…", icon: <Pencil size={13} />, onSelect: () => setCalDialog({ name: list.Name, rename: (n) => renameList(list.Id, n) }) },
+        colorMenu(list.Color, (color) => recolorList(list.Id, color)),
+        { label: "Show in Tasks", icon: <ListTodo size={13} />, checked: inTasks, disabled: lastInTasks, onSelect: () => setListInTasks(list.Id, !inTasks) },
+        { type: "separator" },
+        { label: "Delete calendar…", icon: <Trash2 size={13} />, danger: true, disabled: lists.length <= 1, onSelect: () => setDeletingList(list) },
+      ];
+    }
+    const feed = c.kind === "feed" ? feeds.find((f) => feedKey(f.Id) === c.id) : null;
+    if (feed) {
+      return [
+        { type: "separator" },
+        { label: "Refresh now", icon: <RefreshCw size={13} />, onSelect: () => void refreshFeed(feed.Id) },
+        { label: "Rename…", icon: <Pencil size={13} />, onSelect: () => setCalDialog({ name: feed.Name, rename: (n) => renameFeed(feed.Id, n) }) },
+        colorMenu(feed.Color, (color) => recolorFeed(feed.Id, color)),
+        {
+          label: "Copy link",
+          icon: <Link size={13} />,
+          onSelect: () => void navigator.clipboard.writeText(feed.Url).then(() => toast("Copied the calendar's link"), () => toast("Couldn't copy the link")),
+        },
+        { type: "separator" },
+        { label: "Unsubscribe", icon: <Trash2 size={13} />, danger: true, onSelect: () => unsubscribe(feed.Id) },
+      ];
+    }
+    return [];
+  };
+
+  const showAddCalendarMenu = (e: React.MouseEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    openMenu(r.left, r.bottom + 4, [
+      { label: "New calendar…", icon: <CalendarPlus size={13} />, onSelect: () => setCalDialog("new") },
+      { label: "Subscribe by link…", icon: <Rss size={13} />, onSelect: () => setCalDialog("subscribe") },
+      { label: "Import a file (.ics)…", icon: <FileUp size={13} />, onSelect: () => setCalDialog("import") },
     ]);
   };
 
@@ -388,6 +471,7 @@ export default function ScheduleScreen() {
         onEdit={edit}
         onCalendarMenu={showCalendarMenu}
         onEventMenu={showEventMenu}
+        onAddCalendar={showAddCalendarMenu}
       />
 
       <main className="flex min-w-0 flex-1 flex-col gap-4 bg-bg px-7 pt-[22px]">
@@ -513,6 +597,11 @@ export default function ScheduleScreen() {
             }}
           />
         ))}
+      {calDialog === "new" && <NewCalendarDialog onClose={() => setCalDialog(null)} />}
+      {calDialog === "subscribe" && <SubscribeDialog onClose={() => setCalDialog(null)} />}
+      {calDialog === "import" && <ImportDialog onClose={() => setCalDialog(null)} />}
+      {calDialog && typeof calDialog === "object" && <RenameCalendarDialog name={calDialog.name} onRename={calDialog.rename} onClose={() => setCalDialog(null)} />}
+      {deletingList && <DeleteListDialog list={deletingList} lists={lists} tasks={tasks} onDone={() => setDeletingList(null)} />}
       <ContextMenu menu={menu} onClose={() => setMenu(null)} />
     </>
   );

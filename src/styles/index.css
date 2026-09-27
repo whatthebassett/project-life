@@ -334,3 +334,131 @@ fieldset:disabled :is(button, input, select, textarea) {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- Home's card grid (home/HomeGrid.tsx) ---------- */
+
+.home-grid .react-grid-item {
+  transition-property: transform, width, height;
+}
+.home-cell {
+  display: flex;
+}
+.home-cell > * {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+/* Unlocked: an empty spot on a card picks it up. */
+.home-grid:not(.is-locked) .home-cell > section {
+  cursor: grab;
+}
+.home-grid .react-draggable-dragging .home-cell > section,
+.home-grid .react-draggable-dragging.home-cell > section {
+  cursor: grabbing;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+}
+/* Where the card will land. */
+.home-grid .react-grid-item.react-grid-placeholder {
+  background: var(--accent-soft);
+  border: 1.5px dashed var(--accent);
+  border-radius: 24px;
+  opacity: 1;
+}
+
+/* Resize handles: each whole side of a card, and its corners. Invisible
+   until pointed at, when an accent line shows the edge that moves. The
+   per-side rules repeat the resets because the grid's own stylesheet loads
+   after this one with rules just as specific. */
+.home-grid .react-grid-item > .react-resizable-handle {
+  z-index: 3;
+  margin: 0;
+  padding: 0;
+  opacity: 1;
+  transform: none;
+  background: none;
+}
+.home-grid .react-grid-item > .react-resizable-handle::after {
+  display: none;
+}
+.home-grid.is-locked .react-resizable-handle {
+  display: none;
+}
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-n,
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-s {
+  left: 24px;
+  right: 24px;
+  width: auto;
+  height: 12px;
+  margin: 0;
+  transform: none;
+  cursor: ns-resize;
+}
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-n {
+  top: -6px;
+}
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-s {
+  top: auto;
+  bottom: -6px;
+}
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-e,
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-w {
+  top: 24px;
+  bottom: 24px;
+  width: 12px;
+  height: auto;
+  margin: 0;
+  transform: none;
+  cursor: ew-resize;
+}
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-e {
+  left: auto;
+  right: -6px;
+}
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-w {
+  left: -6px;
+}
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-ne,
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-nw,
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-se,
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-sw {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  transform: none;
+}
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-ne {
+  top: -6px;
+  right: -6px;
+  left: auto;
+  bottom: auto;
+  cursor: nesw-resize;
+}
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-nw {
+  top: -6px;
+  left: -6px;
+  cursor: nwse-resize;
+}
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-se {
+  right: -6px;
+  bottom: -6px;
+  left: auto;
+  top: auto;
+  cursor: nwse-resize;
+}
+.home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-sw {
+  left: -6px;
+  bottom: -6px;
+  top: auto;
+  cursor: nesw-resize;
+}
+.home-grid .react-resizable-handle-n:hover,
+.home-grid .react-resizable-handle-s:hover,
+.home-grid .react-resizable-handle-e:hover,
+.home-grid .react-resizable-handle-w:hover {
+  background: linear-gradient(var(--accent), var(--accent)) center / 100% 2px no-repeat;
+}
+.home-grid .react-resizable-handle-e:hover,
+.home-grid .react-resizable-handle-w:hover {
+  background-size: 2px 100%;
+}

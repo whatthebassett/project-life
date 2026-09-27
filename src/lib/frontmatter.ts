@@ -1,7 +1,8 @@
 // YAML front matter: the "---" block at the very top of a note. Noted keeps it
 // exactly as written (other apps put their own keys there) and only edits the
-// one line it owns, "cover:". The Visual editor never sees the block; it gets
-// the note's body, and the block is put back in front when the note saves.
+// lines it owns, "cover:" and "icon:". The Visual editor never sees the block;
+// it gets the note's body, and the block is put back in front when the note
+// saves.
 
 const BLOCK = /^---[ \t]*\r?\n(?:([\s\S]*?)\r?\n)?---[ \t]*(?:\r?\n|$)/;
 
@@ -75,6 +76,18 @@ export function withCoverPosition(md: string, pos: string | null): string {
   const add = pos && pos !== "50% 50%" ? [`cover-position: ${JSON.stringify(pos)}`] : [];
   const afterCover = (lines: string[]) => lines.findIndex((l) => keyLine("cover").test(l) || keyLine("banner").test(l)) + 1;
   return withFront(md, (l) => keyLine("cover-position").test(l), add, afterCover);
+}
+
+// The note's icon: one emoji shown above its title and beside its name in
+// lists ("icon:"). Anything longer than an emoji or two is ignored.
+export function iconOf(md: string): string | null {
+  const icon = readKey(splitFront(md).yaml, "icon");
+  return icon && icon.length <= 16 && !/\s/.test(icon) ? icon : null;
+}
+
+// The note with its icon set (or removed with null); it goes at the top.
+export function withIcon(md: string, icon: string | null): string {
+  return withFront(md, (l) => keyLine("icon").test(l), icon ? [`icon: ${JSON.stringify(icon)}`] : []);
 }
 
 // Drops the front matter lines `drop` matches and puts `add` in, at the top

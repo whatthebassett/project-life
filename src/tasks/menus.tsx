@@ -46,7 +46,7 @@ import {
   setTaskDue,
   toggleTask,
 } from "./actions";
-import { currentLists } from "./lists";
+import { taskLists } from "./lists";
 import type { ReminderId, RepeatId, Task } from "./model";
 import type { Group } from "./views";
 
@@ -87,7 +87,7 @@ export function estimateMenu(task: Task): MenuItem[] {
 }
 
 export function listMenu(task: Task): MenuItem[] {
-  return currentLists().map<MenuItem>((l) => ({ label: l.name, icon: dot(l.color), checked: task.List === l.id, onSelect: () => setList(task, l.id) }));
+  return taskLists().map<MenuItem>((l) => ({ label: l.name, icon: dot(l.color), checked: task.List === l.id, onSelect: () => setList(task, l.id) }));
 }
 
 export function priorityMenu(task: Task): MenuItem[] {

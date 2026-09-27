@@ -148,18 +148,23 @@ pub(crate) fn web_agent(timeout_secs: u64, user_agent: &str) -> ureq::Agent {
 // capped at `limit` bytes. Returns where it ended up, its content type, and
 // the bytes.
 pub(crate) fn fetch_public(url: &str, accept: &str, limit: u64, timeout_secs: u64) -> Result<(url::Url, String, Vec<u8>), String> {
-    fetch_from(url, accept, limit, timeout_secs, false)
+    fetch_from(url, accept, limit, timeout_secs, false, BROWSER_AGENT)
 }
+
+// News sites and link previews expect a browser; data services get Project
+// Life's own name (see fetch_data).
+const BROWSER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ProjectLife/0.1";
+const APP_AGENT: &str = concat!("ProjectLife/", env!("CARGO_PKG_VERSION"), " (+https://github.com/whatthebassett/project-life)");
 
 // The same, for a web page's <head> only: reading stops once it has come by,
 // or at `limit` bytes without it. Titles and previews are all in the head,
 // and some pages (YouTube's) are over a megabyte with the head half way down.
 pub(crate) fn fetch_public_head(url: &str, limit: u64, timeout_secs: u64) -> Result<(url::Url, String, Vec<u8>), String> {
-    fetch_from(url, "text/html,*/*;q=0.5", limit, timeout_secs, true)
+    fetch_from(url, "text/html,*/*;q=0.5", limit, timeout_secs, true, BROWSER_AGENT)
 }
 
-fn fetch_from(url: &str, accept: &str, limit: u64, timeout_secs: u64, head_only: bool) -> Result<(url::Url, String, Vec<u8>), String> {
-    let agent = web_agent(timeout_secs, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ProjectLife/0.1");
+fn fetch_from(url: &str, accept: &str, limit: u64, timeout_secs: u64, head_only: bool, user_agent: &str) -> Result<(url::Url, String, Vec<u8>), String> {
+    let agent = web_agent(timeout_secs, user_agent);
     let mut current = url::Url::parse(url).map_err(err)?;
     for _ in 0..5 {
         if !matches!(current.scheme(), "http" | "https") {
@@ -236,6 +241,40 @@ pub fn fetch_text(url: String) -> Result<String, String> {
     Ok(decode_text(&kind, &bytes))
 }
 
+// A calendar someone shares by link (.ics): Google's "secret address in iCal
+// format", Outlook's published calendars, iCloud, holidays, sports fixtures.
+// webcal:// is the same address over https. Up to 25 MB: a calendar with
+// years of history is big.
+#[tauri::command(async)]
+pub fn fetch_calendar(url: String) -> Result<String, String> {
+    let url = url.trim();
+    let url = match url.split_once("://") {
+        Some((scheme, rest)) if scheme.eq_ignore_ascii_case("webcal") || scheme.eq_ignore_ascii_case("webcals") => format!("https://{rest}"),
+        _ => url.to_string(),
+    };
+    let (_, kind, bytes) = fetch_public(&url, "text/calendar, application/ics;q=0.9, */*;q=0.5", 25 * 1024 * 1024, 30)?;
+    let text = decode_text(&kind, &bytes);
+    if !text.contains("BEGIN:VCALENDAR") {
+        return Err("That address didn't give back a calendar. Check it's the iCal (.ics) link.".into());
+    }
+    Ok(text)
+}
+
+// Scores and stock prices for Home's Sports and Markets cards: ESPN's
+// scoreboards and Yahoo Finance's charts and search. Only those services, and
+// under Project Life's own name. Up to 3 MB.
+#[tauri::command(async)]
+pub fn fetch_data(url: String) -> Result<String, String> {
+    let parsed = url::Url::parse(&url).map_err(err)?;
+    let host = parsed.host_str().unwrap_or_default();
+    let allowed = ["site.web.api.espn.com", "query1.finance.yahoo.com", "query2.finance.yahoo.com"];
+    if parsed.scheme() != "https" || !allowed.contains(&host) {
+        return Err(format!("{host} isn't one of the services Home's cards use."));
+    }
+    let (_, kind, bytes) = fetch_from(&url, "application/json", 3 * 1024 * 1024, 15, false, APP_AGENT)?;
+    Ok(decode_text(&kind, &bytes))
+}
+
 // Most feeds are UTF-8, but some older ones are Latin-1 or Windows-1252,
 // named in the Content-Type or the XML declaration. Those are decoded here so
 // accented letters and curly quotes come through.
@@ -305,6 +344,17 @@ mod tests {
     fn keeps_the_start_of_a_page_with_no_head() {
         let page = vec![b'x'; 100 * 1024];
         assert_eq!(read_head(&page[..], 40 * 1024).unwrap().len(), 40 * 1024);
+    }
+
+    // Needs the internet: cargo test live_card_data -- --ignored
+    #[test]
+    #[ignore]
+    fn live_card_data() {
+        let espn = super::fetch_data("https://site.web.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard".into()).unwrap();
+        assert!(espn.contains("\"events\""));
+        let yahoo = super::fetch_data("https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?range=1d&interval=5m".into()).unwrap();
+        assert!(yahoo.contains("regularMarketPrice"));
+        assert!(super::fetch_data("https://example.com/".into()).is_err());
     }
 
     // Needs the internet: cargo test live_youtube_title -- --ignored

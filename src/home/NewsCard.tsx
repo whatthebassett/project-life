@@ -1,16 +1,16 @@
 import { EyeOff, Filter, Link2, ListFilter, Newspaper, SquareArrowOutUpRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { menuPoint, type MenuItem } from "../components/ContextMenu";
-import { openUrl } from "../lib/api";
+import { previewFor } from "../editor/linkPreviews";
+import { api, openUrl } from "../lib/api";
 import { useSettings } from "../lib/SettingsContext";
-import { useNotes } from "../notes/NotesContext";
 import { Chip } from "../ui/Chip";
 import { toast } from "../ui/Toast";
 import { LOCAL, localFeedUrl, topics } from "./feeds";
 import { cachedFeed, isFresh, loadFeed, mergeHeadlines, staleAfter, type Feed, type FeedResult } from "./news";
 import { copyLink } from "./menus";
 import NewsSourcesPopup from "./NewsSourcesPopup";
-import { Card, CardLink, Empty } from "./parts";
+import { Card, CardLink, Empty, useRowMenu } from "./parts";
 import { newsSources, newsTopic, weatherPlace, type NewsSource } from "./prefs";
 import { age } from "./time";
 import type { HomeData } from "./useHome";
@@ -38,6 +38,8 @@ interface Shown {
   topic: string;
   source: string;
   published: number;
+  // The story's picture, from the feed.
+  image?: string;
   // The chosen source it came from (not for sample headlines).
   from?: NewsSource;
 }
@@ -46,7 +48,7 @@ interface Shown {
 export default function NewsCard({ home }: { home: HomeData }) {
   const { settings, update } = useSettings();
   const [managing, setManaging] = useState(false);
-  const { openMenu } = useNotes();
+  const openMenu = useRowMenu("news", "News");
   // Settings objects are replaced on every change, so these only change when
   // the sources or the place do.
   const sources = useMemo(() => newsSources(settings), [settings.NewsSources]);
@@ -97,12 +99,13 @@ export default function NewsCard({ home }: { home: HomeData }) {
     const inTopic = feeds.filter((f) => topic === "All" || f.source.Topic === topic);
     const loaded = inTopic.flatMap((f) => (results[f.url]?.feed ? [results[f.url]!.feed as Feed] : []));
     const byUrl = new Map(inTopic.map((f) => [f.url, f.source]));
-    shown = mergeHeadlines(loaded, 2).map((h) => {
+    shown = mergeHeadlines(loaded, 6).map((h) => {
       const s = byUrl.get(h.source)!;
-      return { key: h.link, title: h.title, link: h.link, topic: s.Topic, source: h.publisher ?? s.Name, published: h.published, from: s };
+      return { key: h.link, title: h.title, link: h.link, topic: s.Topic, source: h.publisher ?? s.Name, published: h.published, image: h.image, from: s };
     });
   }
-  shown = shown.slice(0, 4);
+  // A row each, newest first; the list scrolls inside the card.
+  shown = shown.slice(0, 24);
 
   const inTopic = feeds.filter((f) => topic === "All" || f.source.Topic === topic);
   const pending = !home.sample && inTopic.some((f) => !results[f.url]);
@@ -150,8 +153,9 @@ export default function NewsCard({ home }: { home: HomeData }) {
     >
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
-          <h2 className="m-0 text-16 font-semibold">News</h2>
-          <div role="group" aria-label="News topics" className="flex gap-1.5 overflow-x-auto">
+          <h2 className="m-0 shrink-0 text-16 font-semibold">News</h2>
+          {/* On a narrow card the topics scroll sideways, without a scrollbar in the way. */}
+          <div role="group" aria-label="News topics" className="flex min-w-0 gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {["All", ...available].map((t) => (
               <Chip key={t} variant="pill" selected={t === topic} onClick={() => update({ HomeNewsTopic: t })}>
                 {t}
@@ -159,13 +163,15 @@ export default function NewsCard({ home }: { home: HomeData }) {
             ))}
           </div>
         </div>
-        <CardLink onClick={() => setManaging(true)}>Manage sources</CardLink>
+        <span className="shrink-0 whitespace-nowrap">
+          <CardLink onClick={() => setManaging(true)}>Manage sources</CardLink>
+        </span>
       </div>
       {empty ? (
         <Empty>{empty}</Empty>
       ) : (
-        <div className="grid min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-3">
-          {shown.map((h) => {
+        <div className="-mx-2 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-2">
+          {shown.map((h, i) => {
             const color = topicColor(h.topic);
             return (
               <button
@@ -179,12 +185,10 @@ export default function NewsCard({ home }: { home: HomeData }) {
                   openMenu(x, y, headlineMenu(h));
                 }}
                 title={h.title}
-                className="flex min-w-0 gap-[14px] rounded-[16px] border border-line bg-panel2 p-[14px] text-left transition-colors hover:border-faint"
+                className="flex min-w-0 shrink-0 items-center gap-[14px] rounded-[14px] px-2 py-2 text-left transition-colors hover:bg-panel2"
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] bg-bg font-mono text-13 font-medium" style={{ color }}>
-                  {initials(h.source)}
-                </span>
-                <span className="flex min-w-0 flex-col gap-1.5">
+                <Thumb headline={h} color={color} sample={Boolean(home.sample)} lookUp={i < 8} />
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
                   <span className="flex gap-2 font-mono text-11 text-muted">
                     <span style={{ color }}>{h.topic}</span>
                     <span className="truncate">{h.source}</span>
@@ -199,5 +203,38 @@ export default function NewsCard({ home }: { home: HomeData }) {
       )}
       {managing && <NewsSourcesPopup onClose={() => setManaging(false)} />}
     </Card>
+  );
+}
+
+// The story's picture: the one in the feed, else the one its page offers for
+// link previews (looked up, and cached, only for the top headlines so a long
+// list doesn't fetch dozens of pages). No picture, or one that won't load,
+// shows the source's initials instead.
+function Thumb({ headline: h, color, sample, lookUp }: { headline: Shown; color: string; sample: boolean; lookUp: boolean }) {
+  const [src, setSrc] = useState<string | null>(h.image ?? null);
+  const [broken, setBroken] = useState(false);
+  useEffect(() => {
+    setBroken(false);
+    if (h.image) {
+      setSrc(h.image);
+      return;
+    }
+    setSrc(null);
+    // Google News links go through a redirect page that has no picture of its own.
+    if (sample || !lookUp || /^https?:\/\/news\.google\./i.test(h.link)) return;
+    let alive = true;
+    void previewFor(h.link, api.fetchLinkPreview).then((p) => alive && p?.image && setSrc(p.image));
+    return () => {
+      alive = false;
+    };
+  }, [h.link, h.image, sample, lookUp]);
+
+  if (src && !broken) {
+    return <img src={src} alt="" onError={() => setBroken(true)} className="h-[60px] w-[84px] shrink-0 rounded-[12px] border border-line bg-bg object-cover" />;
+  }
+  return (
+    <span className="flex h-[60px] w-[84px] shrink-0 items-center justify-center rounded-[12px] bg-panel2 font-mono text-13 font-medium" style={{ color }}>
+      {initials(h.source)}
+    </span>
   );
 }

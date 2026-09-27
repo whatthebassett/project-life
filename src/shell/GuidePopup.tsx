@@ -5,9 +5,9 @@ import { KeyCaps, SectionLabel } from "../ui/bits";
 import { Popup, PopupHeader } from "../ui/Popup";
 
 const places: { icon: IconName; name: string; text: string }[] = [
-  { icon: "home", name: "Home", text: "A bit of everything: what's up next, today's progress, your schedule, tasks, goals, habits, recent notes, news and weather. Ctrl K captures a task from anywhere." },
+  { icon: "home", name: "Home", text: "A bit of everything: what's up next, today's progress, your schedule, tasks, goals, habits, recent notes, news, weather, sports and markets. Move and resize the cards, or lock them. Ctrl K opens the command palette from anywhere: add a task, note or event, or jump to a command or note." },
   { icon: "notes", name: "Notes", text: "Plain Markdown files, written in Visual or Markdown mode. Type / for blocks, right-click a to-do to send it to Tasks, and open “How to use Notes” for a tour." },
-  { icon: "schedule", name: "Schedule", text: "Your week or month. Type “Haircut sat 3pm” to add an event, drag to move or resize one, and join calls from the card on the left." },
+  { icon: "schedule", name: "Schedule", text: "Your week or month. Type “Haircut sat 3pm” to add an event (“Mom’s birthday oct 3” comes back every year), drag to move or resize one, and join calls from the card on the left." },
   { icon: "tasks", name: "Tasks", text: "Quick add reads dates, priorities (!high) and lists (#errands). Later moves a task on; double-click one for everything about it." },
   { icon: "habits", name: "Habits", text: "Check off, count or time what you do regularly. Streaks forgive a missed day a week, and your day ends at 3 AM." },
   { icon: "goals", name: "Goals", text: "Something to get done by a date. Log progress, tick milestones, or link habits so every check-in counts toward it." },

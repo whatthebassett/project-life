@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import type { MenuItem } from "../components/ContextMenu";
 import NotePicker from "../components/NotePicker";
 import { meetingPlan, patchSynced } from "../accounts/actions";
+import { patchFeedEvent } from "./feeds";
 import { appName, calendarKey, providerName, splitKey } from "../accounts/model";
 import { useAccounts } from "../accounts/useAccounts";
 import { openUrl, titleOf } from "../lib/api";
@@ -26,6 +27,7 @@ import {
   findJoinLink,
   fromStamp,
   fromZone,
+  isReadOnly,
   localStamp,
   localZone,
   nextFree,
@@ -165,7 +167,8 @@ export default function EventPopup({ event, occ, isNew, events, now, openMenu, o
   // From a connected calendar: Outlook or Google Calendar has it.
   const remote = event.Remote ?? null;
   const remoteAccount = remote ? accounts.find((a) => a.Id === remote.Account) : null;
-  const readOnly = Boolean(remote && !remote.Editable);
+  const readOnly = isReadOnly(event);
+  const feed = event.Feed ? listFor(event.Calendar).name : null;
   const onSynced = Boolean(splitKey(f.calendar));
   // Connected calendars that can take this event (not while it repeats here).
   const syncedChoices = accounts
@@ -220,7 +223,8 @@ export default function EventPopup({ event, occ, isNew, events, now, openMenu, o
   const save = () => {
     // Someone else's event: only Project Life's own links to it change.
     if (readOnly) {
-      patchSynced(event.Id, { Note: f.note, Task: f.task });
+      if (event.Feed) patchFeedEvent(event.Id, { Note: f.note, Task: f.task });
+      else patchSynced(event.Id, { Note: f.note, Task: f.task });
       onClose();
       return;
     }
@@ -278,6 +282,12 @@ export default function EventPopup({ event, occ, isNew, events, now, openMenu, o
 
       <div className="flex min-h-0 flex-1">
         <div className="flex min-w-0 flex-1 flex-col gap-[18px] overflow-y-auto px-7 py-[22px]">
+          {feed && (
+            <div role="note" className="flex items-center gap-3 rounded-[14px] border border-line bg-panel py-2.5 pr-2.5 pl-3.5 text-13 text-muted">
+              <TriangleAlert size={15} className="shrink-0 text-warn" />
+              <span className="flex-1">On “{feed}”, a calendar you subscribe to, so it's changed where it comes from. You can still link a note or task to it here.</span>
+            </div>
+          )}
           {remote && (remote.Series || readOnly) && (
             <div role="note" className="flex items-center gap-3 rounded-[14px] border border-line bg-panel py-2.5 pr-2.5 pl-3.5 text-13 text-muted">
               {readOnly ? <TriangleAlert size={15} className="shrink-0 text-warn" /> : <Repeat size={15} className="shrink-0 text-accent2" />}
@@ -426,6 +436,7 @@ export default function EventPopup({ event, occ, isNew, events, now, openMenu, o
                     <option value="weekdays">Every weekday</option>
                     <option value="weekly">Every {fromYmd(f.day).toLocaleDateString(locale(), { weekday: "long" })}</option>
                     <option value="monthly">Every month on the {ordinal(fromYmd(f.day).getDate())}</option>
+                    <option value="yearly">Every year on {fromYmd(f.day).toLocaleDateString(locale(), { month: "long", day: "numeric" })}</option>
                   </select>
                   <ChevronDown size={14} className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-muted" />
                 </span>
@@ -661,7 +672,7 @@ export default function EventPopup({ event, occ, isNew, events, now, openMenu, o
               Open in {appName[remoteAccount?.Provider ?? "microsoft"]}
             </Button>
           )}
-          {!isNew && (
+          {!isNew && !event.Feed && (
             <Button variant="danger" onClick={() => (repeating ? setAsking("Delete") : onDelete("all"))}>
               Delete
             </Button>

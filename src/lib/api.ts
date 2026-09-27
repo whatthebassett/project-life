@@ -34,7 +34,7 @@ export async function writeSettings(contents: string): Promise<void> {
 }
 
 // The JSON data files in Data\ (tasks.json, events.json …), read and written whole.
-export type DataFile = "tasks.json" | "events.json" | "habits.json" | "goals.json" | "accounts.json";
+export type DataFile = "tasks.json" | "events.json" | "habits.json" | "goals.json" | "accounts.json" | "calendars.json";
 
 export async function readData(name: DataFile): Promise<string | null> {
   if (!inTauri) {
@@ -92,6 +92,28 @@ export async function fetchText(url: string): Promise<string> {
   return invoke<string>("fetch_text", { url });
 }
 
+// Scores and stock prices for Home's Sports and Markets cards (fetch_data:
+// ESPN and Yahoo Finance only). The browser preview tries fetch, which those
+// services may refuse.
+export async function fetchData(url: string): Promise<string> {
+  if (!inTauri) {
+    const res = await fetch(url);
+    if (!res.ok) throw `${new URL(url).hostname} answered ${res.status}.`;
+    return res.text();
+  }
+  return invoke<string>("fetch_data", { url });
+}
+
+// A calendar shared by link (.ics), for subscribing. See fetch_calendar.
+export async function fetchCalendar(url: string): Promise<string> {
+  if (!inTauri) {
+    const res = await fetch(url.trim().replace(/^webcals?:/i, "https:"));
+    if (!res.ok) throw `${new URL(url).hostname} answered ${res.status}.`;
+    return res.text();
+  }
+  return invoke<string>("fetch_calendar", { url });
+}
+
 // Opens a web page in the default browser.
 export async function openUrl(url: string): Promise<void> {
   if (!inTauri) {
@@ -115,6 +137,8 @@ export interface NoteInfo {
   // When the file was made; 0 when Windows doesn't say.
   created: number;
   size: number;
+  // The emoji from its front matter ("icon:"), when it has one.
+  icon?: string | null;
 }
 
 // Switching notes folders. With copying on, the notes are merged into

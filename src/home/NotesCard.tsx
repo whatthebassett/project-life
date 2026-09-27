@@ -1,15 +1,17 @@
 import { Copy, ExternalLink, FileText, Maximize2, Pin, PinOff, Trash2 } from "lucide-react";
 import { menuPoint, type MenuItem } from "../components/ContextMenu";
 import { isPinned } from "../lib/notebook";
+import NoteIcon from "../notes/NoteIcon";
 import { useNotes } from "../notes/NotesContext";
 import type { Screen } from "../shell/nav";
-import { Card, CardHeader, CardLink, Empty } from "./parts";
+import { Card, CardHeader, CardLink, Empty, useRowMenu } from "./parts";
 import { ago } from "./time";
 import type { HomeData } from "./useHome";
 
 // The last few notes edited.
 export default function NotesCard({ home, onNavigate }: { home: HomeData; onNavigate: (s: Screen) => void }) {
-  const { activate, actions, notebook, openMenu } = useNotes();
+  const { activate, actions, notebook } = useNotes();
+  const openMenu = useRowMenu("notes", "Recent notes");
   const notes = [...home.notes].sort((a, b) => b.edited - a.edited).slice(0, 3);
 
   const noteMenu = (name: string): MenuItem[] => [
@@ -49,7 +51,10 @@ export default function NotesCard({ home, onNavigate }: { home: HomeData; onNavi
           className="-mx-3 flex w-[calc(100%+24px)] flex-col gap-1 rounded-[12px] px-3 py-[10px] text-left transition-colors hover:bg-panel2"
         >
           <span className="flex w-full justify-between gap-2">
-            <span className="truncate text-14 font-medium">{n.title}</span>
+            <span className="flex min-w-0 items-center gap-1.5 text-14 font-medium">
+              {n.icon && <NoteIcon icon={n.icon} />}
+              <span className="truncate">{n.title}</span>
+            </span>
             <span className="font-mono text-11 whitespace-nowrap text-muted">{ago(n.edited, home.now.getTime())}</span>
           </span>
           <span className="w-full truncate text-13 text-muted">{n.snippet}</span>

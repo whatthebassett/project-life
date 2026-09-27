@@ -8,12 +8,11 @@ import { useGoals } from "../goals/useGoals";
 import { habitDay, hueColor } from "../habits/model";
 import { rulesOf, useHabits } from "../habits/useHabits";
 import { useSettings } from "../lib/SettingsContext";
-import { useNotes } from "../notes/NotesContext";
 import { showGoal } from "../shell/go";
 import type { Screen } from "../shell/nav";
 import { fromYmd } from "../tasks/dates";
 import { toast } from "../ui/Toast";
-import { Card, CardHeader, CardLink, Empty } from "./parts";
+import { Card, CardHeader, CardLink, Empty, useRowMenu } from "./parts";
 import type { HomeData } from "./useHome";
 
 const SHOWN = 3;
@@ -56,7 +55,7 @@ export default function GoalsCard({ home, onNavigate }: { home: HomeData; onNavi
   const { goals, areas } = useGoals();
   const { habits } = useHabits();
   const { settings } = useSettings();
-  const { openMenu } = useNotes();
+  const openMenu = useRowMenu("goals", "Goals");
   const today = habitDay(home.now, rulesOf(settings));
 
   const rows = useMemo(

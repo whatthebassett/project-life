@@ -44,6 +44,7 @@ import { SlashCommands, type SlashState } from "../editor/slash";
 import LinkHoverCard from "./LinkHoverCard";
 import { VideoEmbeds, refreshVideoEmbeds } from "../editor/videoEmbeds";
 import { LinkTitles } from "../editor/linkTitles";
+import { NotedLink, SmartLinks } from "../editor/smartLinks";
 import { currentSettings } from "../lib/settings";
 import { NotedImage, insertDataImages, insertImageFiles } from "../editor/images";
 import { NotedCodeBlock } from "../editor/code";
@@ -138,10 +139,11 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        link: { openOnClick: false, autolink: true, linkOnPaste: true },
+        link: false,
         codeBlock: false,
         underline: false,
       }),
+      NotedLink.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
       NotedCodeBlock,
       NotedUnderline,
       Caret.configure({ config: () => caretRef.current }),
@@ -194,6 +196,7 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
       }),
       TaskLinks.configure({ links: () => todoLinksRef.current ?? new Map(), open: (id) => onOpenTodoRef.current?.(id) }),
       VideoEmbeds.configure({ enabled: () => videoEmbedsRef.current }),
+      SmartLinks.configure({ fetch: api.fetchLinkPreview, open: (url) => void openUrl(url) }),
       LinkTitles.configure({ fetch: api.fetchLinkPreview, enabled: () => currentSettings().LinkTitles !== false }),
     ],
     content: initial,

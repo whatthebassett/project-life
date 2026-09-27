@@ -1,4 +1,4 @@
-/* The four themes. Every theme uses the same layout and only swaps these
+/* The five themes. Every theme uses the same layout and only swaps these
    tokens (DESIGN.md §2). Midnight is the base. The html element carries
    data-theme; switching it reskins everything at once.
 
@@ -24,6 +24,9 @@
   --warn: #ffb36b;
   --warn-soft: rgba(255, 179, 107, 0.14);
   --danger: #ff7a85;
+  /* Stock prices: up, and down. */
+  --gain: #5ce1c6;
+  --loss: var(--danger);
   --glow: rgba(160, 146, 255, 0.2);
   --scrim: rgba(4, 5, 9, 0.62);
   --today-tint: rgba(160, 146, 255, 0.05);
@@ -53,6 +56,9 @@
   --warn: #f58fa6;
   --warn-soft: rgba(245, 143, 166, 0.14);
   --danger: #ff8590;
+  /* Stock prices: up, and down. */
+  --gain: #4fe0b0;
+  --loss: var(--danger);
   --glow: rgba(79, 224, 176, 0.18);
   --scrim: rgba(2, 8, 7, 0.62);
   --today-tint: rgba(79, 224, 176, 0.05);
@@ -84,6 +90,9 @@
   --warn: #f58fa6;
   --warn-soft: rgba(245, 143, 166, 0.14);
   --danger: #ff7a7a;
+  /* Stock prices: up, and down. */
+  --gain: #7fd49a;
+  --loss: var(--danger);
   --glow: rgba(255, 154, 92, 0.18);
   --scrim: rgba(8, 5, 4, 0.62);
   --today-tint: rgba(255, 154, 92, 0.05);
@@ -113,6 +122,9 @@
   --warn: #b4501a;
   --warn-soft: rgba(180, 80, 26, 0.12);
   --danger: #c62f3d;
+  /* Stock prices: up, and down. */
+  --gain: #0b8a6d;
+  --loss: var(--danger);
   --glow: rgba(90, 72, 224, 0.1);
   --scrim: rgba(20, 22, 30, 0.38);
   --today-tint: rgba(90, 72, 224, 0.04);
@@ -122,4 +134,40 @@
   --hue-3: #c62f3d;
   --hue-4: #2f6fd6;
   --hue-5: #b23a7c;
+}
+
+/* Peach, from Checkpoint: a blush page beside a soft peach-pink sidebar, in
+   rosewood ink. Checkpoint's page, cover and ink; the accents are warm ones
+   chosen to pass contrast here, with a rose-mauve accent kept well apart
+   from the red of warnings. */
+:root[data-theme="peach"] {
+  color-scheme: light;
+  --bg: #fff7f5;
+  --side: #f5d7d0;
+  --panel: #fffcfb;
+  --panel2: #fbeeea;
+  --line: rgba(175, 95, 100, 0.17);
+  --text: #40292b;
+  --muted: #765657;
+  --faint: #a8878a;
+  --accent: #a84a73;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(168, 74, 115, 0.12);
+  --accent2: #2f7d6d;
+  --accent2-soft: rgba(47, 125, 109, 0.12);
+  --warn: #9a5a12;
+  --warn-soft: rgba(154, 90, 18, 0.12);
+  --danger: #c4302b;
+  /* Stock prices: up, and down. */
+  --gain: #2f7d6d;
+  --loss: var(--danger);
+  --glow: rgba(168, 74, 115, 0.1);
+  --scrim: rgba(64, 41, 43, 0.38);
+  --today-tint: rgba(168, 74, 115, 0.05);
+  --hue-0: #6b4fd0;
+  --hue-1: #2f7d6d;
+  --hue-2: #9a5a12;
+  --hue-3: #c2493a;
+  --hue-4: #2f6fd6;
+  --hue-5: #a84a73;
 }

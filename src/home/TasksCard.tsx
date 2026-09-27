@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { AlarmClock, Check, CheckSquare, Copy, Flag, Maximize2, RotateCcw, Trash2 } from "lucide-react";
 import { menuPoint, type MenuItem } from "../components/ContextMenu";
-import { useNotes } from "../notes/NotesContext";
 import { go } from "../shell/go";
 import { applyLater, deleteTasks, duplicateTask, laterChoices } from "../tasks/actions";
 import { addDays, daysBetween, formatDue, startOfDay, ymd } from "../tasks/dates";
@@ -10,7 +9,7 @@ import { byDue, isOverdue, openCount, setCompleted, todaysTasks, type Task } fro
 import { priorityMenu } from "../tasks/menus";
 import { requestTasks } from "../tasks/nav";
 import { Checkbox } from "../ui/Checkbox";
-import { Card, CardHeader, Empty } from "./parts";
+import { Card, CardHeader, Empty, useRowMenu } from "./parts";
 import type { HomeData } from "./useHome";
 
 // Today's tasks (due today or overdue, and what was checked off today), then
@@ -26,7 +25,7 @@ export default function TasksCard({ home }: { home: HomeData }) {
   const left = openCount(todays);
 
   const toggle = (t: Task) => home.updateTasks((tasks) => setCompleted(tasks, t.Id, !t.Completed, new Date()));
-  const { openMenu } = useNotes();
+  const openMenu = useRowMenu("tasks", "Tasks");
 
   // Like the Tasks screen's row menu, less what needs the list at hand.
   // Sample tasks aren't in the real list, so only ticking them works.

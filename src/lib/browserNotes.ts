@@ -2,6 +2,8 @@
 // runs in a plain browser, for trying the Notes screen without the app. Notes
 // live in localStorage; file names follow the same rules as the real ones.
 // Never used inside the app.
+import { iconOf } from "./frontmatter";
+
 interface Stored {
   files: Record<string, { text: string; modified: number; created: number }>;
   trash: Record<string, { text: string; modified: number; created: number }>;
@@ -40,7 +42,13 @@ function unique(files: Record<string, unknown>, title: string, keep?: string): s
   }
 }
 
-const info = (name: string, f: { text: string; modified: number; created: number }) => ({ name, modified: f.modified, created: f.created, size: f.text.length });
+const info = (name: string, f: { text: string; modified: number; created: number }) => ({
+  name,
+  modified: f.modified,
+  created: f.created,
+  size: f.text.length,
+  icon: iconOf(f.text.slice(0, 4096)),
+});
 
 export function browserNotes(command: string, a: Record<string, unknown>): unknown {
   const s = load();

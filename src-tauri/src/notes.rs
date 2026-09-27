@@ -34,6 +34,8 @@ pub struct NoteInfo {
     // When the file was made (the Details panel); 0 when Windows doesn't say.
     created: u64,
     size: u64,
+    // The emoji from its front matter ("icon:"), for the lists.
+    icon: Option<String>,
 }
 
 // Where the notes live: Data\Notes beside the app, unless another folder was
@@ -216,9 +218,43 @@ fn list_md(dir: &Path) -> Result<Vec<NoteInfo>, String> {
         if !meta.is_file() {
             continue;
         }
-        out.push(NoteInfo { name, modified: millis(meta.modified()), created: millis(meta.created()), size: meta.len() });
+        let icon = icon_of(&entry.path());
+        out.push(NoteInfo { name, modified: millis(meta.modified()), created: millis(meta.created()), size: meta.len(), icon });
     }
     Ok(out)
+}
+
+// A note's icon: "icon:" in the "---" block at the top (frontmatter.ts
+// iconOf). Only the first few KB are read; anything longer than an emoji or
+// two doesn't count.
+fn icon_of(path: &Path) -> Option<String> {
+    use std::io::Read;
+    let mut head = Vec::new();
+    fs::File::open(path).ok()?.take(4096).read_to_end(&mut head).ok()?;
+    let text = String::from_utf8_lossy(&head);
+    let mut lines = text.lines();
+    if lines.next()?.trim_end() != "---" {
+        return None;
+    }
+    for line in lines {
+        if line.trim_end() == "---" {
+            return None;
+        }
+        let Some(value) = line.strip_prefix("icon").and_then(|rest| rest.trim_start().strip_prefix(':')) else {
+            continue;
+        };
+        let value = value.trim();
+        let value = if value.len() >= 2 && value.starts_with('"') && value.ends_with('"') {
+            serde_json::from_str::<String>(value).unwrap_or_else(|_| value[1..value.len() - 1].to_string())
+        } else if value.len() >= 2 && value.starts_with('\'') && value.ends_with('\'') {
+            value[1..value.len() - 1].replace("''", "'")
+        } else {
+            value.split(" #").next().unwrap_or("").trim().to_string()
+        };
+        let short = !value.is_empty() && value.encode_utf16().count() <= 16 && !value.contains(char::is_whitespace);
+        return short.then_some(value);
+    }
+    None
 }
 
 #[tauri::command]
@@ -519,6 +555,44 @@ pub struct LinkPreview {
     description: String,
     site: String,
     image: String,
+    // The site's icon, for a smart link's chip. Older cached previews have none.
+    #[serde(default)]
+    icon: String,
+}
+
+// Sign-in pages, by where they are: login.microsoftonline.com,
+// id.atlassian.com, accounts.google.com, /login.action, /signin, /sso …
+fn is_sign_in(u: &url::Url) -> bool {
+    let host = u.host_str().unwrap_or_default().to_lowercase();
+    let first = host.split('.').next().unwrap_or_default();
+    let path = u.path().to_lowercase();
+    ["login", "signin", "auth", "id", "accounts", "sso"].contains(&first)
+        || ["/login", "/signin", "/sign-in", "/sso", "/oauth", "/authorize", "/auth/"].iter().any(|p| path.contains(p))
+}
+
+// The site's icon: the page's own <link rel="icon">, else /favicon.ico.
+fn site_icon(html: &str, page: &url::Url) -> String {
+    let tag = regex::Regex::new(r"(?is)<link\b[^>]*>").ok();
+    let attr = |t: &str, name: &str| {
+        regex::Regex::new(&format!(r#"(?is)\b{name}\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))"#))
+            .ok()
+            .and_then(|re| re.captures(t).and_then(|c| c.get(1).or_else(|| c.get(2)).or_else(|| c.get(3)).map(|m| m.as_str().to_string())))
+    };
+    let mut best: Option<(u8, String)> = None;
+    for m in tag.iter().flat_map(|re| re.find_iter(html)) {
+        let t = m.as_str();
+        let rel = attr(t, "rel").unwrap_or_default().to_lowercase();
+        let rank = if rel.split_whitespace().any(|r| r == "icon") { 2 } else if rel.contains("apple-touch-icon") { 1 } else { continue };
+        let Some(href) = attr(t, "href") else { continue };
+        if best.as_ref().map_or(true, |(r, _)| rank > *r) {
+            best = Some((rank, decode_entities(href.trim())));
+        }
+    }
+    best.and_then(|(_, href)| page.join(&href).ok())
+        .or_else(|| page.join("/favicon.ico").ok())
+        .filter(|u| matches!(u.scheme(), "http" | "https"))
+        .map(|u| u.to_string())
+        .unwrap_or_default()
 }
 
 fn preview_cache_path(url: &str) -> PathBuf {
@@ -570,6 +644,12 @@ pub fn fetch_link_preview(url: String) -> Result<Option<LinkPreview>, String> {
     let Ok((current, kind, bytes)) = web::fetch_public_head(&url, 3 * 1024 * 1024, 8) else {
         return Ok(None);
     };
+    // A private page (Confluence, SharePoint, Google Docs) sends Project Life,
+    // which isn't signed in, to a sign-in page. Its title would be "Log in to
+    // continue", so there's no preview; the link keeps its address.
+    if is_sign_in(&current) {
+        return Ok(None);
+    }
     if !kind.contains("html") {
         return Ok(None);
     }
@@ -589,6 +669,7 @@ pub fn fetch_link_preview(url: String) -> Result<Option<LinkPreview>, String> {
         description: meta_content(&html, &["og:description", "twitter:description", "description"]).unwrap_or_default(),
         site: meta_content(&html, &["og:site_name"]).unwrap_or_else(|| current.host_str().unwrap_or_default().to_string()),
         image,
+        icon: site_icon(&html, &current),
     };
     if let Some(dir) = cache.parent() {
         let _ = fs::create_dir_all(dir);
@@ -599,7 +680,19 @@ pub fn fetch_link_preview(url: String) -> Result<Option<LinkPreview>, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::recycled_title;
+    use super::{is_sign_in, recycled_title};
+
+    #[test]
+    fn spots_sign_in_pages() {
+        let u = |s: &str| url::Url::parse(s).unwrap();
+        assert!(is_sign_in(&u("https://id.atlassian.com/login?continue=x")));
+        assert!(is_sign_in(&u("https://acme.atlassian.net/wiki/login.action?os_destination=x")));
+        assert!(is_sign_in(&u("https://login.microsoftonline.com/common/oauth2/authorize")));
+        assert!(is_sign_in(&u("https://accounts.google.com/ServiceLogin")));
+        assert!(!is_sign_in(&u("https://www.youtube.com/watch?v=ejjBbaq9RmY")));
+        assert!(!is_sign_in(&u("https://acme.atlassian.net/wiki/spaces/OPS/pages/1/Escalations")));
+        assert!(!is_sign_in(&u("https://www.identity-design.com/")));
+    }
 
     #[test]
     fn restores_the_whole_title() {

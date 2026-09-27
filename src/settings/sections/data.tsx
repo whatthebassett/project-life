@@ -366,6 +366,8 @@ const licenses: [string, string][] = [
   ["CodeMirror", "MIT"],
   ["Tailwind CSS", "MIT"],
   ["Lucide icons", "ISC"],
+  ["ical.js", "MPL-2.0"],
+  ["React Grid Layout", "MIT"],
   ["Atkinson Hyperlegible", "SIL Open Font License 1.1"],
   ["Geist and Geist Mono", "SIL Open Font License 1.1"],
   ["Weather by Open-Meteo", "CC BY 4.0"],

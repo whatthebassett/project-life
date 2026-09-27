@@ -1,20 +1,23 @@
 import { locale } from "../lib/format";
 import { clockText } from "../lib/format";
-import { Fragment, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import clsx from "clsx";
 import { Ellipsis, Pin, Share } from "lucide-react";
 import { api, titleOf } from "../lib/api";
 import { useSettings } from "../lib/SettingsContext";
-import { coverOf, coverPositionOf, splitFront } from "../lib/frontmatter";
+import { coverOf, coverPositionOf, iconOf, splitFront } from "../lib/frontmatter";
 import { isPinned, lookup, parentOf, type PriorityValue } from "../lib/notebook";
 import { spotFor, rememberSpot, type EditorSpot } from "../lib/positions";
 import { saveImageFile } from "../editor/images";
 import type { CaretConfig } from "../editor/caret";
 import NoteHeader from "../components/NoteHeader";
 import SourceEditor from "../components/SourceEditor";
-import VisualEditor from "../components/VisualEditor";
+import Toolbar from "../components/Toolbar";
+import VisualEditor, { type EditorCommands } from "../components/VisualEditor";
+import type { Editor } from "@tiptap/react";
 import { SectionLabel } from "../ui/bits";
 import { SegmentedControl } from "../ui/SegmentedControl";
+import NoteIcon from "./NoteIcon";
 import NotesSidebar from "./NotesSidebar";
 import { useNotes } from "./NotesContext";
 import { headingsOf, todoCount, wordCount } from "./outline";
@@ -32,6 +35,8 @@ import { Icon } from "../ui/icons";
 // the page and a status line, then On this page and Details on the right.
 export default function NotesScreen() {
   const n = useNotes();
+  // Either side panel can be hidden for a wider page (Ctrl+\, Ctrl+Shift+\).
+  const { settings } = useSettings();
   const [trash, setTrash] = useState(0);
   useEffect(() => {
     void api
@@ -44,7 +49,7 @@ export default function NotesScreen() {
 
   return (
     <>
-      <NotesSidebar trashCount={trash} />
+      {!settings.NotesListHidden && <NotesSidebar trashCount={trash} />}
       <main className="flex min-w-0 flex-1 flex-col bg-bg">
         <Tabs />
         {n.current ? (
@@ -62,13 +67,13 @@ export default function NotesScreen() {
           </div>
         )}
       </main>
-      <RightPanel />
+      {!settings.NotesDetailsHidden && <RightPanel />}
     </>
   );
 }
 
 function Tabs() {
-  const { tabs, current, activate, closeTab, reorderTab, tabMenu, openMenu, keyFor, pickNote } = useNotes();
+  const { tabs, current, activate, closeTab, reorderTab, tabMenu, openMenu, keyFor, pickNote, iconFor } = useNotes();
   const [dragging, setDragging] = useState<string | null>(null);
   const [drop, setDrop] = useState<{ name: string; before: boolean } | null>(null);
 
@@ -81,10 +86,11 @@ function Tabs() {
   };
 
   return (
-    <div className="flex h-[50px] shrink-0 items-end gap-1 overflow-x-auto border-b border-line bg-side px-[14px]">
+    <div className="flex h-[50px] shrink-0 items-end gap-1 overflow-x-auto border-b border-line bg-side px-[14px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <div role="tablist" aria-label="Open notes" className="contents">
         {tabs.map((name) => {
           const on = name === current;
+          const icon = iconFor(name);
           return (
             <div
               key={name}
@@ -106,8 +112,16 @@ function Tabs() {
                 setDragging(null);
                 setDrop(null);
               }}
+              // Middle-click closes the tab, as in a browser. Pressing the
+              // middle button would otherwise start the tab strip's
+              // autoscroll, which swallows the click.
+              onMouseDown={(e) => {
+                if (e.button === 1) e.preventDefault();
+              }}
               onAuxClick={(e) => {
-                if (e.button === 1) void closeTab(name);
+                if (e.button !== 1) return;
+                e.preventDefault();
+                void closeTab(name);
               }}
               onContextMenu={(e) => {
                 e.preventDefault();
@@ -124,10 +138,11 @@ function Tabs() {
                 role="tab"
                 aria-selected={on}
                 aria-description={`${keyFor("app.closeTab")} closes it`}
-                onMouseDown={() => !on && void activate(name)}
-                className="h-full truncate text-13 font-medium"
+                onMouseDown={(e) => e.button === 0 && !on && void activate(name)}
+                className="flex h-full min-w-0 items-center gap-1.5 text-13 font-medium"
               >
-                {titleOf(name)}
+                {icon && <NoteIcon icon={icon} />}
+                <span className="truncate">{titleOf(name)}</span>
               </button>
               {/* For the mouse; the keyboard closes tabs with the shortcut or the tab's menu. */}
               <button
@@ -241,9 +256,21 @@ function Page() {
   const { settings } = useSettings();
   const name = n.current!;
   const nb = n.notebook!;
+  // The editor and its link and picture commands, for the format bar.
+  const [editor, setEditor] = useState<Editor | null>(null);
+  const commands = useRef<EditorCommands | null>(null);
+  const { onVisualEditor } = n;
+  const onEditor = useCallback(
+    (e: Editor | null) => {
+      onVisualEditor(e);
+      setEditor(e);
+    },
+    [onVisualEditor],
+  );
   const body = useMemo(() => splitFront(n.text).body, [n.text]);
   const cover = useMemo(() => coverOf(n.text), [n.text]);
   const coverPosition = useMemo(() => coverPositionOf(n.text), [n.text]);
+  const icon = useMemo(() => iconOf(n.text), [n.text]);
   const info = n.notes.find((x) => x.name === name);
   const tags = useMemo(() => {
     const ids = lookup(nb.tags.Notes, name) ?? [];
@@ -271,6 +298,10 @@ function Page() {
       onRemoveCover={() => n.setCover(null)}
       coverPosition={coverPosition}
       onCoverPosition={n.setCoverPosition}
+      icon={icon}
+      onChooseIcon={n.chooseIcon}
+      onRemoveIcon={() => n.setIcon(null)}
+      onMenu={n.openMenu}
       path={parentsOf(nb, name)}
       onOpenParent={(p) => n.actions.open(p)}
       tags={tags}
@@ -281,45 +312,55 @@ function Page() {
   );
 
   return (
-    <div className="min-h-0 flex-1" data-note-page>
-      {n.mode === "Markdown" ? (
-        <SourceEditor
-          key={n.opening}
-          initial={n.text}
-          lineNumbers={Boolean(settings.LineNumbers)}
-          wordWrap={settings.WordWrap !== false}
-          blinkMs={530}
-          onChange={n.onChange}
-          onView={n.onSourceView}
-          header={header}
-          spot={spotFor(n.editing, "markdown")}
-          onSpot={(spot: EditorSpot) => n.editing && rememberSpot(n.editing, "markdown", spot)}
-        />
-      ) : (
-        <VisualEditor
-          key={n.opening}
-          initial={body}
-          header={header}
-          readable
-          caret={caret}
-          keys={n.keys}
-          keyFor={n.keyFor}
-          onChange={n.onBodyChange}
-          openMenu={n.openMenu}
-          onEmoji={n.openEmoji}
-          onEditor={n.onVisualEditor}
-          linkPreviews={settings.LinkPreviews !== false}
-          videoEmbeds={settings.VideoEmbeds !== false}
-          todoLinks={todoLinks}
-          onOpenTodo={(id) => requestTasks({ kind: "open", id })}
-          todoMenu={n.todoMenu}
-          spot={spotFor(n.editing, "visual")}
-          onSpot={(spot: EditorSpot) => n.editing && rememberSpot(n.editing, "visual", spot)}
-        />
+    <div className="flex min-h-0 flex-1 flex-col" data-note-page style={{ "--note-width": noteWidths[settings.NoteWidth ?? "wide"] } as React.CSSProperties}>
+      {n.mode !== "Markdown" && settings.NotesFormatBar !== false && (
+        <Toolbar editor={editor} openMenu={n.openMenu} keyFor={n.keyFor} onEmoji={() => n.openEmoji()} onLink={() => commands.current?.link()} onImage={() => commands.current?.image()} />
       )}
+      <div className="min-h-0 flex-1">
+        {n.mode === "Markdown" ? (
+          <SourceEditor
+            key={n.opening}
+            initial={n.text}
+            lineNumbers={Boolean(settings.LineNumbers)}
+            wordWrap={settings.WordWrap !== false}
+            blinkMs={530}
+            onChange={n.onChange}
+            onView={n.onSourceView}
+            header={header}
+            spot={spotFor(n.editing, "markdown")}
+            onSpot={(spot: EditorSpot) => n.editing && rememberSpot(n.editing, "markdown", spot)}
+          />
+        ) : (
+          <VisualEditor
+            key={n.opening}
+            initial={body}
+            header={header}
+            readable
+            caret={caret}
+            keys={n.keys}
+            keyFor={n.keyFor}
+            onChange={n.onBodyChange}
+            openMenu={n.openMenu}
+            onEmoji={n.openEmoji}
+            onEditor={onEditor}
+            commands={commands}
+            linkPreviews={settings.LinkPreviews !== false}
+            videoEmbeds={settings.VideoEmbeds !== false}
+            todoLinks={todoLinks}
+            onOpenTodo={(id) => requestTasks({ kind: "open", id })}
+            todoMenu={n.todoMenu}
+            spot={spotFor(n.editing, "visual")}
+            onSpot={(spot: EditorSpot) => n.editing && rememberSpot(n.editing, "visual", spot)}
+          />
+        )}
+      </div>
     </div>
   );
 }
+
+// Settings → Notes → Page width. Full width is a width the page never
+// reaches, so the column fills whatever room there is.
+export const noteWidths = { narrow: "660px", wide: "900px", full: "100000px" } as const;
 
 function StatusBar() {
   const { saved, current, text, mode, keyFor } = useNotes();

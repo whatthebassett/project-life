@@ -120,6 +120,6 @@ export function toneOf(hex: string | null, fallback: number): ListColor {
 // The calendars that are on, as the lists module shows them.
 export function calendarLists(accounts: Account[]): TaskList[] {
   return accounts.flatMap((a) =>
-    a.Calendars.filter((c) => c.On).map((c) => ({ id: calendarKey(a.Id, c.Id), name: c.Name, color: `var(--${c.Color})`, tone: c.Color })),
+    a.Calendars.filter((c) => c.On).map((c) => ({ id: calendarKey(a.Id, c.Id), name: c.Name, color: `var(--${c.Color})`, tone: c.Color, inTasks: false })),
   );
 }

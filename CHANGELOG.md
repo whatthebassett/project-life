@@ -1,5 +1,58 @@
 # Changelog
 
+## Zora's Domain (0.3.0 beta)
+
+*September 27, 2026.* A Home you can arrange, with sports and markets; a command palette; smart links and a format bar in Notes; calendars from anywhere.
+
+### Features
+
+#### Home
+
+- Move and resize the cards: drag a card by any empty spot, or drag its sides and corners. They snap to a grid of thirds and halves, and fill any gap above them.
+- Right-click any card, or any row on it, for Size and Move; lock the whole layout with the padlock at the top right.
+- New Sports card: live scores for the NFL, NBA, MLB and NHL, today's games first. Follow teams to pin their games to the top.
+- New Markets card: the S&P 500, Dow and Nasdaq, and a watchlist with prices, the day's change and a trend line.
+- News shows a picture for each story, one headline per row, with more below.
+
+#### Command palette
+
+- Ctrl+K opens it from anywhere: add a task, a note (note:) or an event (event:), jump to any screen, open a note, or run a command.
+- A note added from it opens in Notes, ready to write.
+
+#### Notes
+
+- A format bar above the note: undo, text style, bold and the rest, lists, callouts, tables, pictures and emoji.
+- Links become smart links: a chip with the site's icon and the page's title. Right-click → Display as URL, Inline, Card or Embed.
+- Typed links turn into their page's title too, not just pasted ones.
+- Give a note an emoji; it shows by its title, in the notebook, the tabs and on Home.
+- Page width (Narrow, Wide, Full width), and hide the notebook or About this note for more room (`Ctrl+\`, `Ctrl+Shift+\`).
+- Tables show a line between columns; middle-click closes a tab.
+
+#### Schedule
+
+- Events can repeat every year; “Mom's birthday oct 3” in quick add does it for you.
+- Subscribe to a calendar by its link (Google, Outlook, iCloud, holidays, sports) or import an .ics file.
+- Make new calendars, with a switch for whether each is also a list in Tasks; two new colors, blue and pink.
+
+#### Settings
+
+- Peach, Checkpoint's theme, joins the others. Match Windows light and dark keeps it when Windows is light.
+
+### Defect fixes
+
+- **Home**: cards could be dragged down into space they didn't stay in; they now land where they fit, and gaps close up.
+- **Home**: news headlines are no longer cut to a couple of words on a small window.
+- **Notes**: adding a note from another screen straight after starting could do nothing; it now waits for Notes and opens the note.
+- **Notes**: a link to a private page (Confluence, SharePoint) no longer gets renamed “Log in to continue”; it keeps its address.
+- **Notes**: a link's hover card no longer closes when you press Ctrl or Alt, so Ctrl+click works.
+
+### Known issues
+
+- **Connected accounts**: connecting a Microsoft or Google account isn't switched on in this build yet. Connect says so until the app registrations are added.
+- **Home**: scores and prices come from ESPN's and Yahoo Finance's public feeds, which aren't official and could change. The cards say so when they can't load.
+- **Schedule**: subscribed calendars don't send reminders.
+- **Right-click menus**: spelling suggestions only show with Shift+right-click, which opens the Windows menu.
+
 ## Kakariko (0.2.0 beta)
 
 *September 25, 2026.* Links that explain themselves, videos right in your notes, and right-click menus everywhere.

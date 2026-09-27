@@ -13,7 +13,7 @@ import { locale } from "../lib/format";
 import { addDays, fromYmd, isYmd, ymd } from "../tasks/dates";
 
 export type EventKind = "event" | "focus" | "reminder";
-export type EventRepeat = "daily" | "weekdays" | "weekly" | "monthly";
+export type EventRepeat = "daily" | "weekdays" | "weekly" | "monthly" | "yearly";
 export type CallKind = "teams" | "meet" | "zoom";
 
 export interface CalEvent {
@@ -46,6 +46,10 @@ export interface CalEvent {
   Note?: string | null;
   // From a connected account's calendar (accounts/model.ts).
   Remote?: RemoteRef | null;
+  // From a calendar subscribed to by link (feeds.ts): read-only.
+  Feed?: string | null;
+  // The event's UID in the .ics file it came from.
+  Uid?: string | null;
   Created: string;
   [key: string]: unknown;
 }
@@ -63,6 +67,12 @@ export interface RemoteRef {
   Declined?: boolean;
 }
 
+// Events that can't be changed here: someone else's invitation in a
+// connected calendar, or anything on a subscribed calendar.
+export function isReadOnly(e: CalEvent): boolean {
+  return Boolean((e.Remote && !e.Remote.Editable) || e.Feed);
+}
+
 export interface EventFile {
   Events: CalEvent[];
   [key: string]: unknown;
@@ -70,7 +80,7 @@ export interface EventFile {
 
 const LOCAL = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 const KINDS: EventKind[] = ["event", "focus", "reminder"];
-const REPEATS: EventRepeat[] = ["daily", "weekdays", "weekly", "monthly"];
+const REPEATS: EventRepeat[] = ["daily", "weekdays", "weekly", "monthly", "yearly"];
 const CALLS: CallKind[] = ["teams", "meet", "zoom"];
 
 export function parseEvents(text: string | null): EventFile {
@@ -140,7 +150,15 @@ function repeatsOn(repeat: EventRepeat, first: Date, day: Date): boolean {
       return day.getDay() === first.getDay();
     case "monthly":
       return day.getDate() === first.getDate();
+    case "yearly":
+      if (day.getMonth() === first.getMonth() && day.getDate() === first.getDate()) return true;
+      // A February 29th birthday shows on the 28th in other years.
+      return first.getMonth() === 1 && first.getDate() === 29 && day.getMonth() === 1 && day.getDate() === 28 && !isLeapYear(day.getFullYear());
   }
+}
+
+function isLeapYear(y: number) {
+  return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
 }
 
 // Every showing that touches [from, to), in start order.
@@ -350,6 +368,7 @@ export const repeatLabels: Record<EventRepeat, string> = {
   weekdays: "Every weekday",
   weekly: "Every week",
   monthly: "Every month",
+  yearly: "Every year",
 };
 
 export const reminderChoices: { minutes: number; label: string }[] = [

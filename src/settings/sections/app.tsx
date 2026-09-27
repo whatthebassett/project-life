@@ -254,14 +254,14 @@ export function Appearance() {
     <>
       <div className="flex flex-col gap-3">
         <SectionLabel>Theme</SectionLabel>
-        <div role="radiogroup" aria-label="Theme" className="grid grid-cols-4 gap-3">
+        <div role="radiogroup" aria-label="Theme" className="grid grid-cols-5 gap-3">
           {themes.map((t) => (
             <ThemeCard key={t.id} theme={t} selected={t.id === selected} onPick={() => update({ Theme: t.id })} />
           ))}
         </div>
       </div>
       <ListGroup title="COLOR">
-        <Toggle label="Match Windows light and dark" desc="Switches to Daylight when Windows is in light mode" value={Boolean(settings.MatchWindows)} onChange={(v) => update({ MatchWindows: v })} />
+        <Toggle label="Match Windows light and dark" desc="A light theme when Windows is light: Daylight, or Peach if that's your pick" value={Boolean(settings.MatchWindows)} onChange={(v) => update({ MatchWindows: v })} />
         <Swatches
           label="Accent color"
           desc="Leave on Theme to use each theme's own accent"
@@ -344,6 +344,8 @@ export const homeCards: { id: string; label: string }[] = [
   { id: "notes", label: "Recent notes" },
   { id: "news", label: "News" },
   { id: "weather", label: "Weather" },
+  { id: "sports", label: "Sports" },
+  { id: "stocks", label: "Markets" },
 ];
 
 export function HomeScreenSettings() {
@@ -363,6 +365,10 @@ export function HomeScreenSettings() {
         {homeCards.map((c) => (
           <Toggle key={c.id} label={c.label} value={!hidden.has(c.id)} onChange={(v) => set(c.id, v)} />
         ))}
+      </ListGroup>
+      <ListGroup title="LAYOUT">
+        <Toggle label="Lock the cards" desc="So they can't be moved or resized by accident" value={settings.HomeLocked === true} onChange={(v) => update({ HomeLocked: v })} />
+        <Action label="Card layout" desc={settings.HomeLayout ? "Moved and resized" : "As it started"} action="Reset" disabled={!settings.HomeLayout} onClick={() => update({ HomeLayout: undefined })} />
       </ListGroup>
       <ListGroup title="NEWS AND WEATHER">
         <Action label="News sources" desc={sources !== null ? `${sources} ${sources === 1 ? "source" : "sources"}` : "Gaming, tech and local"} action="Manage" onClick={() => setNewsOpen(true)} />
