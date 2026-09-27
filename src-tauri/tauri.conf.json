@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Project Life",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "identifier": "com.ultimabass.projectlife",
   "build": {
     "beforeDevCommand": "npm run dev",

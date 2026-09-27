@@ -208,6 +208,10 @@ export const api = {
   // null: back to the default. Returns the folder now in use, and what copying did.
   setNotesFolder: (path: string | null, copy: boolean) => call<FolderSwitch>("set_notes_folder", { path, copy }),
   importNotes: (paths: string[]) => call<ImportResult>("import_notes", { paths }),
+  // A note Windows asked the app to open (File Explorer), once; and its name
+  // when it's in the notes folder already.
+  takeOpenedNote: () => (inTauri ? invoke<string | null>("take_opened_note") : Promise.resolve(null)),
+  noteInFolder: (path: string) => invoke<string | null>("note_in_folder", { path }),
   exportNote: (name: string, destination: string) => call<void>("export_note", { name, destination }),
   exportAll: (destination: string) => call<number>("export_all", { destination }),
   openNotesFolder: () => call<void>("open_notes_folder"),

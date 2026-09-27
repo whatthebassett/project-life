@@ -6,6 +6,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { Editor } from "@tiptap/react";
 import type { EditorView } from "@codemirror/view";
 import { open as openFile, save as saveFile } from "@tauri-apps/plugin-dialog";
+import { listen } from "@tauri-apps/api/event";
+import { toast } from "../ui/Toast";
 import { api, inTauri, titleOf, type NoteInfo } from "../lib/api";
 import {
   isPinned,
@@ -806,6 +808,45 @@ export function NotesProvider({ visible, onShow, children }: Props) {
       await notify("Import", `Couldn't import: ${String(e)}`);
     }
   }, [filter, commit, refreshNotes, activate, notify]);
+
+  // A note opened from File Explorer (double-click, or Open with): straight to
+  // it in Notes. One in the notes folder opens as it is; one anywhere else is
+  // imported as a copy, since notes live in the notes folder, and says so.
+  const openFromExplorer = useCallback(async () => {
+    const path = await api.takeOpenedNote().catch(() => null);
+    if (!path) return;
+    await started.current?.promise;
+    try {
+      const name = await api.noteInFolder(path);
+      if (name) {
+        await refreshNotes();
+        await activate(name, true);
+        return;
+      }
+      const { imported, failed } = await api.importNotes([path]);
+      const nb = notebookRef.current;
+      if (!imported.length || !nb) {
+        await notify("Open note", `Couldn't open ${path}${failed[0] ? `: ${failed[0].error}` : "."}`);
+        return;
+      }
+      await commit({ ...nb, order: [imported[0], ...nb.order] });
+      await refreshNotes();
+      await activate(imported[0], true);
+      toast(`Opened a copy of “${titleOf(imported[0])}”. It's outside your notes folder, so it was imported.`);
+    } catch (e) {
+      await notify("Open note", `Couldn't open ${path}: ${String(e)}`);
+    }
+  }, [refreshNotes, activate, commit, notify]);
+
+  // At startup, and each time the running app is asked to open another.
+  const openFromExplorerRef = useRef(openFromExplorer);
+  openFromExplorerRef.current = openFromExplorer;
+  useEffect(() => {
+    if (!inTauri) return;
+    void openFromExplorerRef.current();
+    const stop = listen("open-note-file", () => void openFromExplorerRef.current());
+    return () => void stop.then((f) => f());
+  }, []);
 
   const exportNote = useCallback(async () => {
     const name = currentRef.current;

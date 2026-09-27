@@ -371,6 +371,56 @@ pub struct ImportFailure {
     error: String,
 }
 
+// ----- opened from File Explorer -----
+
+// A Markdown file Windows asked Project Life to open (double-click, or Open
+// with), waiting until Notes has loaded and asks for it.
+static OPENED: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+
+// The Markdown file among a launch's arguments (after the program itself),
+// made absolute from the folder it was launched in. Flags (--autostart and
+// the like) and anything that isn't an existing .md file are skipped.
+pub fn note_arg(args: &[String], cwd: &Path) -> Option<String> {
+    args.iter()
+        .skip(1)
+        .filter(|a| !a.starts_with('-'))
+        .map(|a| {
+            let p = PathBuf::from(a);
+            if p.is_absolute() { p } else { cwd.join(p) }
+        })
+        .find(|p| {
+            let ext = p.extension().and_then(|e| e.to_str()).map(|e| e.to_ascii_lowercase());
+            p.is_file() && matches!(ext.as_deref(), Some("md" | "markdown"))
+        })
+        .map(|p| p.to_string_lossy().into_owned())
+}
+
+pub fn remember_opened(path: String) {
+    if let Ok(mut opened) = OPENED.lock() {
+        *opened = Some(path);
+    }
+}
+
+// The file waiting to be opened, once: Notes asks at startup and whenever
+// the app is asked to open another while it's running.
+#[tauri::command]
+pub fn take_opened_note() -> Option<String> {
+    OPENED.lock().ok()?.take()
+}
+
+// The note's name when the file is right in the notes folder; None when it
+// lives somewhere else (Notes then imports a copy).
+#[tauri::command]
+pub fn note_in_folder(path: String) -> Result<Option<String>, String> {
+    let dir = notes_dir()?;
+    let file = PathBuf::from(&path);
+    let same = |a: &Path, b: &Path| matches!((fs::canonicalize(a), fs::canonicalize(b)), (Ok(x), Ok(y)) if x == y);
+    Ok(match (file.parent(), file.file_name()) {
+        (Some(parent), Some(name)) if same(parent, &dir) => Some(name.to_string_lossy().into_owned()),
+        _ => None,
+    })
+}
+
 #[tauri::command(async)]
 pub fn import_notes(paths: Vec<String>) -> Result<ImportResult, String> {
     let dir = notes_dir()?;
@@ -680,7 +730,21 @@ pub fn fetch_link_preview(url: String) -> Result<Option<LinkPreview>, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{is_sign_in, recycled_title};
+    use super::{is_sign_in, note_arg, recycled_title};
+
+    #[test]
+    fn finds_the_note_windows_opened() {
+        let dir = std::env::temp_dir().join("pl-note-arg-test");
+        let _ = std::fs::create_dir_all(&dir);
+        let file = dir.join("Plans.md");
+        std::fs::write(&file, "# Plans").unwrap();
+        let exe = "C:\\Apps\\Project Life.exe".to_string();
+        let full = file.to_string_lossy().into_owned();
+        assert_eq!(note_arg(&[exe.clone(), full.clone()], &dir), Some(full.clone()));
+        assert_eq!(note_arg(&[exe.clone(), "--autostart".into(), "Plans.md".into()], &dir), Some(full));
+        assert_eq!(note_arg(&[exe.clone(), "missing.md".into()], &dir), None);
+        assert_eq!(note_arg(&[exe], &dir), None);
+    }
 
     #[test]
     fn spots_sign_in_pages() {

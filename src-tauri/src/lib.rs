@@ -155,6 +155,11 @@ pub fn run() {
         return;
     }
     notes::load_notes_folder();
+    // Opened from File Explorer (double-click, or Open with): the note to show.
+    let args: Vec<String> = std::env::args().collect();
+    if let Some(path) = notes::note_arg(&args, &std::env::current_dir().unwrap_or_default()) {
+        notes::remember_opened(path);
+    }
     // Settings → Privacy → Save crash reports: a crash on this side goes into
     // Data\Logs too.
     let default_hook = std::panic::take_hook();
@@ -167,7 +172,15 @@ pub fn run() {
     tauri::Builder::default()
         // A second copy (started again while this one sits in the tray)
         // just brings this one forward.
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| tray::show_main(app)))
+        // A second launch (another note opened from File Explorer while the app
+        // is running) hands its file over and brings the window forward.
+        .plugin(tauri_plugin_single_instance::init(|app, args, cwd| {
+            tray::show_main(app);
+            if let Some(path) = notes::note_arg(&args, std::path::Path::new(&cwd)) {
+                notes::remember_opened(path);
+                let _ = tauri::Emitter::emit(app, "open-note-file", ());
+            }
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
@@ -293,7 +306,9 @@ pub fn run() {
             notes::write_meta,
             notes::notes_folder_info,
             notes::set_notes_folder,
-            notes::fetch_link_preview
+            notes::fetch_link_preview,
+            notes::take_opened_note,
+            notes::note_in_folder
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

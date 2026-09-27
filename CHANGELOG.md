@@ -1,5 +1,13 @@
 # Changelog
 
+## Zora's Domain (0.3.1 beta)
+
+*September 27, 2026.* A fix for opening notes from File Explorer.
+
+### Defect fixes
+
+- **Notes**: opening a note from File Explorer (double-click, or Open with) now opens it in Notes, whether Project Life was running or not. A Markdown file outside your notes folder is imported as a copy and opened.
+
 ## Zora's Domain (0.3.0 beta)
 
 *September 27, 2026.* A Home you can arrange, with sports and markets; a command palette; smart links and a format bar in Notes; calendars from anywhere.

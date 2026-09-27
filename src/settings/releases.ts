@@ -16,6 +16,20 @@ export interface Release {
 export const releases: Release[] = [
   {
     name: "Zora's Domain",
+    version: "0.3.1 beta",
+    date: "2026-09-27",
+    summary: "A fix for opening notes from File Explorer.",
+    features: [],
+    fixes: [
+      {
+        area: "Notes",
+        text: "Opening a note from File Explorer (double-click, or Open with) now opens it in Notes, whether Project Life was running or not. A Markdown file outside your notes folder is imported as a copy and opened.",
+      },
+    ],
+    known: [],
+  },
+  {
+    name: "Zora's Domain",
     version: "0.3.0 beta",
     date: "2026-09-27",
     summary: "A Home you can arrange, with sports and markets; a command palette; smart links and a format bar in Notes; calendars from anywhere.",
