@@ -43,7 +43,7 @@ import { setCompleted } from "../tasks/model";
 import { requestTasks } from "../tasks/nav";
 import { taskStore } from "../tasks/useTasks";
 import { linkedTasks, sendAllTodos, sendTodo, todosOf, withTodoChecked } from "./todoLinks";
-import { keyMap, keyOf, keysFor } from "../lib/shortcuts";
+import { keyMap, keyOf, keysFor, showKeys } from "../lib/shortcuts";
 import { initRecents, rememberEmoji, setSkinTone } from "../lib/emoji";
 import { setDefaultCodeLanguage } from "../editor/code";
 import { currentSettings } from "../lib/settings";
@@ -967,7 +967,8 @@ export function NotesProvider({ visible, onShow, children }: Props) {
   // Settings → Keyboard shortcuts; App handles the Everywhere ones.
   const shortcutOverrides = settings.Shortcuts;
   const keys = useMemo(() => keyMap(shortcutOverrides, ["Notes", "Tabs", "Formatting"]), [shortcutOverrides]);
-  const keyFor = useCallback((id: string) => keysFor(id, shortcutOverrides), [shortcutOverrides]);
+  // A command's keys as they're shown in menus and tips ("Ctrl+N", or "⌘N" on a Mac).
+  const keyFor = useCallback((id: string) => showKeys(keysFor(id, shortcutOverrides)), [shortcutOverrides]);
   const mode = settings.EditorMode === "Markdown" ? "Markdown" : "Visual";
   const setMode = useCallback((m: "Visual" | "Markdown") => update({ EditorMode: m }), [update]);
 

@@ -1,6 +1,12 @@
 // Every command that can have a keyboard shortcut. The ids match earlier
 // versions of Noted, so shortcuts saved in appearance.json carry over.
 // Settings.Shortcuts holds only the ones the writer changed; "" means none.
+//
+// On a Mac, "Ctrl" in these strings is the ⌘ key (as Ctrl is on Windows: the
+// one most shortcuts use), and "MacCtrl" is the Mac's own Control key. The
+// saved form is the same on both, so a Data folder moved between them keeps
+// its shortcuts. showKeys and keyCaps turn it into what's shown: "⇧⌘K".
+import { isMac } from "./platform";
 
 // Everywhere: App's own (they work on any screen). Notes and Tabs: the Notes
 // screen's. Formatting: inside a note, so Ctrl+K and Ctrl+E can mean one
@@ -12,6 +18,9 @@ export interface ShortcutCommand {
   name: string;
   group: ShortcutGroup;
   keys: string;
+  // The default on a Mac, where it has to differ: ⌘Tab belongs to macOS, and
+  // ⌥⇧ with an arrow selects text by the word.
+  mac?: string;
 }
 
 export const shortcutCommands: ShortcutCommand[] = [
@@ -26,10 +35,10 @@ export const shortcutCommands: ShortcutCommand[] = [
   { id: "app.new", name: "New note", group: "Notes", keys: "Ctrl+N" },
   { id: "app.newPage", name: "New page inside", group: "Notes", keys: "Ctrl+Alt+N" },
   { id: "app.movePage", name: "Move note to…", group: "Notes", keys: "" },
-  { id: "app.noteUp", name: "Move note up", group: "Notes", keys: "Alt+Shift+Up" },
-  { id: "app.noteDown", name: "Move note down", group: "Notes", keys: "Alt+Shift+Down" },
-  { id: "app.noteIn", name: "Put note inside the one above", group: "Notes", keys: "Alt+Shift+Right" },
-  { id: "app.noteOut", name: "Take note out of its notebook", group: "Notes", keys: "Alt+Shift+Left" },
+  { id: "app.noteUp", name: "Move note up", group: "Notes", keys: "Alt+Shift+Up", mac: "MacCtrl+Alt+Up" },
+  { id: "app.noteDown", name: "Move note down", group: "Notes", keys: "Alt+Shift+Down", mac: "MacCtrl+Alt+Down" },
+  { id: "app.noteIn", name: "Put note inside the one above", group: "Notes", keys: "Alt+Shift+Right", mac: "MacCtrl+Alt+Right" },
+  { id: "app.noteOut", name: "Take note out of its notebook", group: "Notes", keys: "Alt+Shift+Left", mac: "MacCtrl+Alt+Left" },
   { id: "app.rename", name: "Rename note", group: "Notes", keys: "F2" },
   { id: "app.pin", name: "Pin or unpin note", group: "Notes", keys: "Ctrl+Alt+P" },
   { id: "app.save", name: "Save now", group: "Notes", keys: "Ctrl+S" },
@@ -53,8 +62,8 @@ export const shortcutCommands: ShortcutCommand[] = [
   { id: "app.switch", name: "Switch note", group: "Tabs", keys: "Ctrl+P" },
   { id: "app.closeTab", name: "Close tab", group: "Tabs", keys: "Ctrl+W" },
   { id: "app.closeOtherTabs", name: "Close other tabs", group: "Tabs", keys: "" },
-  { id: "app.nextTab", name: "Next tab", group: "Tabs", keys: "Ctrl+Tab" },
-  { id: "app.previousTab", name: "Previous tab", group: "Tabs", keys: "Ctrl+Shift+Tab" },
+  { id: "app.nextTab", name: "Next tab", group: "Tabs", keys: "Ctrl+Tab", mac: "MacCtrl+Tab" },
+  { id: "app.previousTab", name: "Previous tab", group: "Tabs", keys: "Ctrl+Shift+Tab", mac: "MacCtrl+Shift+Tab" },
   { id: "app.moveTabLeft", name: "Move tab left", group: "Tabs", keys: "Ctrl+Shift+PageUp" },
   { id: "app.moveTabRight", name: "Move tab right", group: "Tabs", keys: "Ctrl+Shift+PageDown" },
 
@@ -134,7 +143,8 @@ export function keyOf(e: KeyboardEvent): string | null {
   else if (/^F\d{1,2}$/.test(c)) key = c;
   else key = codeNames[c];
   if (!key) return null;
-  return (e.ctrlKey ? "Ctrl+" : "") + (e.shiftKey ? "Shift+" : "") + (e.altKey ? "Alt+" : "") + key;
+  const main = isMac ? e.metaKey : e.ctrlKey;
+  return (main ? "Ctrl+" : "") + (isMac && e.ctrlKey ? "MacCtrl+" : "") + (e.shiftKey ? "Shift+" : "") + (e.altKey ? "Alt+" : "") + key;
 }
 
 const aliases: Record<string, string> = { escape: "Esc", backspace: "Back", return: "Enter", pgup: "PageUp", pgdn: "PageDown", plus: "=" };
@@ -155,16 +165,42 @@ export function normalizeKeys(text: string): string | null {
   for (const part of parts) {
     const m = part.toLowerCase();
     if (m === "ctrl" || m === "control") mods.add("Ctrl");
+    else if (m === "macctrl") mods.add("MacCtrl");
     else if (m === "shift") mods.add("Shift");
     else if (m === "alt") mods.add("Alt");
     else return null;
   }
   key = aliases[key.toLowerCase()] ?? (key.length === 1 ? key.toUpperCase() : key[0].toUpperCase() + key.slice(1));
-  return (mods.has("Ctrl") ? "Ctrl+" : "") + (mods.has("Shift") ? "Shift+" : "") + (mods.has("Alt") ? "Alt+" : "") + key;
+  return (mods.has("Ctrl") ? "Ctrl+" : "") + (mods.has("MacCtrl") ? "MacCtrl+" : "") + (mods.has("Shift") ? "Shift+" : "") + (mods.has("Alt") ? "Alt+" : "") + key;
 }
 
 export function defaultKeys(id: string): string {
-  return normalizeKeys(byId.get(id)?.keys ?? "") ?? "";
+  const c = byId.get(id);
+  return normalizeKeys((isMac && c?.mac) || c?.keys || "") ?? "";
+}
+
+// How a Mac writes each key: modifiers as symbols in the order ⌃⌥⇧⌘, then the key.
+const macModifiers: [string, string][] = [
+  ["MacCtrl", "⌃"],
+  ["Alt", "⌥"],
+  ["Shift", "⇧"],
+  ["Ctrl", "⌘"],
+];
+const macKeys: Record<string, string> = { Up: "↑", Down: "↓", Left: "←", Right: "→", Enter: "↩", Back: "⌫", Delete: "⌦", Esc: "⎋", Tab: "⇥", PageUp: "⇞", PageDown: "⇟", Home: "↖", End: "↘" };
+
+// A shortcut's keys one by one, for key caps: ["Ctrl", "Shift", "K"], or
+// ["⇧", "⌘", "K"] on a Mac.
+export function keyCaps(keys: string): string[] {
+  if (!keys) return [];
+  const parts = keys.split("+");
+  if (!isMac) return parts;
+  const key = parts.pop()!;
+  return [...macModifiers.filter(([name]) => parts.includes(name)).map(([, symbol]) => symbol), macKeys[key] ?? key];
+}
+
+// A shortcut as it's shown in menus and tips: "Ctrl+Shift+K", or "⇧⌘K" on a Mac.
+export function showKeys(keys: string): string {
+  return isMac ? keyCaps(keys).join("") : keys;
 }
 
 export function keysFor(id: string, overrides?: Record<string, string>): string {
@@ -202,6 +238,10 @@ export function clashes(a: ShortcutGroup, b: ShortcutGroup): boolean {
 }
 
 // A recorded shortcut must be distinctive enough not to swallow typing.
+// On a Mac, ⌥ with a letter or digit types a character (⌥N is ˜), so it needs
+// ⌘ or ⌃ as well.
 export function isAssignable(keys: string): boolean {
-  return /(^|\+)(Ctrl|Alt)\+/.test(keys) || /(^|\+)F\d{1,2}$/.test(keys);
+  if (/(^|\+)F\d{1,2}$/.test(keys)) return true;
+  if (isMac && !/(^|\+)(Ctrl|MacCtrl)\+/.test(keys) && /\+.$/.test(keys)) return false;
+  return /(^|\+)(Ctrl|MacCtrl|Alt)\+/.test(keys);
 }

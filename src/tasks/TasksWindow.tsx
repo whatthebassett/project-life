@@ -1,3 +1,4 @@
+import { isMac } from "../lib/platform";
 import clsx from "clsx";
 import { emitTo } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -104,7 +105,7 @@ export default function TasksWindow() {
   return (
     <div className="relative flex h-full flex-col bg-bg text-text">
       <header data-tauri-drag-region className="flex h-8 shrink-0 items-stretch border-b border-line bg-side">
-        <span data-tauri-drag-region className="pointer-events-none flex items-center pl-3.5 text-12 text-muted">
+        <span data-tauri-drag-region className={clsx("pointer-events-none flex items-center text-12 text-muted", isMac ? "pl-[82px]" : "pl-3.5")}>
           Tasks · Project Life
         </span>
         <div data-tauri-drag-region className="flex-1" />
@@ -119,12 +120,17 @@ export default function TasksWindow() {
         >
           <Pin size={13} className={onTop ? "text-accent" : undefined} />
         </WinButton>
-        <WinButton title="Minimize" onClick={() => inTauri && void win().minimize()}>
-          <Minus size={16} />
-        </WinButton>
-        <WinButton title="Close" close onClick={() => inTauri && void taskStore().flush().finally(() => win().close())}>
-          <X size={17} />
-        </WinButton>
+        {/* A Mac's window has its own minimize and close buttons, on the left. */}
+        {!isMac && (
+          <>
+            <WinButton title="Minimize" onClick={() => inTauri && void win().minimize()}>
+              <Minus size={16} />
+            </WinButton>
+            <WinButton title="Close" close onClick={() => inTauri && void taskStore().flush().finally(() => win().close())}>
+              <X size={17} />
+            </WinButton>
+          </>
+        )}
       </header>
 
       <div className="flex flex-col gap-3 px-4 pt-3.5">

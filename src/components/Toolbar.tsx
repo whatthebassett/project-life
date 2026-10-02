@@ -1,3 +1,4 @@
+import { isMac } from "../lib/platform";
 import { useRef } from "react";
 import { useEditorState, type Editor } from "@tiptap/react";
 import {
@@ -169,8 +170,8 @@ export default function Toolbar({ editor, openMenu, keyFor, onEmoji, onLink, onI
         // A narrow window wraps it onto a second line rather than hiding buttons.
         className="mx-auto flex min-h-12 w-full max-w-[calc(var(--note-width)+80px)] flex-wrap items-center gap-x-0.5 gap-y-1 px-10 py-2 text-muted"
       >
-        <Btn label="Undo" icon={<Undo2 size={16} />} title="Undo (Ctrl+Z)" disabled={!state.undo} onClick={() => c().undo().run()} />
-        <Btn label="Redo" icon={<Redo2 size={16} />} title="Redo (Ctrl+Y)" disabled={!state.redo} onClick={() => c().redo().run()} />
+        <Btn label="Undo" icon={<Undo2 size={16} />} title={isMac ? "Undo (⌘Z)" : "Undo (Ctrl+Z)"} disabled={!state.undo} onClick={() => c().undo().run()} />
+        <Btn label="Redo" icon={<Redo2 size={16} />} title={isMac ? "Redo (⇧⌘Z)" : "Redo (Ctrl+Y)"} disabled={!state.redo} onClick={() => c().redo().run()} />
         <Sep />
         <button
           type="button"

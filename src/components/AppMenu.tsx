@@ -1,3 +1,4 @@
+import { showKeys } from "../lib/shortcuts";
 import { useCallback, useEffect, useState } from "react";
 import { EditorView } from "@codemirror/view";
 import type { EditorView as NoteView } from "@tiptap/pm/view";
@@ -65,7 +66,7 @@ function itemsAt(target: Element | null): MenuItem[] {
 
   // Plain text on the page that's been selected.
   const selected = window.getSelection()?.toString() ?? "";
-  if (selected.trim()) return [...items, { label: "Copy", icon: clipboardIcons.copy, hint: "Ctrl+C", onSelect: () => void copyText(selected) }];
+  if (selected.trim()) return [...items, { label: "Copy", icon: clipboardIcons.copy, hint: showKeys("Ctrl+C"), onSelect: () => void copyText(selected) }];
   return items[items.length - 1]?.type === "separator" ? items.slice(0, -1) : items;
 }
 
@@ -114,7 +115,7 @@ function fieldItems(field: Field): MenuItem[] {
     {
       label: "Cut",
       icon: clipboardIcons.cut,
-      hint: "Ctrl+X",
+      hint: showKeys("Ctrl+X"),
       disabled: !selected || locked || secret,
       onSelect: () => {
         restore();
@@ -124,7 +125,7 @@ function fieldItems(field: Field): MenuItem[] {
     {
       label: "Copy",
       icon: clipboardIcons.copy,
-      hint: "Ctrl+C",
+      hint: showKeys("Ctrl+C"),
       disabled: !selected || secret,
       onSelect: () => {
         restore();
@@ -134,7 +135,7 @@ function fieldItems(field: Field): MenuItem[] {
     {
       label: "Paste",
       icon: clipboardIcons.paste,
-      hint: "Ctrl+V",
+      hint: showKeys("Ctrl+V"),
       disabled: locked,
       onSelect: () =>
         void readClipboard().then((clip) => {
@@ -148,7 +149,7 @@ function fieldItems(field: Field): MenuItem[] {
     {
       label: "Select all",
       icon: clipboardIcons.selectAll,
-      hint: "Ctrl+A",
+      hint: showKeys("Ctrl+A"),
       disabled: !field.value,
       onSelect: () => {
         field.focus();
@@ -178,7 +179,7 @@ function editableItems(host: HTMLElement): MenuItem[] {
     {
       label: "Cut",
       icon: clipboardIcons.cut,
-      hint: "Ctrl+X",
+      hint: showKeys("Ctrl+X"),
       disabled: !hasSelection,
       onSelect: () => {
         restore();
@@ -188,7 +189,7 @@ function editableItems(host: HTMLElement): MenuItem[] {
     {
       label: "Copy",
       icon: clipboardIcons.copy,
-      hint: "Ctrl+C",
+      hint: showKeys("Ctrl+C"),
       disabled: !hasSelection,
       onSelect: () => {
         restore();
@@ -198,7 +199,7 @@ function editableItems(host: HTMLElement): MenuItem[] {
     {
       label: "Paste",
       icon: clipboardIcons.paste,
-      hint: "Ctrl+V",
+      hint: showKeys("Ctrl+V"),
       onSelect: () =>
         void readClipboard().then((clip) => {
           if (!clip || (!clip.text && !clip.html)) return;
@@ -215,7 +216,7 @@ function editableItems(host: HTMLElement): MenuItem[] {
     {
       label: "Select all",
       icon: clipboardIcons.selectAll,
-      hint: "Ctrl+A",
+      hint: showKeys("Ctrl+A"),
       onSelect: () => {
         if (code) {
           code.focus();

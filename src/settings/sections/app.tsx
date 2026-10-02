@@ -1,10 +1,11 @@
+import { isMac, osName } from "../../lib/platform";
 import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { useEffect, useRef, useState } from "react";
 import { PlaceSearch } from "../../home/WeatherCard";
 import NewsSourcesPopup from "../../home/NewsSourcesPopup";
 import { shortPlace, temperatureUnit, weatherPlace, type Place } from "../../home/prefs";
 import { fetchText, inTauri, system } from "../../lib/api";
-import { accentChoices, isWindows11 } from "../../lib/appearance";
+import { accentChoices, hasMaterials } from "../../lib/appearance";
 import { clockText, dateText } from "../../lib/format";
 import { refreshAppFonts } from "../../lib/fonts";
 import { textSizes, type Settings, type TextSize } from "../../lib/settings";
@@ -151,7 +152,7 @@ export function General() {
     <>
       <ListGroup title="STARTUP">
         <Toggle
-          label="Open when Windows starts"
+          label={isMac ? "Open at login" : "Open when Windows starts"}
           value={Boolean(startup)}
           disabled={!inTauri || startup === null}
           onChange={(v) => {
@@ -160,7 +161,7 @@ export function General() {
             void (v ? enable() : disable()).catch(() => setStartup(!v));
           }}
         />
-        <Toggle label="Keep running in the tray" desc="Reminders still fire when the window is closed" value={settings.KeepInTray !== false} onChange={(v) => update({ KeepInTray: v })} />
+        <Toggle label={isMac ? "Keep running in the menu bar" : "Keep running in the tray"} desc="Reminders still fire when the window is closed" value={settings.KeepInTray !== false} onChange={(v) => update({ KeepInTray: v })} />
         <Choice
           label="Open to"
           value={settings.OpenTo ?? "home"}
@@ -243,7 +244,8 @@ export function Appearance() {
   }, [fontsOpen]);
   const selected = themeFor(settings.Theme).id;
   const current = themeFor(settings.Theme);
-  const win11 = isWindows11();
+  // Windows 11 has Mica and Acrylic; a Mac has one see-through background.
+  const win11 = hasMaterials();
   const headOptions = [
     { value: "atkinson", label: "Atkinson Hyperlegible" },
     { value: "geist", label: "Geist" },
@@ -261,7 +263,7 @@ export function Appearance() {
         </div>
       </div>
       <ListGroup title="COLOR">
-        <Toggle label="Match Windows light and dark" desc="A light theme when Windows is light: Daylight, or Peach if that's your pick" value={Boolean(settings.MatchWindows)} onChange={(v) => update({ MatchWindows: v })} />
+        <Toggle label={`Match ${osName} light and dark`} desc={`A light theme when ${osName} is light: Daylight, or Peach if that's your pick`} value={Boolean(settings.MatchWindows)} onChange={(v) => update({ MatchWindows: v })} />
         <Swatches
           label="Accent color"
           desc="Leave on Theme to use each theme's own accent"
@@ -274,11 +276,16 @@ export function Appearance() {
         />
         <Seg
           label="Window background"
-          desc={win11 ? "Windows 11 only" : "Mica and Acrylic need Windows 11"}
-          value={win11 ? (settings.Material ?? "solid") : "solid"}
+          desc={isMac ? "Translucent lets the desktop show through, blurred" : win11 ? "Windows 11 only" : "Mica and Acrylic need Windows 11"}
+          value={win11 ? (isMac && settings.Material === "acrylic" ? "mica" : (settings.Material ?? "solid")) : "solid"}
           onChange={(v) => win11 && update({ Material: v })}
           options={
-            win11
+            isMac
+              ? [
+                  { value: "solid", label: "Solid" },
+                  { value: "mica", label: "Translucent" },
+                ]
+              : win11
               ? [
                   { value: "solid", label: "Solid" },
                   { value: "mica", label: "Mica" },

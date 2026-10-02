@@ -5,7 +5,8 @@ import { inTauri, system } from "../../lib/api";
 import { liveStatus, OBS_SECRET, stateText, type LiveStatus } from "../../lib/live";
 import type { Settings } from "../../lib/settings";
 import { useSettings } from "../../lib/SettingsContext";
-import { clashes, defaultKeys, isAssignable, keyOf, keysFor, shortcutCommands, type ShortcutGroup } from "../../lib/shortcuts";
+import { isMac, secretStore, thisComputer } from "../../lib/platform";
+import { clashes, defaultKeys, isAssignable, keyCaps, keyOf, keysFor, shortcutCommands, showKeys, type ShortcutGroup } from "../../lib/shortcuts";
 import { commonZones, localZone, zoneCity, zoneName } from "../../schedule/events";
 import { testNotification } from "../../tasks/reminders";
 import { useTasks } from "../../tasks/useTasks";
@@ -109,7 +110,7 @@ function Streaming() {
           className="h-[38px] w-[96px] rounded-[11px] border border-line bg-panel2 px-3 font-mono text-13 text-text outline-none focus:border-faint"
         />
       </ListRow>
-      <ListRow label="OBS WebSocket password" description="Kept in Windows Credential Manager, not in Project Life’s files">
+      <ListRow label="OBS WebSocket password" description={`Kept in ${secretStore}, not in Project Life’s files`}>
         <span className="flex shrink-0 items-center gap-2">
           <input
             type="password"
@@ -168,6 +169,9 @@ const shortcutGroups: { group: ShortcutGroup; title: string }[] = [
   { group: "Formatting", title: "FORMATTING, INSIDE A NOTE" },
 ];
 
+// Keys as a sentence says them: "Ctrl + Shift + K", or "⇧⌘K" on a Mac.
+const spoken = (keys: string) => (isMac ? showKeys(keys) : keys.replace(/\+/g, " + "));
+
 export function Shortcuts() {
   const { settings, update } = useSettings();
   const [recording, setRecording] = useState<string | null>(null);
@@ -182,7 +186,7 @@ export function Shortcuts() {
       const clash = shortcutCommands.find((c) => c.id !== id && clashes(c.group, self.group) && keysFor(c.id, next) === keys);
       if (clash) {
         next[clash.id] = "";
-        setNote(`${keys.replace(/\+/g, " + ")} was moved from ${clash.name}.`);
+        setNote(`${spoken(keys)} was moved from ${clash.name}.`);
       } else setNote(null);
     }
     if (keys === defaultKeys(id)) delete next[id];
@@ -195,7 +199,7 @@ export function Shortcuts() {
     const onKey = (e: KeyboardEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      const plain = !e.ctrlKey && !e.altKey && !e.shiftKey;
+      const plain = !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey;
       if (e.key === "Escape" && plain) return setRecording(null);
       if ((e.key === "Backspace" || e.key === "Delete") && plain) {
         assign(recording, "");
@@ -214,7 +218,7 @@ export function Shortcuts() {
   return (
     <>
       <p className="m-0 text-13 leading-[1.5] text-muted">
-        Click a shortcut, then press the new keys. Use Ctrl or Alt, or a function key. Backspace removes a shortcut; Escape cancels.
+        Click a shortcut, then press the new keys. {isMac ? "Use ⌘ or ⌃ (⌥ too, with an arrow or another named key), or a function key." : "Use Ctrl or Alt, or a function key."} Backspace removes a shortcut; Escape cancels.
       </p>
       {note && <p className="m-0 text-13 text-accent">{note}</p>}
       {shortcutGroups.map(({ group, title }) => (
@@ -230,7 +234,7 @@ export function Shortcuts() {
                   <span className="flex shrink-0 items-center gap-1.5">
                     <button
                       type="button"
-                      title={`Reset to ${defaultKeys(c.id).replace(/\+/g, " + ") || "none"}`}
+                      title={`Reset to ${spoken(defaultKeys(c.id)) || "none"}`}
                       aria-label={`Reset ${c.name}`}
                       onClick={() => assign(c.id, defaultKeys(c.id))}
                       className={clsx("flex h-8 w-8 items-center justify-center rounded-[9px] text-muted hover:bg-panel2 hover:text-text", !changed && "invisible")}
@@ -239,14 +243,14 @@ export function Shortcuts() {
                     </button>
                     <button
                       type="button"
-                      aria-label={`${c.name}: ${keys || "no shortcut"}. Change`}
+                      aria-label={`${c.name}: ${showKeys(keys) || "no shortcut"}. Change`}
                       onClick={() => setRecording(listening ? null : c.id)}
                       className={clsx("flex min-h-[38px] min-w-[96px] items-center justify-end rounded-[10px] border px-1 hover:bg-panel2", listening ? "border-accent" : "border-transparent")}
                     >
                       {listening ? (
                         <span className="px-2 text-12 font-medium text-accent">Press keys…</span>
                       ) : keys ? (
-                        <KeyCaps keys={keys.split("+")} />
+                        <KeyCaps keys={keyCaps(keys)} />
                       ) : (
                         <span className="px-2 text-12 text-muted">None</span>
                       )}
@@ -338,7 +342,7 @@ export function ScheduleSettings() {
           desc="For new events. Others can still be picked per event."
           value={settings.ScheduleZone && zones.includes(settings.ScheduleZone) ? settings.ScheduleZone : here}
           onChange={(v) => update({ ScheduleZone: v === here ? null : v })}
-          options={zones.map((z) => ({ value: z, label: `${zoneCity(z)} (${zoneName(z)})${z === here ? " · this PC" : ""}` }))}
+          options={zones.map((z) => ({ value: z, label: `${zoneCity(z)} (${zoneName(z)})${z === here ? ` · ${thisComputer}` : ""}` }))}
         />
       </ListGroup>
     </>

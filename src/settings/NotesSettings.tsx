@@ -1,3 +1,4 @@
+import { fileBrowser, isMac, wording } from "../lib/platform";
 import { useEffect, useState } from "react";
 import { open as openFile } from "@tauri-apps/plugin-dialog";
 import { api, inTauri, type FolderSwitch, type NotesFolderInfo } from "../lib/api";
@@ -61,7 +62,7 @@ export default function NotesSettings() {
   return (
     <>
       <ListGroup title="EDITOR">
-        <ListRow label="Open notes in" description="Switch any time with Ctrl /">
+        <ListRow label="Open notes in" description={wording("Switch any time with Ctrl /")}>
           <SegmentedControl
             label="Open notes in"
             surface="panel"
@@ -138,7 +139,7 @@ export default function NotesSettings() {
         >
           <Switch label="Copy my notes to the new folder" checked={copy} onChange={setCopy} />
         </ListRow>
-        <ListRow label="Open the notes folder" description={info?.chosen ? "Or go back to the default folder, next to Project Life" : "In File Explorer"}>
+        <ListRow label="Open the notes folder" description={info?.chosen ? isMac ? "Or go back to the default folder, with the rest of Project Life’s data" : "Or go back to the default folder, next to Project Life" : `In ${fileBrowser}`}>
           <span className="flex shrink-0 gap-2">
             {info?.chosen && (
               <Button size="sm" disabled={busy} onClick={() => void change(null)}>

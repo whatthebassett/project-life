@@ -1,3 +1,4 @@
+import { thisComputer } from "../lib/platform";
 import clsx from "clsx";
 import type { Editor } from "@tiptap/react";
 import { open as openFile } from "@tauri-apps/plugin-dialog";
@@ -351,7 +352,7 @@ export default function TaskPopup({ task, onClose, openMenu }: Props) {
                 <button
                   onClick={(e) =>
                     menuAt(e, [
-                      { label: "A file from this PC…", icon: <Paperclip size={13} />, onSelect: () => void attachFromPc() },
+                      { label: `A file from ${thisComputer}…`, icon: <Paperclip size={13} />, onSelect: () => void attachFromPc() },
                       { label: "A note…", icon: <FileText size={13} />, onSelect: () => setPicking("attach") },
                     ])
                   }

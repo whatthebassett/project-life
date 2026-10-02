@@ -493,6 +493,7 @@ fn enc(s: &str) -> String {
 
 // Windows' own name for its time zone ("Eastern Standard Time"), which
 // Outlook uses to answer in local time.
+#[cfg(windows)]
 fn windows_zone() -> String {
     use windows::Win32::System::Time::{GetDynamicTimeZoneInformation, DYNAMIC_TIME_ZONE_INFORMATION};
     let mut info = DYNAMIC_TIME_ZONE_INFORMATION::default();
@@ -500,6 +501,13 @@ fn windows_zone() -> String {
     let name = String::from_utf16_lossy(&info.TimeZoneKeyName);
     let name = name.trim_end_matches('\0').trim();
     if name.is_empty() { "UTC".into() } else { name.to_string() }
+}
+
+// Elsewhere the zone has its IANA name ("America/New_York"), which Outlook
+// takes as well.
+#[cfg(not(windows))]
+fn windows_zone() -> String {
+    iana_time_zone::get_timezone().unwrap_or_else(|_| "UTC".into())
 }
 
 // "2026-09-25" → that local midnight, as UTC for the APIs.

@@ -2,6 +2,7 @@
 // folder that has never had a note or notebook file, so they don't come back
 // once deleted). "How to use Notes" shows every block the editor makes, in
 // the Markdown it's saved as.
+import { wording } from "../lib/platform";
 import { ymd } from "../tasks/dates";
 
 export const WELCOME = "Welcome to Notes";
@@ -165,7 +166,7 @@ Hover over any block to see its handle at the left. Drag the handle to move the 
 `;
 
   return [
-    [WELCOME, welcome],
-    [GUIDE, guide],
+    [WELCOME, wording(welcome)],
+    [GUIDE, wording(guide)],
   ];
 }

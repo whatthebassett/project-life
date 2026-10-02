@@ -1,3 +1,4 @@
+import { isMac } from "../lib/platform";
 import clsx from "clsx";
 import { useEffect, useState, type ReactNode } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -21,16 +22,24 @@ interface Props {
 // The window draws its own 32px title bar in the theme's colors: the app and
 // screen name on the left, window controls on the right. Empty space drags
 // the window; double-clicking it maximizes, and right-clicking it gives the
-// window's own menu.
+// window's own menu. On a Mac the window keeps its own red, yellow and green
+// buttons, which sit over the left of the bar, so the title starts after them
+// and the Windows-style controls aren't drawn.
 export default function TitleBar({ title, onGallery, galleryOpen }: Props) {
   const [maximized, setMaximized] = useState(false);
+  // Full screen hides the Mac's window buttons, so the title moves back.
+  const [fullscreen, setFullscreen] = useState(false);
   const { openMenu } = useNotes();
 
   useEffect(() => {
     if (!inTauri) return;
     const win = getCurrentWindow();
-    void win.isMaximized().then(setMaximized);
-    const unlisten = win.onResized(() => void win.isMaximized().then(setMaximized));
+    const look = () => {
+      void win.isMaximized().then(setMaximized);
+      if (isMac) void win.isFullscreen().then(setFullscreen);
+    };
+    look();
+    const unlisten = win.onResized(look);
     return () => void unlisten.then((f) => f());
   }, []);
 
@@ -56,7 +65,7 @@ export default function TitleBar({ title, onGallery, galleryOpen }: Props) {
 
   return (
     <header data-tauri-drag-region onContextMenu={(e) => void windowMenu(e)} className="flex h-8 shrink-0 items-stretch border-b border-line bg-side">
-      <div data-tauri-drag-region className="flex min-w-0 items-center gap-2 pl-4 text-12 text-muted">
+      <div data-tauri-drag-region className={clsx("flex min-w-0 items-center gap-2 text-12 text-muted", isMac && !fullscreen ? "pl-[82px]" : "pl-4")}>
         <span className="pointer-events-none truncate">{title}</span>
         {onGallery && (
           <button
@@ -75,7 +84,7 @@ export default function TitleBar({ title, onGallery, galleryOpen }: Props) {
         )}
       </div>
       <div data-tauri-drag-region className="flex-1" />
-      <div className="flex items-stretch">
+      <div className={clsx("flex items-stretch", isMac && "hidden")}>
         <WinButton title="Minimize" onClick={() => inTauri && void win().minimize()}>
           <Minus size={16} />
         </WinButton>

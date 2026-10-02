@@ -21,6 +21,18 @@ export const releases: Release[] = [
     summary: "A Home you can arrange, with sports and markets; a command palette; smart links and a format bar in Notes; calendars from anywhere.",
     features: [
       {
+        area: "Welcome, Mac",
+        items: [
+          "Project Life now runs on macOS, on Macs with Apple silicon. Everything in the Windows app is here: Home, Notes, Tasks, Schedule, Habits and Goals",
+          "It looks and behaves like a Mac app: the window's own close, minimize and zoom buttons, a menu bar, and an icon in the menu bar that keeps reminders coming after the window is closed. The Dock icon brings the window back, and ⌘Q quits",
+          "Shortcuts use ⌘ where Windows uses Ctrl: ⌘K for the command palette, ⌘N for a new note, ⌘, for Settings. Next and previous tab are ⌃Tab and ⌃⇧Tab, and ⌃⌥ with the arrows moves a note in the notebook. Change any of them in Settings → Keyboard shortcuts",
+          "Reminders arrive as macOS notifications, a call's with a Join button",
+          "Your data is kept in Library → Application Support → Project Life; Settings → Storage and backup opens it. Sign-ins and the OBS password go in the Keychain",
+          "Settings speaks Mac: Open at login, Match macOS light and dark, and a Translucent window background in place of Mica and Acrylic",
+          "Coming from Windows? Copy what's in the Data folder next to Project Life.exe into the Mac's data folder and your notes, tasks, schedule, habits, goals and settings come with you",
+        ],
+      },
+      {
         area: "Home",
         items: [
           "Move and resize the cards: drag a card by any empty spot, or drag its sides and corners. They snap to a grid of thirds and halves, and fill any gap above them",

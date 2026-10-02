@@ -1,3 +1,4 @@
+import { isMac, pathSep, secretStore, thisComputer } from "../../lib/platform";
 import { getVersion } from "@tauri-apps/api/app";
 import { open as openFolder, save as saveFile } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
@@ -119,7 +120,7 @@ export function Accounts() {
         </ListGroup>
       ))}
       <Note>
-        Sign-in happens in your browser, and Project Life keeps it in Windows Credential Manager, never in its files. Synced events can be changed here and the change goes to {accounts.length ? [...new Set(accounts.map((a) => appName[a.Provider]))].join(" and ") : "Outlook or Google Calendar"}; a whole repeating series is changed there.
+        Sign-in happens in your browser, and Project Life keeps it in {secretStore}, never in its files. Synced events can be changed here and the change goes to {accounts.length ? [...new Set(accounts.map((a) => appName[a.Provider]))].join(" and ") : "Outlook or Google Calendar"}; a whole repeating series is changed there.
       </Note>
       {leaving && (
         <Dialog
@@ -221,7 +222,7 @@ export function Storage() {
         <Toggle label="Daily backup" desc="Keeps the last 14 days" value={settings.Backup !== false} onChange={(v) => update({ Backup: v })} />
         <Path
           label="Backup folder"
-          desc="Point this at OneDrive to back up off this PC"
+          desc={isMac ? "Point this at iCloud Drive to back up off this Mac" : "Point this at OneDrive to back up off this PC"}
           value={settings.BackupFolder ?? info?.defaultBackups ?? "…"}
           actions={[
             { label: "Change", onClick: () => void chooseBackupFolder(), disabled: !inTauri },
@@ -303,7 +304,7 @@ export function Privacy() {
         <Info label="What goes online" desc="Only what you ask for: weather, news feeds, link previews, fonts, connected calendars, and a daily look for updates on GitHub" />
         <Toggle
           label="Save crash reports"
-          desc="Kept on this PC in Data\Logs, never sent anywhere. Includes no note or task content."
+          desc={`Kept on ${thisComputer} in Data${pathSep}Logs, never sent anywhere. Includes no note or task content.`}
           value={Boolean(settings.SaveCrashReports)}
           onChange={(v) => update({ SaveCrashReports: v })}
         />
@@ -319,7 +320,7 @@ export function Privacy() {
             })
           }
         />
-        <Action label="Delete all data on this PC" desc="Can’t be undone. Export first." action="Delete" tone="danger" danger disabled={!inTauri} onClick={() => setConfirm(true)} />
+        <Action label={`Delete all data on ${thisComputer}`} desc="Can’t be undone. Export first." action="Delete" tone="danger" danger disabled={!inTauri} onClick={() => setConfirm(true)} />
       </ListGroup>
       {confirm && (
         <Dialog

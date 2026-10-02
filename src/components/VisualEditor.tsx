@@ -1,3 +1,4 @@
+import { isMac } from "../lib/platform";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -261,9 +262,10 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
         setDatePick({ pos: nodePos, attrs: node.attrs as DateTimeAttrs, anchor: new DOMRect(r.left, r.top, CALENDAR_WIDTH, r.height) });
         return true;
       },
-      // Ctrl+click opens a link in the browser.
+      // Ctrl+click opens a link in the browser (⌘-click on a Mac, where
+      // Control-click is a right-click).
       handleClick: (view, pos, event) => {
-        if (!event.ctrlKey) return false;
+        if (!(isMac ? event.metaKey : event.ctrlKey)) return false;
         const link = view.state.doc.resolve(pos).marks().find((m) => m.type.name === "link");
         if (!link) return false;
         void openUrl(link.attrs.href);
@@ -629,7 +631,7 @@ function EmojiMenu({ state }: { state: EmojiSuggestState }) {
               state.select(e);
             }}
           >
-            <span className="text-center leading-none" style={{ fontFamily: '"Segoe UI Emoji", sans-serif', fontSize: "var(--emoji-menu, 23px)", minWidth: "1.3em" }}>
+            <span className="text-center leading-none" style={{ fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif', fontSize: "var(--emoji-menu, 23px)", minWidth: "1.3em" }}>
               {nativeOf(e)}
             </span>
             <span className="min-w-0 flex-1 truncate font-mono text-[12px]">:{e.id}:</span>

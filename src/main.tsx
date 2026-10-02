@@ -40,8 +40,15 @@ async function start() {
 void start().finally(() => {
   // Tasks' own window shows itself once it's drawn.
   if (!inTauri || isTasksWindow()) return;
-  requestAnimationFrame(() => {
+  // Once the first frame is drawn. A Mac's web view draws no frames while
+  // its window is hidden, so there a short wait stands in for the frame.
+  let shown = false;
+  const show = () => {
+    if (shown) return;
+    shown = true;
     const win = getCurrentWindow();
     void win.show().then(() => win.setFocus());
-  });
+  };
+  requestAnimationFrame(show);
+  setTimeout(show, 80);
 });

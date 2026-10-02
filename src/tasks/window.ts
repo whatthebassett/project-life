@@ -2,7 +2,9 @@
 // top-level window, label "tasks", running this page under "#tasks". Both
 // windows save to tasks.json and tell each other to reload (lib/api.ts
 // announceData). The window-state plugin remembers where it was put.
+import { LogicalPosition } from "@tauri-apps/api/dpi";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { isMac } from "../lib/platform";
 import { loadSettings, textScale } from "../lib/settings";
 
 export const TASKS_WINDOW = "tasks";
@@ -31,7 +33,9 @@ async function open(): Promise<void> {
     minWidth: 340,
     minHeight: 420,
     center: true,
-    decorations: false,
+    // Windows: the page draws the whole frame. A Mac keeps its own window
+    // buttons, laid over the page's title bar.
+    ...(isMac ? { decorations: true, titleBarStyle: "overlay" as const, hiddenTitle: true, trafficLightPosition: new LogicalPosition(14, 16) } : { decorations: false }),
     visible: false,
     resizable: true,
     focus: true,

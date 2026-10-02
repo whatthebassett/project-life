@@ -4,15 +4,25 @@
 // pre-releases); installing downloads the zip into Data\Updates, and on
 // restart the new exe takes the old one's place. Windows lets a running exe be
 // renamed, so the old one steps aside as "…exe.old" and is deleted next start.
+//
+// A Mac's release is a zip of Project Life.app ("…-mac-arm64.zip", from
+// `npm run mac`). It's handled the same way: the new app waits in Updates, and
+// on restart the old one steps aside as "Project Life.app.old".
 use crate::{data_dir, ensure, err, web};
 use serde::Serialize;
 use serde_json::Value;
-use std::{fs, io::Read, path::PathBuf};
+use std::{
+    fs,
+    io::Read,
+    path::{Path, PathBuf},
+};
 use tauri::AppHandle;
 
 // Where releases are published.
 const REPO: &str = "whatthebassett/project-life";
-const ZIP_SUFFIX: &str = "-portable.zip";
+
+// How this system's download ends. The Mac app is for Apple silicon only.
+const ZIP_SUFFIX: &str = if cfg!(target_os = "macos") { "-mac-arm64.zip" } else { "-portable.zip" };
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -41,14 +51,39 @@ fn newer(a: &str, b: &str) -> bool {
     version_key(a) > version_key(b)
 }
 
-// The copy that's running, if it's the portable app (not a development build).
-fn installed_exe() -> Result<PathBuf, String> {
+// The copy that's running, if it's the portable app (not a development build):
+// the exe on Windows, Project Life.app on a Mac.
+fn installed() -> Result<PathBuf, String> {
+    const DEV: &str = "Updates install into the portable app, not a development build.";
     let exe = std::env::current_exe().map_err(err)?;
     let dir = exe.parent().ok_or("Can't tell where Project Life is.")?;
-    if cfg!(debug_assertions) || dir.ends_with("target\\release") || dir.ends_with("target\\debug") {
-        return Err("Updates install into the portable app, not a development build.".into());
+    if cfg!(debug_assertions) || dir.ends_with(Path::new("target").join("release")) || dir.ends_with(Path::new("target").join("debug")) {
+        return Err(DEV.into());
+    }
+    if cfg!(target_os = "macos") {
+        // …/Project Life.app/Contents/MacOS/project-life
+        let app = exe.ancestors().nth(3).filter(|a| a.extension().is_some_and(|e| e == "app")).ok_or(DEV)?;
+        if app.components().any(|c| c.as_os_str() == "target") {
+            return Err(DEV.into());
+        }
+        // An app opened straight from a download runs from a read-only copy
+        // macOS makes of it, which can't be replaced.
+        if app.components().any(|c| c.as_os_str() == "AppTranslocation") {
+            return Err("Move Project Life to the Applications folder and open it from there. Then it can update itself.".into());
+        }
+        return Ok(app.to_path_buf());
     }
     Ok(exe)
+}
+
+// Where the old copy waits while the new one starts.
+fn old_copy(installed: &Path) -> PathBuf {
+    installed.with_extension(if cfg!(target_os = "macos") { "app.old" } else { "exe.old" })
+}
+
+// A file, or a Mac app (which is a folder).
+fn remove(path: &Path) {
+    let _ = if path.is_dir() { fs::remove_dir_all(path) } else { fs::remove_file(path) };
 }
 
 fn get(url: &str, accept: &str) -> Result<Vec<u8>, String> {
@@ -102,19 +137,13 @@ pub fn update_check(app: AppHandle, beta: bool) -> Result<Option<Release>, Strin
     Ok(best.filter(|r| newer(&r.version, &current)))
 }
 
-fn staged_exe() -> PathBuf {
-    data_dir().join("Updates").join("Project Life.exe")
+fn staged() -> PathBuf {
+    data_dir().join("Updates").join(if cfg!(target_os = "macos") { "Project Life.app" } else { "Project Life.exe" })
 }
 
-// Downloads the release and takes the new exe out of its zip, ready for the
-// next start. Nothing changes until then.
-#[tauri::command(async)]
-pub fn update_download(download: String) -> Result<(), String> {
-    installed_exe()?;
-    if !download.starts_with("https://github.com/") {
-        return Err("That download isn't from Project Life's releases.".into());
-    }
-    let bytes = get(&download, "application/octet-stream")?;
+// Takes the new exe out of its zip and leaves it in Updates.
+#[cfg(not(target_os = "macos"))]
+fn stage(bytes: Vec<u8>) -> Result<(), String> {
     let mut zip = zip::ZipArchive::new(std::io::Cursor::new(bytes)).map_err(|_| "The download isn't a zip.".to_string())?;
     let mut exe = None;
     for i in 0..zip.len() {
@@ -132,42 +161,94 @@ pub fn update_download(download: String) -> Result<(), String> {
         return Err("The downloaded Project Life.exe doesn't look right.".into());
     }
     ensure(data_dir().join("Updates"))?;
-    let tmp = staged_exe().with_extension("exe.part");
+    let tmp = staged().with_extension("exe.part");
     fs::write(&tmp, &exe).map_err(err)?;
-    fs::rename(&tmp, staged_exe()).map_err(err)?;
+    fs::rename(&tmp, staged()).map_err(err)?;
     Ok(())
 }
 
-// Swaps in the downloaded exe and starts it.
+// Takes Project Life.app out of its zip and leaves it in Updates. ditto does
+// the unzipping: it keeps what a Mac app needs (which files can run, links,
+// the signature).
+#[cfg(target_os = "macos")]
+fn stage(bytes: Vec<u8>) -> Result<(), String> {
+    let updates = ensure(data_dir().join("Updates"))?;
+    let (zip, unpacked) = (updates.join("update.zip"), updates.join("unpacked"));
+    remove(&unpacked);
+    fs::write(&zip, &bytes).map_err(err)?;
+    let unzipped = std::process::Command::new("/usr/bin/ditto").args(["-x", "-k"]).arg(&zip).arg(&unpacked).status().map(|s| s.success()).unwrap_or(false);
+    remove(&zip);
+    let app = unpacked.join("Project Life.app");
+    // The real thing has a program inside and says it's Project Life.
+    let about = fs::read(app.join("Contents").join("Info.plist")).unwrap_or_default();
+    let right = unzipped && app.join("Contents").join("MacOS").is_dir() && String::from_utf8_lossy(&about).contains("com.ultimabass.projectlife");
+    if !right {
+        remove(&unpacked);
+        return Err(if unzipped { "The download doesn't have Project Life.app in it." } else { "The download isn't a zip." }.into());
+    }
+    remove(&staged());
+    let moved = fs::rename(&app, staged()).map_err(err);
+    remove(&unpacked);
+    moved
+}
+
+// Downloads the release and takes the new app out of its zip, ready for the
+// next start. Nothing changes until then.
+#[tauri::command(async)]
+pub fn update_download(download: String) -> Result<(), String> {
+    installed()?;
+    if !download.starts_with("https://github.com/") {
+        return Err("That download isn't from Project Life's releases.".into());
+    }
+    stage(get(&download, "application/octet-stream")?)
+}
+
+// Puts the downloaded copy where the running one was.
+fn put(staged: &Path, installed: &Path) -> Result<(), String> {
+    if cfg!(target_os = "macos") {
+        // A move, or a copy when Updates is on another disk than the app.
+        if fs::rename(staged, installed).is_ok() {
+            return Ok(());
+        }
+        return match std::process::Command::new("/usr/bin/ditto").arg(staged).arg(installed).status() {
+            Ok(s) if s.success() => Ok(()),
+            _ => Err("it couldn't be copied there".into()),
+        };
+    }
+    fs::copy(staged, installed).map(|_| ()).map_err(err)
+}
+
+// Swaps in the downloaded app and starts it.
 #[tauri::command]
 pub fn update_install(app: AppHandle) -> Result<(), String> {
-    let exe = installed_exe()?;
-    let staged = staged_exe();
+    let installed = installed()?;
+    let staged = staged();
     if !staged.exists() {
         return Err("Download the update first.".into());
     }
-    let old = exe.with_extension("exe.old");
-    let _ = fs::remove_file(&old);
-    fs::rename(&exe, &old).map_err(|e| format!("Couldn't make room for the update: {e}"))?;
-    if let Err(e) = fs::copy(&staged, &exe) {
+    let old = old_copy(&installed);
+    remove(&old);
+    fs::rename(&installed, &old).map_err(|e| format!("Couldn't make room for the update: {e}"))?;
+    if let Err(e) = put(&staged, &installed) {
         // Put the running copy back so Project Life still starts.
-        let _ = fs::rename(&old, &exe);
+        remove(&installed);
+        let _ = fs::rename(&old, &installed);
         return Err(format!("Couldn't put the update in place: {e}"));
     }
-    let _ = fs::remove_file(&staged);
+    remove(&staged);
     app.restart();
 }
 
 // Whether an update is downloaded and waiting for a restart.
 #[tauri::command]
 pub fn update_ready() -> bool {
-    staged_exe().exists() && installed_exe().is_ok()
+    staged().exists() && installed().is_ok()
 }
 
-// Last start's old exe, once the new one is running.
+// Last start's old copy, once the new one is running.
 pub fn clean_up() {
-    if let Ok(exe) = installed_exe() {
-        let _ = fs::remove_file(exe.with_extension("exe.old"));
+    if let Ok(installed) = installed() {
+        remove(&old_copy(&installed));
     }
 }
 

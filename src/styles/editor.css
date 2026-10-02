@@ -758,7 +758,7 @@ body.block-dragging * {
 /* Emoji in notes, at Settings → Editing → Emoji size. */
 .ProseMirror .emoji,
 .noted-source .cm-emoji {
-  font-family: "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Segoe UI Symbol", sans-serif;
   font-size: var(--emoji-in-note, 1.3em);
   line-height: 1;
   vertical-align: -0.08em;

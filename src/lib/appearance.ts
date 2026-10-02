@@ -1,5 +1,6 @@
 import { Effect, getCurrentWindow } from "@tauri-apps/api/window";
 import { inTauri, system } from "./api";
+import { isMac } from "./platform";
 import { textScale, type Settings } from "./settings";
 import { themeFor, type Theme } from "./themes";
 
@@ -42,7 +43,7 @@ function rgba(hex: string, alpha: number): string {
 export function headFontStack(choice: string | undefined): string {
   if (!choice || choice === "atkinson") return '"Atkinson Hyperlegible", "Geist", ui-sans-serif, system-ui, sans-serif';
   if (choice === "geist") return '"Geist", ui-sans-serif, system-ui, sans-serif';
-  if (choice === "system") return '"Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif';
+  if (choice === "system") return isMac ? '-apple-system, "SF Pro Display", system-ui, sans-serif' : '"Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif';
   return `"${choice.replace(/"/g, "")}", "Geist", ui-sans-serif, system-ui, sans-serif`;
 }
 
@@ -86,7 +87,9 @@ export function applyAppearance(settings: Settings) {
 
   // Mica or Acrylic: the window's backdrop shows through the page's own
   // background and sidebars; panels stay solid so text stays easy to read.
-  const glass = windows11 && settings.Material && settings.Material !== "solid" ? settings.Material : null;
+  // A Mac has one such backdrop (Translucent, saved as "mica"), drawn by the
+  // window as the system's own blurred material.
+  const glass = (windows11 || isMac) && settings.Material && settings.Material !== "solid" ? settings.Material : null;
   if (glass) {
     root.dataset.material = glass;
     const a = glass === "acrylic" ? 0.55 : 0.7;
@@ -102,7 +105,8 @@ export function applyAppearance(settings: Settings) {
     const win = getCurrentWindow();
     void win.setTheme(theme.scheme).catch(() => {});
     if (win.label === "main") {
-      if (glass) void win.setEffects({ effects: [glass === "acrylic" ? Effect.Acrylic : Effect.Mica] }).catch(() => {});
+      if (glass && isMac) void win.setEffects({ effects: [Effect.UnderWindowBackground] }).catch(() => {});
+      else if (glass) void win.setEffects({ effects: [glass === "acrylic" ? Effect.Acrylic : Effect.Mica] }).catch(() => {});
       else void win.clearEffects().catch(() => {});
     }
   }
@@ -127,4 +131,5 @@ export async function watchSystemTheme(get: () => Settings) {
   window.setInterval(() => void check(), 60_000);
 }
 
-export const isWindows11 = () => windows11;
+// Whether the window can show a backdrop through the page.
+export const hasMaterials = () => windows11 || isMac;

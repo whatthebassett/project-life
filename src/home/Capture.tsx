@@ -1,3 +1,4 @@
+import { showKeys } from "../lib/shortcuts";
 import { Icon } from "../ui/icons";
 import { useNotes } from "../notes/NotesContext";
 import { openPalette } from "../palette/open";
@@ -7,7 +8,7 @@ import { openPalette } from "../palette/open";
 // command or note picked.
 export default function Capture() {
   const { keyFor } = useNotes();
-  const keys = keyFor("app.capture") || "Ctrl+K";
+  const keys = keyFor("app.capture") || showKeys("Ctrl+K");
   return (
     <div className="flex shrink items-center gap-[10px]">
       <button

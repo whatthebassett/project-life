@@ -1,3 +1,4 @@
+import { wording } from "../lib/platform";
 import { Extension, type Editor, type Range } from "@tiptap/core";
 import { PluginKey } from "@tiptap/pm/state";
 import Suggestion, { type SuggestionProps } from "@tiptap/suggestion";
@@ -77,7 +78,7 @@ function allItems(options: SlashOptions): SlashItem[] {
       run: block((e) => e.chain().focus().setCallout(kind).run()),
     })),
     { id: "link", group: "Insert", label: "Link", description: "Link to a web page", keywords: "url", run: block(() => options.onLink()) },
-    { id: "image", group: "Insert", label: "Image", description: "A picture from your PC", keywords: "picture photo img", run: block(() => options.onImage()) },
+    { id: "image", group: "Insert", label: "Image", description: wording("A picture from your PC"), keywords: "picture photo img", run: block(() => options.onImage()) },
     { id: "emoji", group: "Insert", label: "Emoji", description: "Pick from every emoji", keywords: "smiley face symbol", run: block(() => options.onEmoji()) },
     { id: "date", group: "Insert", label: "Date and time", description: "Pick a day, and a time if you like", keywords: "calendar when due day deadline remind schedule future", run: block(() => options.onDate()) },
     { id: "now", group: "Insert", label: "Now", description: "Today's date and the time right now", keywords: "current date time timestamp clock", run: block((e) => e.chain().focus().insertDateTime(nowAttrs(true)).run()) },

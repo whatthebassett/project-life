@@ -212,7 +212,7 @@ export default function EmojiPicker({ x, y, tone, onTone, hint = "Pick as many a
                     key={`${s.id}:${cell.native}`}
                     data-index={i}
                     className={clsx("flex aspect-square items-center justify-center rounded-[9px] leading-none hover:bg-panel2", focus === i && "bg-accent-soft ring-1 ring-accent")}
-                    style={{ fontFamily: '"Segoe UI Emoji", "Segoe UI Symbol", sans-serif', fontSize: 26 }}
+                    style={{ fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", "Segoe UI Symbol", sans-serif', fontSize: 26 }}
                     title={cell.emoji ? `${cell.emoji.name}  :${cell.emoji.id}:` : cell.native}
                     onMouseEnter={() => setHover(cell)}
                     onClick={() => {
@@ -234,7 +234,7 @@ export default function EmojiPicker({ x, y, tone, onTone, hint = "Pick as many a
       <div className="flex h-14 shrink-0 items-center gap-2.5 px-3">
         {hover ? (
           <>
-            <span className="text-[30px] leading-none" style={{ fontFamily: '"Segoe UI Emoji", sans-serif' }}>
+            <span className="text-[30px] leading-none" style={{ fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif' }}>
               {hover.native}
             </span>
             <span className="min-w-0 flex-1">

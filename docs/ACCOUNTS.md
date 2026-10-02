@@ -2,7 +2,7 @@
 
 Project Life signs in to Microsoft and Google with its own app registrations. Each takes about ten minutes to make, once, and both are free. When you have the IDs, they go in `src-tauri/src/oauth_ids.rs` (or send them over and they'll be built in). Until then, Settings → Connected accounts shows **Needs setup**.
 
-None of this is secret the way a password is. Every desktop app ships its client ID, and Google says a desktop app's "client secret" can't be kept secret and isn't treated as one. Your sign-ins themselves live in Windows Credential Manager on your PC.
+None of this is secret the way a password is. Every desktop app ships its client ID, and Google says a desktop app's "client secret" can't be kept secret and isn't treated as one. Your sign-ins themselves live in Windows Credential Manager on your PC, or in the Keychain on a Mac.
 
 ## Microsoft (Outlook calendar and Teams)
 
@@ -48,4 +48,4 @@ Zoom stays *links only*. Paste a `zoom.us/j/…` link into an event's place, des
 - **Calendars:** reads your calendars from a month back to six months ahead, every 5 or 15 minutes, or only when it opens (Settings → Connected accounts → Sync calendars). You pick which calendars sync. Shared and holiday calendars start off.
 - **Changes both ways:** editing, moving or deleting a synced event changes it in Outlook or Google Calendar. For a repeating event, a change here applies to that one day; change the whole series in Outlook or Google Calendar. Events someone else organized can't be changed here, but you can link a note or task to them.
 - **Meeting links:** choosing Teams or Meet on an event makes the link when you save. On an Outlook or Google calendar, it's part of the event there. On Project Life's own calendars, it's a meeting on its own.
-- **Disconnect** removes the sign-in from Credential Manager (and tells Google to forget it). It also removes that account's events from Project Life. Nothing changes in Outlook or Google Calendar.
+- **Disconnect** removes the sign-in from Credential Manager or the Keychain (and tells Google to forget it). It also removes that account's events from Project Life. Nothing changes in Outlook or Google Calendar.

@@ -1,5 +1,5 @@
-// What Settings needs from Windows and the disk: light or dark mode, the
-// Windows version, fonts, whether a streaming app is running, the location,
+// What Settings needs from Windows (or macOS) and the disk: light or dark mode,
+// the Windows version, fonts, whether a streaming app is running, the location,
 // secrets, backups, export, clearing caches, deleting everything, crash logs,
 // and importing from Checkpoint.
 use std::{
@@ -14,8 +14,9 @@ use tauri_plugin_opener::OpenerExt;
 
 use crate::{data_dir, ensure, err, merge, notes, web};
 
-// ----- Windows -----
+// ----- Windows, and the same answers from macOS -----
 
+#[cfg(windows)]
 fn reg_query(key: &str, value: &str) -> Option<String> {
     use std::os::windows::process::CommandExt;
     let output = std::process::Command::new("reg")
@@ -29,6 +30,7 @@ fn reg_query(key: &str, value: &str) -> Option<String> {
 }
 
 // "light" or "dark": how Windows shows apps (Settings → Personalization → Colors).
+#[cfg(windows)]
 #[tauri::command]
 pub fn system_theme() -> String {
     match reg_query(r"HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "AppsUseLightTheme").as_deref() {
@@ -37,7 +39,21 @@ pub fn system_theme() -> String {
     }
 }
 
+// On a Mac: System Settings → Appearance. The setting reads "Dark" in dark
+// mode and isn't there at all in light mode.
+#[cfg(target_os = "macos")]
+#[tauri::command]
+pub fn system_theme() -> String {
+    let dark = std::process::Command::new("defaults")
+        .args(["read", "-g", "AppleInterfaceStyle"])
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().eq_ignore_ascii_case("dark"))
+        .unwrap_or(false);
+    if dark { "dark".into() } else { "light".into() }
+}
+
 // The Windows build number: 22000 and up is Windows 11 (Mica and Acrylic).
+#[cfg(windows)]
 #[tauri::command]
 pub fn os_build() -> u32 {
     reg_query(r"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "CurrentBuildNumber")
@@ -45,15 +61,24 @@ pub fn os_build() -> u32 {
         .unwrap_or(0)
 }
 
+// Not Windows: 0. The page asks which system it's on itself (lib/platform.ts).
+#[cfg(not(windows))]
+#[tauri::command]
+pub fn os_build() -> u32 {
+    0
+}
+
 // What's on the clipboard, as text and as HTML (either can be empty), for
 // Paste in the right-click menu. The page can't read the clipboard itself
-// without WebView2 asking permission first.
+// without WebView2 asking permission first (a Mac's web view shows its own
+// little Paste button instead).
 #[derive(Serialize)]
 pub struct ClipboardContents {
     text: String,
     html: String,
 }
 
+#[cfg(windows)]
 #[tauri::command]
 pub fn read_clipboard() -> Result<ClipboardContents, String> {
     use windows::core::w;
@@ -100,8 +125,18 @@ pub fn read_clipboard() -> Result<ClipboardContents, String> {
     }
 }
 
+#[cfg(target_os = "macos")]
+#[tauri::command]
+pub fn read_clipboard() -> Result<ClipboardContents, String> {
+    let mut clipboard = arboard::Clipboard::new().map_err(|_| "The clipboard is busy. Try again in a moment.".to_string())?;
+    let text = clipboard.get_text().unwrap_or_default();
+    let html = clipboard.get().html().unwrap_or_default();
+    Ok(ClipboardContents { text, html })
+}
+
 // Windows' "HTML Format" is UTF-8 with a header giving where the copied part
 // starts and ends, in bytes.
+#[cfg(any(windows, test))]
 fn html_fragment(bytes: &[u8]) -> String {
     let end = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
     let bytes = &bytes[..end];
@@ -114,6 +149,7 @@ fn html_fragment(bytes: &[u8]) -> String {
 }
 
 // Which of these programs are running (by .exe name, any case).
+#[cfg(windows)]
 #[tauri::command]
 pub fn running_apps(names: Vec<String>) -> Vec<String> {
     use windows::Win32::Foundation::CloseHandle;
@@ -139,6 +175,24 @@ pub fn running_apps(names: Vec<String>) -> Vec<String> {
     found
 }
 
+// A Mac's programs have no ".exe", so "obs.exe" is found as OBS and
+// "streamlabs desktop.exe" as Streamlabs Desktop.
+#[cfg(target_os = "macos")]
+#[tauri::command]
+pub fn running_apps(names: Vec<String>) -> Vec<String> {
+    let Ok(output) = std::process::Command::new("ps").args(["-axo", "comm="]).output() else { return Vec::new() };
+    let text = String::from_utf8_lossy(&output.stdout).into_owned();
+    let running: Vec<String> = text.lines().filter_map(|l| Path::new(l.trim()).file_name().map(|n| n.to_string_lossy().to_lowercase())).collect();
+    let mut found = Vec::new();
+    for name in names {
+        let wanted = name.to_lowercase();
+        if running.iter().any(|r| r == wanted.strip_suffix(".exe").unwrap_or(&wanted)) && !found.contains(&wanted) {
+            found.push(wanted);
+        }
+    }
+    found
+}
+
 #[derive(Serialize)]
 pub struct Position {
     latitude: f64,
@@ -147,6 +201,7 @@ pub struct Position {
 
 // Where this PC is, from Windows' location service (Settings → Privacy →
 // Location, "Let desktop apps access your location").
+#[cfg(windows)]
 #[tauri::command(async)]
 pub fn current_location() -> Result<Position, String> {
     use windows::Devices::Geolocation::Geolocator;
@@ -159,7 +214,89 @@ pub fn current_location() -> Result<Position, String> {
     Ok(Position { latitude: point.Latitude, longitude: point.Longitude })
 }
 
-// ----- secrets (Windows Credential Manager) -----
+// Where this Mac is, from Location Services. macOS asks the first time (the
+// reason it shows is in Info.plist), and only an app run from Project Life.app
+// may ask at all, so a development build is told no.
+#[cfg(target_os = "macos")]
+#[tauri::command(async)]
+pub fn current_location(app: AppHandle) -> Result<Position, String> {
+    const DENIED: &str = "Couldn't get your location. Check that Project Life is allowed in System Settings → Privacy & Security → Location Services.";
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.run_on_main_thread(move || mac_location::request(tx)).map_err(err)?;
+    // Long enough to answer macOS's question.
+    match rx.recv_timeout(std::time::Duration::from_secs(60)) {
+        Ok(Some((latitude, longitude))) => Ok(Position { latitude, longitude }),
+        _ => Err(DENIED.into()),
+    }
+}
+
+// Core Location answers through a delegate object, on the main thread.
+#[cfg(target_os = "macos")]
+mod mac_location {
+    use std::{cell::RefCell, sync::mpsc::Sender};
+
+    use objc2::rc::Retained;
+    use objc2::runtime::{NSObject, NSObjectProtocol, ProtocolObject};
+    use objc2::{define_class, msg_send, DefinedClass, MainThreadMarker, MainThreadOnly};
+    use objc2_core_location::{CLLocation, CLLocationManager, CLLocationManagerDelegate};
+    use objc2_foundation::{NSArray, NSError};
+
+    // Latitude and longitude, or None when macOS wouldn't say.
+    type Answer = Option<(f64, f64)>;
+
+    struct Ivars {
+        tx: Sender<Answer>,
+    }
+
+    define_class!(
+        #[unsafe(super(NSObject))]
+        #[thread_kind = MainThreadOnly]
+        #[name = "ProjectLifeLocationDelegate"]
+        #[ivars = Ivars]
+        struct Delegate;
+
+        unsafe impl NSObjectProtocol for Delegate {}
+
+        unsafe impl CLLocationManagerDelegate for Delegate {
+            #[unsafe(method(locationManager:didUpdateLocations:))]
+            fn did_update(&self, _manager: &CLLocationManager, locations: &NSArray<CLLocation>) {
+                if let Some(location) = locations.lastObject() {
+                    let at = unsafe { location.coordinate() };
+                    let _ = self.ivars().tx.send(Some((at.latitude, at.longitude)));
+                }
+            }
+
+            #[unsafe(method(locationManager:didFailWithError:))]
+            fn did_fail(&self, _manager: &CLLocationManager, _error: &NSError) {
+                let _ = self.ivars().tx.send(None);
+            }
+        }
+    );
+
+    thread_local! {
+        // The request in flight. It's kept until the next one replaces it, so
+        // neither object is freed inside its own callback.
+        static ACTIVE: RefCell<Option<(Retained<CLLocationManager>, Retained<Delegate>)>> = const { RefCell::new(None) };
+    }
+
+    pub fn request(tx: Sender<Answer>) {
+        let Some(mtm) = MainThreadMarker::new() else {
+            let _ = tx.send(None);
+            return;
+        };
+        let delegate = Delegate::alloc(mtm).set_ivars(Ivars { tx });
+        let delegate: Retained<Delegate> = unsafe { msg_send![super(delegate), init] };
+        let manager = unsafe { CLLocationManager::new() };
+        unsafe {
+            manager.setDelegate(Some(ProtocolObject::from_ref(&*delegate)));
+            manager.requestWhenInUseAuthorization();
+            manager.requestLocation();
+        }
+        ACTIVE.with(|active| *active.borrow_mut() = Some((manager, delegate)));
+    }
+}
+
+// ----- secrets (Windows Credential Manager, or the Mac's Keychain) -----
 
 pub(crate) fn entry(name: &str) -> Result<keyring::Entry, String> {
     if name.is_empty() || !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '.') {
@@ -196,6 +333,7 @@ fn fonts_dir() -> Result<PathBuf, String> {
 }
 
 // Font families Windows has installed, by the names CSS matches.
+#[cfg(windows)]
 #[tauri::command(async)]
 pub fn list_system_fonts() -> Vec<String> {
     use windows::Win32::Foundation::LPARAM;
@@ -221,6 +359,17 @@ pub fn list_system_fonts() -> Vec<String> {
         EnumFontFamiliesExW(dc, &font, Some(collect), LPARAM(&mut names as *mut _ as isize), 0);
         ReleaseDC(None, dc);
     }
+    names.sort_by_key(|n| n.to_lowercase());
+    names.dedup();
+    names
+}
+
+// The Mac's, from Core Text. Names that start with a dot are the system's own
+// hidden fonts.
+#[cfg(target_os = "macos")]
+#[tauri::command(async)]
+pub fn list_system_fonts() -> Vec<String> {
+    let mut names: Vec<String> = core_text::font_collection::get_family_names().iter().map(|n| n.to_string()).filter(|n| !n.is_empty() && !n.starts_with('.')).collect();
     names.sort_by_key(|n| n.to_lowercase());
     names.dedup();
     names

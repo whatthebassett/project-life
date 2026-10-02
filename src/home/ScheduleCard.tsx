@@ -11,7 +11,7 @@ import type { HomeData } from "./useHome";
 // Today's timeline, with a "now" line between what's done and what's next.
 // Past events dim; the next one is highlighted; later ones get the live color.
 export default function ScheduleCard({ home, onNavigate }: { home: HomeData; onNavigate: (s: Screen) => void }) {
-  const { activate } = useNotes();
+  const { activate, keyFor } = useNotes();
   const openMenu = useRowMenu("schedule", "Schedule");
   const now = home.now;
   const events = home.events.filter((e) => e.start.toDateString() === now.toDateString()).sort((a, b) => a.start.getTime() - b.start.getTime());
@@ -63,7 +63,7 @@ export default function ScheduleCard({ home, onNavigate }: { home: HomeData; onN
           );
         })}
         {(lineBefore === -1 || events.length === 0) && nowLine}
-        {events.length === 0 && <Empty className="mt-2">Nothing on your schedule today. Press Ctrl+E to add an event.</Empty>}
+        {events.length === 0 && <Empty className="mt-2">Nothing on your schedule today. Press {keyFor("app.newEvent") || "New event on Schedule"} to add an event.</Empty>}
       </div>
     </Card>
   );

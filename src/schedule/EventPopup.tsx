@@ -1,3 +1,4 @@
+import { thisComputer } from "../lib/platform";
 import { clockShort, hour12 } from "../lib/format";
 import { locale } from "../lib/format";
 import clsx from "clsx";
@@ -240,7 +241,7 @@ export default function EventPopup({ event, occ, isNew, events, now, openMenu, o
       r.left,
       r.bottom + 4,
       zones.map((z, i) => ({
-        label: `${zoneName(z)} · ${i === 0 ? "this PC" : zoneCity(z)}`,
+        label: `${zoneName(z)} · ${i === 0 ? thisComputer : zoneCity(z)}`,
         checked: zone === z,
         // The times stay as typed; they now mean that zone's time.
         onSelect: () => set({ zone: z === here ? null : z }),

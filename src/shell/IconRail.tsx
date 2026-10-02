@@ -1,3 +1,4 @@
+import { showKeys } from "../lib/shortcuts";
 import clsx from "clsx";
 import { menuPoint } from "../components/ContextMenu";
 import { useSettings } from "../lib/SettingsContext";
@@ -51,7 +52,7 @@ export default function IconRail({ screen, onNavigate, onSettings }: Props) {
       <button
         type="button"
         aria-label="Settings"
-        title="Settings (Ctrl+,)"
+        title={`Settings (${n.keyFor("app.settings") || showKeys("Ctrl+,")})`}
         onClick={onSettings}
         onContextMenu={(e) => {
           e.preventDefault();

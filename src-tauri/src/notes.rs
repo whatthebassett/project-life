@@ -125,7 +125,7 @@ pub struct FolderSwitch {
 pub fn set_notes_folder(path: Option<String>, copy: bool) -> Result<FolderSwitch, String> {
     let wanted = path.as_deref().map(PathBuf::from).unwrap_or_else(default_notes_dir);
     if !wanted.is_absolute() {
-        return Err("Choose a folder with its full path, such as D:\\Notes.".into());
+        return Err(if cfg!(windows) { "Choose a folder with its full path, such as D:\\Notes." } else { "Choose a folder with its full path, such as /Users/you/Notes." }.into());
     }
     let current = notes_dir()?;
     let target = ensure(wanted)?;
@@ -443,7 +443,7 @@ pub fn export_all(destination: String) -> Result<usize, String> {
 
 #[tauri::command]
 pub fn open_notes_folder() -> Result<(), String> {
-    std::process::Command::new("explorer").arg(notes_dir()?).spawn().map(|_| ()).map_err(err)
+    std::process::Command::new(if cfg!(windows) { "explorer" } else { "open" }).arg(notes_dir()?).spawn().map(|_| ()).map_err(err)
 }
 
 // ----- pictures -----

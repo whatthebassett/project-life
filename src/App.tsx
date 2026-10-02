@@ -37,9 +37,10 @@ import Celebration from "./goals/Celebration";
 import { useAccountSync } from "./accounts/sync";
 import { useFeedSync } from "./schedule/feeds";
 import { useAutoUpdate } from "./lib/updates";
-import { useBackgroundJobs } from "./lib/jobs";
+import { flushAll, useBackgroundJobs } from "./lib/jobs";
+import { isMac } from "./lib/platform";
 import { keyMap, keyOf } from "./lib/shortcuts";
-import { textSizes, type Settings } from "./lib/settings";
+import { currentSettings, textSizes, type Settings } from "./lib/settings";
 
 const screens: Record<Exclude<Screen, "home">, () => React.JSX.Element> = {
   notes: NotesScreen,
@@ -106,6 +107,17 @@ export default function App() {
       void win.unminimize().then(() => win.setFocus());
       requestTasks({ kind: "open", id: e.payload.id, popup: true });
     });
+    // The Mac's menu bar: Project Life → Settings…
+    const settingsMenu = listen("app:settings", () => setSettingsOpen(true));
+    // A Mac's window closes with its own red button (or ⌘W), not the title
+    // bar's: save what's waiting first. Kept in the menu bar, the window is
+    // only hidden (lib.rs), so it mustn't be destroyed here.
+    const closing = isMac
+      ? getCurrentWindow().onCloseRequested(async (e) => {
+          if (currentSettings().KeepInTray !== false) e.preventDefault();
+          await flushAll();
+        })
+      : null;
     // Quit from the tray: save what's waiting, then go.
     const quitting = listen("app:quit", () => {
       void Promise.all([taskStore().flush(), eventStore().flush(), habitStore().flush(), goalStore().flush(), runBeforeClose()]).finally(() => void invoke("quit_app"));
@@ -113,6 +125,8 @@ export default function App() {
     return () => {
       void unlisten.then((f) => f());
       void quitting.then((f) => f());
+      void settingsMenu.then((f) => f());
+      void closing?.then((f) => f());
     };
   }, []);
 

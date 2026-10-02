@@ -1,8 +1,13 @@
-// The file layer. Project Life keeps everything local, in a Data folder beside
-// the executable: settings, and tasks, events, habits and goals as JSON files.
+// The file layer. Project Life keeps everything local, in a Data folder (beside
+// the executable on Windows, in Application Support on a Mac): settings, and
+// tasks, events, habits and goals as JSON files.
 // The frontend owns the JSON; this side only reads and writes it whole, so
 // keys it doesn't know about are never lost. Notes are Markdown files in
 // their own folder (notes.rs).
+// The Mac app is for Apple silicon only; Intel Macs aren't supported.
+#[cfg(all(target_os = "macos", not(target_arch = "aarch64")))]
+compile_error!("Project Life for Mac builds for Apple silicon (aarch64) only.");
+
 mod accounts;
 mod attachments;
 mod merge;
@@ -26,9 +31,15 @@ fn err<E: std::fmt::Display>(e: E) -> String {
 
 // Data sits beside the executable so the app stays portable. During development
 // the executable lives deep in target/, so use the project's own Data folder.
+// On a Mac the executable is sealed inside Project Life.app, so Data is
+// ~/Library/Application Support/Project Life instead.
 fn data_dir() -> PathBuf {
     if cfg!(debug_assertions) {
         return PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..").join("Data");
+    }
+    #[cfg(target_os = "macos")]
+    if let Some(home) = std::env::var_os("HOME") {
+        return PathBuf::from(home).join("Library").join("Application Support").join("Project Life");
     }
     std::env::current_exe()
         .ok()
@@ -103,7 +114,7 @@ fn crash_reports_on() -> bool {
 // The name to greet someone by until they set their own in Settings → Profile.
 #[tauri::command]
 fn default_name() -> String {
-    std::env::var("USERNAME").unwrap_or_default()
+    std::env::var(if cfg!(windows) { "USERNAME" } else { "USER" }).unwrap_or_default()
 }
 
 // The window opens at 1440 x 1000, the size the screens were designed at, but
@@ -131,7 +142,7 @@ fn fit_to_monitor(win: &WebviewWindow) {
 // Project Life runs from any folder on any Windows PC, but it can't carry
 // WebView2 with it. Windows 11 and updated Windows 10 already have it; when
 // it's missing, say so plainly instead of failing silently.
-#[cfg(not(debug_assertions))]
+#[cfg(all(windows, not(debug_assertions)))]
 fn prepare_portable() -> bool {
     use windows::{
         core::HSTRING,
@@ -150,7 +161,7 @@ fn prepare_portable() -> bool {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    #[cfg(not(debug_assertions))]
+    #[cfg(all(windows, not(debug_assertions)))]
     if !prepare_portable() {
         return;
     }
@@ -171,7 +182,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
-        // Settings → General → Open when Windows starts.
+        // Settings → General → Open when Windows starts (Open at login on a Mac).
         .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, None))
         // Pictures in notes, as http://pl.localhost/assets/… (notes.rs).
         // Downloaded fonts too, as http://pl.localhost/__fonts/… (system.rs).
@@ -204,6 +215,8 @@ pub fn run() {
                 fit_to_monitor(&win);
             }
             tray::setup(app)?;
+            #[cfg(target_os = "macos")]
+            tray::app_menu(app)?;
             update::clean_up();
             #[cfg(windows)]
             tray::register_toast_identity(app);
@@ -295,6 +308,14 @@ pub fn run() {
             notes::set_notes_folder,
             notes::fetch_link_preview
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(|_app, _event| {
+            // Clicking the Dock icon brings back a window that was closed to
+            // the menu bar.
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { .. } = _event {
+                tray::show_main(_app);
+            }
+        });
 }

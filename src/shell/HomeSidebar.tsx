@@ -1,3 +1,4 @@
+import { showKeys } from "../lib/shortcuts";
 import clsx from "clsx";
 import { Maximize2 } from "lucide-react";
 import { useState } from "react";
@@ -114,7 +115,7 @@ export default function HomeSidebar({ screen, onNavigate, onSettings }: Props) {
         <button
           type="button"
           aria-label="Settings"
-          title="Settings (Ctrl+,)"
+          title={`Settings (${n.keyFor("app.settings") || showKeys("Ctrl+,")})`}
           onClick={onSettings}
           onContextMenu={(e) => {
             e.preventDefault();

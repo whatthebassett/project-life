@@ -6,6 +6,7 @@ fn err<E: std::fmt::Display>(e: E) -> String {
 }
 
 // A DWORD from the current user's registry, via reg.exe.
+#[cfg(windows)]
 fn reg_dword(key: &str, value: &str) -> Option<u32> {
     use std::os::windows::process::CommandExt;
     let output = std::process::Command::new("reg")
@@ -18,6 +19,7 @@ fn reg_dword(key: &str, value: &str) -> Option<u32> {
     u32::from_str_radix(&hex[2..], 16).ok()
 }
 
+#[cfg(windows)]
 fn reg_string(key: &str, value: &str) -> Option<String> {
     use std::os::windows::process::CommandExt;
     let output = std::process::Command::new("reg")
@@ -95,8 +97,44 @@ impl ureq::unversioned::resolver::Resolver for PublicOnly {
 
 // The proxy this PC uses, like the browser does: HTTPS_PROXY / HTTP_PROXY if
 // set, or the one in Windows' settings (Network & internet → Proxy → Use a
-// proxy server). Read once, when first needed. Setup scripts (PAC files)
-// aren't followed; the connection is then made directly.
+// proxy server) or the Mac's (Network → Proxies → Secure web proxy). Read
+// once, when first needed. Setup scripts (PAC files) aren't followed; the
+// connection is then made directly.
+#[cfg(windows)]
+fn os_proxy() -> Option<String> {
+    let key = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings";
+    if reg_dword(key, "ProxyEnable") != Some(1) {
+        return None;
+    }
+    let server = reg_string(key, "ProxyServer")?;
+    // "host:port" for everything, or per protocol: "http=host:port;https=host:port".
+    Some(if server.contains('=') {
+        let part = |kind: &str| server.split(';').find_map(|p| p.trim().strip_prefix(kind).map(str::to_string));
+        part("https=").or_else(|| part("http="))?
+    } else {
+        server
+    })
+}
+
+// "host:port" from `scutil --proxy`, which prints the Mac's proxy settings as
+// "HTTPSEnable : 1", "HTTPSProxy : host" and "HTTPSPort : 8080" lines.
+#[cfg(not(windows))]
+fn os_proxy() -> Option<String> {
+    let output = std::process::Command::new("scutil").arg("--proxy").output().ok()?;
+    let text = String::from_utf8_lossy(&output.stdout).into_owned();
+    let value = |name: &str| text.lines().find_map(|l| l.trim().strip_prefix(name)?.trim().strip_prefix(':').map(|v| v.trim().to_string()));
+    ["HTTPS", "HTTP"].iter().find_map(|kind| {
+        if value(&format!("{kind}Enable")).as_deref() != Some("1") {
+            return None;
+        }
+        let host = value(&format!("{kind}Proxy")).filter(|h| !h.is_empty())?;
+        Some(match value(&format!("{kind}Port")) {
+            Some(port) => format!("{host}:{port}"),
+            None => host,
+        })
+    })
+}
+
 fn system_proxy() -> Option<ureq::Proxy> {
     static PROXY: std::sync::OnceLock<Option<ureq::Proxy>> = std::sync::OnceLock::new();
     PROXY
@@ -104,18 +142,7 @@ fn system_proxy() -> Option<ureq::Proxy> {
             if let Some(proxy) = ureq::Proxy::try_from_env() {
                 return Some(proxy);
             }
-            let key = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings";
-            if reg_dword(key, "ProxyEnable") != Some(1) {
-                return None;
-            }
-            let server = reg_string(key, "ProxyServer")?;
-            // "host:port" for everything, or per protocol: "http=host:port;https=host:port".
-            let chosen = if server.contains('=') {
-                let part = |kind: &str| server.split(';').find_map(|p| p.trim().strip_prefix(kind).map(str::to_string));
-                part("https=").or_else(|| part("http="))?
-            } else {
-                server
-            };
+            let chosen = os_proxy()?;
             let uri = if chosen.contains("://") { chosen } else { format!("http://{chosen}") };
             ureq::Proxy::new(&uri).ok()
         })

@@ -1,3 +1,4 @@
+import { thisComputer } from "../lib/platform";
 import clsx from "clsx";
 import { useCallback, useState } from "react";
 import ContextMenu, { type MenuItem, type MenuState } from "../components/ContextMenu";
@@ -43,8 +44,8 @@ const groups: { label: string; items: Section[] }[] = [
   {
     label: "APP",
     items: [
-      { id: "general", label: "General", desc: "Startup, dates and language", icon: "settings", keywords: "open when windows starts startup keep running in the tray close open to week starts on time format 12-hour 24-hour clock date format language english updates update channel beta" },
-      { id: "appearance", label: "Appearance", desc: "Themes, fonts and how the app feels", icon: "appearance", keywords: "theme match windows light dark accent color window background mica acrylic headline font text size add a font google fonts density compact sidebar icons" },
+      { id: "general", label: "General", desc: "Startup, dates and language", icon: "settings", keywords: "open when windows starts open at login startup keep running in the tray menu bar close open to week starts on time format 12-hour 24-hour clock date format language english updates update channel beta" },
+      { id: "appearance", label: "Appearance", desc: "Themes, fonts and how the app feels", icon: "appearance", keywords: "theme match windows macos light dark accent color window background mica acrylic translucent headline font text size add a font google fonts density compact sidebar icons" },
       { id: "home", label: "Home screen", desc: "Pick what shows up on Home", icon: "home", keywords: "cards up next today's progress schedule tasks goals habits recent notes news weather news sources temperature" },
       { id: "notifications", label: "Notifications", desc: "What can interrupt you, and when", icon: "notifications", keywords: "remind me about events calls about to start join tasks due habit reminders goal check-ins quiet hours stay quiet while i'm live obs meld streaming sound chime pop test" },
       { id: "shortcuts", label: "Keyboard shortcuts", desc: "Every shortcut can be changed", icon: "shortcuts", keywords: "keys keyboard quick capture go to home settings guide new note switch note visual markdown new task new event reset all shortcuts formatting tabs" },
@@ -64,7 +65,7 @@ const groups: { label: string; items: Section[] }[] = [
     label: "DATA",
     items: [
       { id: "accounts", label: "Connected accounts", desc: "Calendars and video calls", icon: "accounts", keywords: "microsoft outlook teams google meet zoom sync calendars connect disconnect reconnect declined sign in" },
-      { id: "storage", label: "Storage and backup", desc: "Your data lives on this PC", icon: "storage", keywords: "data folder daily backup backup folder onedrive back up now space used import from checkpoint export everything zip" },
+      { id: "storage", label: "Storage and backup", desc: `Your data lives on ${thisComputer}`, icon: "storage", keywords: "data folder daily backup backup folder onedrive icloud back up now space used import from checkpoint export everything zip" },
       { id: "privacy", label: "Privacy", desc: "No account, no tracking", icon: "privacy", keywords: "what goes online crash reports logs clear cached previews news delete all data" },
       { id: "about", label: "About", desc: "Version and release notes", icon: "about", keywords: "version check for updates what's new release notes made by open-source licenses" },
     ],

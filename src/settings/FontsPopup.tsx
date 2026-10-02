@@ -1,3 +1,4 @@
+import { thisComputer } from "../lib/platform";
 import clsx from "clsx";
 import { Download, Search, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -110,7 +111,7 @@ export default function FontsPopup({ current, onPick, onClose }: { current?: str
 
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between gap-3">
-            <SectionLabel>INSTALLED ON THIS PC</SectionLabel>
+            <SectionLabel>{`INSTALLED ON ${thisComputer.toUpperCase()}`}</SectionLabel>
             <label className="flex h-8 w-56 items-center gap-2 rounded-[9px] border border-line bg-panel px-2.5 text-muted">
               <Search size={13} />
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a font" aria-label="Find a font" className="min-w-0 flex-1 bg-transparent text-12 text-text outline-none" />

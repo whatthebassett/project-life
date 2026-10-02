@@ -1,7 +1,7 @@
 import clsx from "clsx";
 
 // Emoji are drawn with Windows' color emoji font, like the picker's.
-export const emojiFont = '"Segoe UI Emoji", "Segoe UI Symbol", sans-serif';
+export const emojiFont = '"Segoe UI Emoji", "Apple Color Emoji", "Segoe UI Symbol", sans-serif';
 
 // A note's icon beside its name in a list, at the list's text size. The name
 // says what the note is, so screen readers skip it.

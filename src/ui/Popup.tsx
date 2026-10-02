@@ -73,7 +73,7 @@ export function Popup({ onClose, onSubmit, width, height, labelledBy, label, chi
       if (e.key === "Escape") {
         e.preventDefault();
         handlers.current.onClose();
-      } else if (e.key === "Enter" && e.ctrlKey && handlers.current.onSubmit) {
+      } else if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && handlers.current.onSubmit) {
         e.preventDefault();
         handlers.current.onSubmit();
       } else if (e.key === "Tab" && panel.current) {
