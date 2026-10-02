@@ -20,7 +20,7 @@ export function navMenu(id: (typeof navItems)[number]["id"], h: NavMenuHandlers)
   if (id === "notes") items.push({ label: "New note", icon: <FilePlus size={13} />, onSelect: h.newNote });
   if (id === "schedule") items.push({ label: "New event", icon: <CalendarPlus size={13} />, hint: h.keyFor("app.newEvent"), onSelect: () => requestSchedule({ kind: "new" }) });
   if (id === "tasks") {
-    items.push({ label: "New task", icon: <Plus size={13} />, hint: h.keyFor("app.newTask"), onSelect: () => requestTasks({ kind: "new" }) });
+    items.push({ label: "New task", icon: <Plus size={13} />, onSelect: () => requestTasks({ kind: "new" }) });
     if (inTauri) items.push({ type: "separator" }, { label: "Pop out Tasks", icon: <ExternalLink size={13} />, onSelect: () => void openTasksWindow() });
   }
   return items;

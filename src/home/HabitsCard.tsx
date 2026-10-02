@@ -1,4 +1,5 @@
-import { dayOfWeek, weekLetters } from "../lib/format";
+import { dayOfWeek, locale, weekLetters } from "../lib/format";
+import { fromYmd } from "../tasks/dates";
 import clsx from "clsx";
 import { Check, EyeOff, Maximize2, Repeat, RotateCcw } from "lucide-react";
 import { menuPoint, type MenuItem } from "../components/ContextMenu";
@@ -12,7 +13,8 @@ import type { HomeData } from "./useHome";
 import type { HomeHabit } from "./sources";
 
 // This week for each habit, Monday first: done days filled, missed ones
-// outlined, today clickable, the days to come dashed.
+// outlined, the days to come dashed. Today and the days before it can be
+// clicked, to fill in a day that was done but not ticked.
 export default function HabitsCard({ home, onNavigate }: { home: HomeData; onNavigate: (s: Screen) => void }) {
   const todayIdx = dayOfWeek(home.now);
   const letters = weekLetters();
@@ -59,6 +61,7 @@ export default function HabitsCard({ home, onNavigate }: { home: HomeData; onNav
       {home.habits.map((h) => {
         // Line the week up with today, whatever the data holds.
         const past = Array.from({ length: todayIdx }, (_, i) => h.past[h.past.length - todayIdx + i] ?? false);
+        const pastDays = Array.from({ length: todayIdx }, (_, i) => h.pastDays?.[(h.pastDays?.length ?? 0) - todayIdx + i]);
         const streak = h.streak + (h.doneToday ? 1 : 0);
         return (
           <div
@@ -79,7 +82,21 @@ export default function HabitsCard({ home, onNavigate }: { home: HomeData; onNav
               {letters.map((_, i) => {
                 if (i < todayIdx) {
                   const ok = past[i];
-                  return <span key={i} className={clsx("h-[22px] w-[22px] rounded-[7px] border-[1.5px]", ok ? "border-accent2 bg-accent2" : "border-faint")} />;
+                  const day = pastDays[i];
+                  const square = clsx("h-[22px] w-[22px] rounded-[7px] border-[1.5px]", ok ? "border-accent2 bg-accent2" : "border-faint");
+                  if (!day || !home.fillHabitDay) return <span key={i} className={square} />;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      tabIndex={-1}
+                      aria-pressed={ok}
+                      aria-label={`${ok ? "Clear" : "Mark done"} ${fromYmd(day).toLocaleDateString(locale(), { weekday: "long" })}: ${h.name}`}
+                      title={ok ? "Done. Click to clear it." : "Click to mark it done."}
+                      onClick={() => home.fillHabitDay?.(h.id, day)}
+                      className={clsx(square, "cursor-pointer transition-[box-shadow] hover:shadow-[0_0_0_2px_var(--line)]")}
+                    />
+                  );
                 }
                 if (i === todayIdx) {
                   return (

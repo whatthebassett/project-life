@@ -1,10 +1,13 @@
-// Opening the command palette (Ctrl+K, or Home's capture box) from anywhere.
+// Opening the command palette (Ctrl+T, Home's capture box, or the + beside
+// the note tabs) from anywhere.
 // App.tsx listens and draws it.
 export type PaletteMode = "task" | "note" | "event";
 
 export interface PaletteRequest {
   mode?: PaletteMode;
   text?: string;
+  // Enter opens a note in a new tab (and Ctrl+Enter in place), not the other way round.
+  newTab?: boolean;
 }
 
 let listener: ((req: PaletteRequest) => void) | null = null;

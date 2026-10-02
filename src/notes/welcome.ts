@@ -20,7 +20,7 @@ export function welcomeNotes(now = new Date()): [string, string][] {
 - [ ] Type **/** at the start of a line to add a heading, a list, a table, a callout and more
 - [ ] Press **Ctrl /** to see this note as plain Markdown, then again to come back
 - [ ] Right-click a note in the notebook to pin it, tag it, or tuck it inside another note
-- [ ] Press **Ctrl P** to jump to any note by name
+- [ ] Press **Ctrl T** to jump to any note by name (Ctrl Enter opens it in a new tab)
 
 ## Where things are
 
@@ -151,8 +151,8 @@ Hover over any block to see its handle at the left. Drag the handle to move the 
 | --- | --- |
 | Ctrl N | New note |
 | Ctrl Alt N | New note inside this one |
-| Ctrl P | Jump to a note |
-| Ctrl T | Open a note in a new tab |
+| Ctrl T | Command palette: jump to a note, or add a task, note or event |
+| Ctrl Enter (in the palette) | Open the note in a new tab |
 | Ctrl W | Close the tab |
 | Ctrl Tab | Next tab |
 | Ctrl / | Switch between Visual and Markdown |

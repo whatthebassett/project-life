@@ -1,13 +1,13 @@
 // The right-click menus for habits: a habit, an archived one, and a day in
 // its last 12 weeks. They need no screen state, so Tasks can use them too.
-import { Archive, ArchiveRestore, Check, Clock, Copy, House, ListChecks, Minus, Palette, Pause, Pencil, Play, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, CalendarCheck, Check, Clock, Copy, House, ListChecks, Minus, Palette, Pause, Pencil, Play, Plus, RotateCcw, Trash2 } from "lucide-react";
 import type { ConfirmOptions } from "../components/ConfirmDialog";
 import type { MenuItem } from "../components/ContextMenu";
 import { locale } from "../lib/format";
 import { currentSettings } from "../lib/settings";
-import { fromYmd } from "../tasks/dates";
+import { addDays, fromYmd, ymd } from "../tasks/dates";
 import { newId } from "../tasks/model";
-import { archiveHabit, saveHabit, startTimer, stepDay, stopTimer, toggleDay } from "./actions";
+import { archiveHabit, fillDay, saveHabit, startTimer, stepDay, stopTimer, toggleDay } from "./actions";
 import { doneOn, hueColor, hueNames, todLabel, valueOn, type Habit, type TimeOfDay } from "./model";
 
 export interface HabitMenuHandlers {
@@ -41,6 +41,8 @@ function stepItems(h: Habit, day: string, when: string): MenuItem[] {
 }
 
 // A habit in a list. `today` is the habit day (habitDay), not the calendar date.
+const yesterdayOf = (today: string) => ymd(addDays(fromYmd(today), -1));
+
 export function habitMenu(h: Habit, today: string, on: HabitMenuHandlers): MenuItem[] {
   // Settings → Habits → Show habits in Tasks puts every habit there already.
   const allInTasks = Boolean(currentSettings().HabitsInTasks);
@@ -52,6 +54,10 @@ export function habitMenu(h: Habit, today: string, on: HabitMenuHandlers): MenuI
             : { label: "Mark done today", icon: <Check size={13} />, onSelect: () => toggleDay(h, today) },
         ]
       : stepItems(h, today, "")),
+    // Done yesterday but not ticked: the quickest way to fill it in.
+    doneOn(h, yesterdayOf(today))
+      ? { label: "Yesterday: not done", icon: <RotateCcw size={13} />, onSelect: () => fillDay(h, yesterdayOf(today), today) }
+      : { label: "Mark yesterday done", icon: <CalendarCheck size={13} />, onSelect: () => fillDay(h, yesterdayOf(today), today) },
     ...(h.Kind === "time"
       ? [
           h.Timer

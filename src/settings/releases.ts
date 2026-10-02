@@ -15,6 +15,67 @@ export interface Release {
 
 export const releases: Release[] = [
   {
+    name: "Lake Hylia",
+    version: "0.4.0 beta",
+    date: "2026-10-02",
+    summary: "One command palette on Ctrl+T, in liquid glass; tags you can add from the note itself; US holidays built in; habits you can fill in after the fact.",
+    features: [
+      {
+        area: "Command palette",
+        items: [
+          "Ctrl+T opens it from anywhere. It now does the jobs of Switch note (Ctrl+P), Open a note in a new tab and New task (Ctrl+Shift+T), which are retired; Ctrl+K is back to adding a link inside a note",
+          "Recent notes come first; typing searches note titles, with each note's notebook and when it was edited. Enter opens a note here, Ctrl+Enter (or Ctrl+click) in a new tab",
+          "A note titled exactly what you typed goes to the top; the + beside the note tabs opens the palette set to open notes in a new tab",
+          "A liquid glass look: the screen shows through a frosted pane with a lit rim, and the Task, Note and Event switch slides. It turns solid with high contrast or reduced transparency",
+        ],
+      },
+      {
+        area: "Notes",
+        items: [
+          "Add tags from the note: click Add tag (or any tag, or the +) under the title to find tags, tick them on or off, or make a new one by typing its name",
+          "Manage tags is rebuilt: bigger, with your tags on the left and the one picked on the right to rename, recolor or delete, a live preview, and the notes that use it. Changes save as you make them",
+          "Tags show in their own color on the note",
+          "A note's icon sits beside its title instead of above it",
+          "The Edited line shows the full date and time; point at it for how long ago",
+          "The format bar's “Type / for blocks” is now an info button that shows how the / menu works",
+        ],
+      },
+      {
+        area: "Schedule",
+        items: [
+          "A built-in US Holidays calendar: the federal holidays (and the weekday they're observed on), plus days like Valentine's Day, Easter, Halloween and the clock changes. Worked out on your PC, so it needs no link or internet",
+          "Right-click it to hide, recolor or remove it; + Add calendar brings it back",
+        ],
+      },
+      {
+        area: "Habits",
+        items: [
+          "Fill in a day you forgot to tick: click any past day in a habit's week, in its history, or on Home's Habits card. Undo is in the message that follows",
+          "Right-click a habit for Mark yesterday done",
+        ],
+      },
+      {
+        area: "Home",
+        items: [
+          "Click an event on the Schedule card to open it",
+        ],
+      },
+      {
+        area: "Everywhere",
+        items: [
+          "Tooltips look like the rest of Project Life instead of Windows' plain ones, and show on keyboard focus too",
+        ],
+      },
+    ],
+    fixes: [
+      { area: "Home", text: "Up Next's countdown no longer runs into a divider line when it reaches three digits; the line is gone and the number has room." },
+      { area: "Notes", text: "A long title no longer loses its second line when the note gets narrower." },
+    ],
+    known: [
+      { area: "Schedule", text: "US Holidays doesn't include holidays that follow other calendars, such as Hanukkah, Passover, Ramadan and Diwali." },
+    ],
+  },
+  {
     name: "Zora's Domain",
     version: "0.3.1 beta",
     date: "2026-09-27",

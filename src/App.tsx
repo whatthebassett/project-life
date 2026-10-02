@@ -32,6 +32,8 @@ import TasksScreen from "./tasks/TasksScreen";
 import { TASKS_OPEN } from "./tasks/TasksWindow";
 import { Toaster } from "./ui/Toast";
 import AppMenu from "./components/AppMenu";
+import Tooltips from "./components/Tooltips";
+import EventEditorHost from "./schedule/EventEditorHost";
 import GuidePopup from "./shell/GuidePopup";
 import Celebration from "./goals/Celebration";
 import { useAccountSync } from "./accounts/sync";
@@ -62,7 +64,7 @@ export default function App() {
   const { settings, update } = useSettings();
   const [screen, setScreen] = useState<Screen>(() => startScreen(settings));
   const [settingsOpen, setSettingsOpen] = useState(false);
-  // The command palette (Ctrl+K), and what it opened with.
+  // The command palette (Ctrl+T), and what it opened with.
   const [palette, setPalette] = useState<PaletteRequest | null>(null);
   useEffect(() => onOpenPalette((req) => setPalette(req)), []);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -118,7 +120,7 @@ export default function App() {
 
   useEffect(() => {
     // Settings → Keyboard shortcuts → Everywhere. Inside a note, keys that
-    // are also a formatting shortcut (Ctrl+K, Ctrl+E) stay with the note.
+    // are also a formatting shortcut (Ctrl+E) stay with the note.
     const onKey = (e: KeyboardEvent) => {
       const keys = keyOf(e);
       if (!keys) return;
@@ -134,7 +136,6 @@ export default function App() {
       else if (id === "app.capture") setPalette((open) => (open ? null : {}));
       else if (id === "app.home") setScreen("home");
       else if (id === "app.guide") setGuideOpen(true);
-      else if (id === "app.newTask") requestTasks({ kind: "new" });
       else if (id === "app.newEvent") requestSchedule({ kind: "new" });
       else if (id === "app.larger" || id === "app.smaller") stepTextSize(id === "app.larger" ? 1 : -1);
     };
@@ -178,6 +179,8 @@ export default function App() {
           <Celebration />
           <Toaster />
           <AppMenu />
+          <Tooltips />
+          <EventEditorHost />
         </div>
       </div>
     </NotesProvider>

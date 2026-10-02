@@ -3,7 +3,7 @@ import { titleOf } from "../lib/api";
 import { joinUrlOf, occurrences, type Occurrence } from "../schedule/events";
 import { startOfDay } from "../tasks/dates";
 import { useAllEvents } from "../schedule/useEvents";
-import { stepDay, toggleDay } from "../habits/actions";
+import { fillDay, stepDay, toggleDay } from "../habits/actions";
 import { activeHabits, currentStreak, doneOn, habitDay, isDue, weekStartOf, type Habit, type HabitRules } from "../habits/model";
 import { rulesOf, useHabits } from "../habits/useHabits";
 import { useSettings } from "../lib/SettingsContext";
@@ -25,6 +25,8 @@ export interface HomeData {
   events: HomeEvent[];
   habits: HomeHabit[];
   toggleHabit: (id: string) => void;
+  // A day earlier this week filled in or cleared (not for sample habits).
+  fillHabitDay?: (id: string, day: string) => void;
   notes: HomeNote[];
 }
 
@@ -72,6 +74,10 @@ export function useHome(): HomeData {
       else if (doneOn(h, habitToday)) stepDay(h, habitToday, -Math.ceil(h.Target / (h.Kind === "time" ? 5 : 1)));
       else stepDay(h, habitToday, 1);
     },
+    fillHabitDay: (id, day) => {
+      const h = habits.find((x) => x.Id === id);
+      if (h) fillDay(h, day, habitToday);
+    },
     notes: recentNotes,
   };
 }
@@ -81,9 +87,13 @@ function toHomeHabit(h: Habit, today: string, rules: HabitRules): HomeHabit {
   const doneToday = doneOn(h, today);
   const mon = fromYmd(weekStartOf(today));
   const past: boolean[] = [];
-  for (let d = mon; ymd(d) < today; d = addDays(d, 1)) past.push(doneOn(h, ymd(d)));
+  const pastDays: string[] = [];
+  for (let d = mon; ymd(d) < today; d = addDays(d, 1)) {
+    past.push(doneOn(h, ymd(d)));
+    pastDays.push(ymd(d));
+  }
   const streak = currentStreak(h, today, rules).count;
-  return { id: h.Id, name: h.Name, streak: Math.max(0, streak - (doneToday ? 1 : 0)), past, doneToday };
+  return { id: h.Id, name: h.Name, streak: Math.max(0, streak - (doneToday ? 1 : 0)), past, pastDays, doneToday };
 }
 
 function toHome(o: Occurrence): HomeEvent {

@@ -23,6 +23,7 @@ import {
   removed,
   renamed,
   saveNotebook,
+  tagPresets,
   unnested,
   withParent,
   withPin,
@@ -59,7 +60,7 @@ import TagDialog from "../components/TagDialog";
 import TagManager from "../components/TagManager";
 import RecycleBin from "../components/RecycleBin";
 import MovePicker from "../components/MovePicker";
-import NotePicker from "../components/NotePicker";
+import { openPalette } from "../palette/open";
 import EmojiPicker from "./EmojiPicker";
 import { GUIDE, WELCOME, welcomeNotes } from "./welcome";
 
@@ -80,6 +81,8 @@ export interface Actions {
   newPageInside: (name: string) => void;
   moveTo: (name: string) => void;
   setTags: (name: string, ids: string[]) => void;
+  // A new tag with this name, in the next color, put straight on the note.
+  createTag: (name: string, tagName: string) => void;
   setPriority: (name: string, priority: PriorityValue) => void;
   setPinned: (name: string, pinned: boolean) => void;
   moveBy: (name: string, step: -1 | 1) => void;
@@ -108,7 +111,6 @@ type DialogState =
   | { kind: "manager" }
   | { kind: "recycle" }
   | { kind: "move"; name: string }
-  | { kind: "pick"; newTab: boolean }
   // `icon`: picking the note's icon rather than typing emoji.
   | { kind: "emoji"; x: number; y: number; icon?: boolean };
 
@@ -165,8 +167,8 @@ interface NotesValue {
   priorityMenu: (name: string) => MenuItem[];
   // On this page: scroll to the index-th heading of the open note.
   jumpToHeading: (index: number) => void;
-  // The note switcher (Ctrl+P), or Ctrl+T's version that opens a new tab.
-  pickNote: (newTab: boolean) => void;
+  // The + beside the tabs: the command palette, opening notes in a new tab.
+  pickNote: () => void;
   exportNote: () => void;
 }
 
@@ -881,6 +883,12 @@ export function NotesProvider({ visible, onShow, children }: Props) {
       newPageInside: (name) => void createNote(name),
       moveTo: (name) => setDialog({ kind: "move", name }),
       setTags: (name, ids) => void (notebookRef.current && commit(withTags(notebookRef.current, name, ids))),
+      createTag: (name, tagName) => {
+        const nb = notebookRef.current;
+        if (!nb) return;
+        const tag: Tag = { Id: newTagId(), Name: tagName, Color: tagPresets[nb.tags.Tags.length % tagPresets.length] };
+        void commit(withTags(withTag(nb, tag), name, [...(lookup(nb.tags.Notes, name) ?? []), tag.Id]));
+      },
       setPriority: (name, p) => void (notebookRef.current && commit(withPriority(notebookRef.current, name, p))),
       setPinned: (name, pinned) => void (notebookRef.current && commit(withPin(notebookRef.current, name, pinned))),
       dropPin: (name, target, where) =>
@@ -1156,14 +1164,6 @@ export function NotesProvider({ visible, onShow, children }: Props) {
       "app.wrap": () => update({ WordWrap: s().WordWrap === false }),
       "app.lines": () => update({ LineNumbers: !s().LineNumbers }),
       "app.emoji": () => openEmoji(),
-      "app.newTab": () => {
-        onShowRef.current();
-        setDialog({ kind: "pick", newTab: true });
-      },
-      "app.switch": () => {
-        onShowRef.current();
-        setDialog({ kind: "pick", newTab: false });
-      },
       "app.closeTab": () => void (cur() && closeTab(cur()!)),
       "app.closeOtherTabs": () => {
         const name = cur();
@@ -1179,7 +1179,7 @@ export function NotesProvider({ visible, onShow, children }: Props) {
   appCommandRef.current = appCommand;
 
   // These work from any screen; the rest only on Notes.
-  const everywhere = useMemo(() => new Set(["app.new", "app.switch", "app.newTab"]), []);
+  const everywhere = useMemo(() => new Set(["app.new"]), []);
 
   // Capture phase: app shortcuts win over the editors' own keys (so Ctrl+/
   // switches modes instead of commenting a line in Markdown mode). Not while
@@ -1283,10 +1283,7 @@ export function NotesProvider({ visible, onShow, children }: Props) {
     moreMenu,
     priorityMenu,
     jumpToHeading,
-    pickNote: (newTab) => {
-      onShowRef.current();
-      setDialog({ kind: "pick", newTab });
-    },
+    pickNote: () => openPalette({ mode: "note", newTab: true }),
     exportNote: () => void exportNote(),
   };
 
@@ -1306,7 +1303,17 @@ export function NotesProvider({ visible, onShow, children }: Props) {
         />
       )}
       {notebook && dialog?.kind === "manager" && (
-        <TagManager notebook={notebook} onNew={actions.newTag} onEdit={actions.editTag} onDelete={actions.deleteTag} onClose={closeDialog} />
+        <TagManager
+          notebook={notebook}
+          notes={notes}
+          onSave={(tag) => void commit(withTag(notebookRef.current ?? notebook, tag))}
+          onDelete={actions.deleteTag}
+          onOpen={(name) => {
+            setDialog(null);
+            void activate(name);
+          }}
+          onClose={closeDialog}
+        />
       )}
       {notebook && dialog?.kind === "recycle" && (
         <RecycleBin
@@ -1331,18 +1338,6 @@ export function NotesProvider({ visible, onShow, children }: Props) {
           onMove={(target) => {
             if (!target || !isWithin(notebook, target, dialog.name)) void commit(withParent(notebook, dialog.name, target));
             setDialog(null);
-          }}
-        />
-      )}
-      {notebook && dialog?.kind === "pick" && (
-        <NotePicker
-          notes={notes}
-          notebook={notebook}
-          newTab={dialog.newTab}
-          onClose={closeDialog}
-          onPick={(name) => {
-            setDialog(null);
-            void activate(name, dialog.newTab);
           }}
         />
       )}

@@ -3,6 +3,8 @@ import { newId } from "../tasks/model";
 import { toast } from "../ui/Toast";
 import { announce, announcing } from "../lib/announce";
 import { currentSettings } from "../lib/settings";
+import { locale } from "../lib/format";
+import { addDays, fromYmd, ymd } from "../tasks/dates";
 import { currentStreak, doneOn, type Habit } from "./model";
 import { habitStore, rulesOf } from "./useHabits";
 
@@ -33,6 +35,26 @@ function withValue(h: Habit, day: string, value: number): Habit {
 export function toggleDay(h: Habit, day: string) {
   edit(h.Id, (x) => withValue(x, day, (x.Log[day] ?? 0) >= x.Target ? 0 : x.Target));
   sayDay(h, day);
+}
+
+// "yesterday", or "Monday, Sep 28", for a day before today.
+export function dayName(day: string, today: string): string {
+  if (day === ymd(addDays(fromYmd(today), -1))) return "yesterday";
+  return fromYmd(day).toLocaleDateString(locale(), { weekday: "long", month: "short", day: "numeric" });
+}
+
+// Filling in a day after the fact (a click on it in the week, the history or
+// Home): done, or cleared, whatever kind of habit, with Undo in case the
+// click was a slip. Today works the same way, without the toast.
+export function fillDay(h: Habit, day: string, today: string) {
+  const latest = store().getState().file.Habits.find((x) => x.Id === h.Id) ?? h;
+  const was = latest.Log[day] ?? 0;
+  const wasDone = doneOn(latest, day);
+  toggleDay(latest, day);
+  if (day === today) return;
+  toast(`${wasDone ? "Cleared" : "Marked"} ${dayName(day, today)} ${wasDone ? "for" : "done for"} ${latest.Name}`, () =>
+    edit(h.Id, (x) => withValue(x, day, was)),
+  );
 }
 
 // Count and time habits: up or down a step (one, or five minutes).

@@ -161,9 +161,9 @@ function Tabs() {
         })}
       </div>
       <button
-        aria-label={`New tab (${keyFor("app.newTab")})`}
-        title={`Open a note in a new tab (${keyFor("app.newTab")})`}
-        onClick={() => pickNote(true)}
+        aria-label="New tab"
+        title="Open a note in a new tab"
+        onClick={() => pickNote()}
         className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] text-muted hover:bg-panel hover:text-text"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
@@ -305,6 +305,10 @@ function Page() {
       path={parentsOf(nb, name)}
       onOpenParent={(p) => n.actions.open(p)}
       tags={tags}
+      allTags={nb.tags.Tags}
+      onSetTags={(ids) => n.actions.setTags(name, ids)}
+      onCreateTag={(tagName) => n.actions.createTag(name, tagName)}
+      onManageTags={n.actions.manageTags}
       priority={priority}
       onPriority={(x, y) => n.openMenu(x, y, n.priorityMenu(name))}
       modified={info?.modified}

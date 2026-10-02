@@ -27,6 +27,19 @@ export function dateText(d: Date, today = new Date(), format?: "short" | "dmy" |
   return d.toLocaleDateString(locale(), { weekday: "short", month: "short", day: "numeric", year: d.getFullYear() === today.getFullYear() ? undefined : "numeric" });
 }
 
+// A moment in full, in the chosen format: "Wednesday, September 30, 2026 at
+// 5:30 PM", "30 September 2026 at 17:30", or "2026-09-30 at 17:30".
+export function fullDateTime(d: Date): string {
+  const f = currentSettings().DateFormat ?? "short";
+  const day =
+    f === "iso"
+      ? dateText(d, d, "iso")
+      : f === "dmy"
+        ? d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+        : d.toLocaleDateString(locale(), { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  return `${day} at ${clockText(d)}`;
+}
+
 // 0 for Monday-first weeks, 6 for Sunday-first: how far a day sits from the
 // start of its week.
 export function dayOfWeek(d: Date): number {

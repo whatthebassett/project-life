@@ -23,7 +23,7 @@ export interface CalendarRow {
   on: boolean;
   // The connected account it comes from, or "Subscribed".
   group?: string;
-  kind?: "list" | "tasks" | "account" | "feed";
+  kind?: "list" | "tasks" | "account" | "feed" | "holidays";
   // Why a subscribed calendar didn't refresh.
   error?: string | null;
 }

@@ -86,6 +86,7 @@ export function listFor(id: string | undefined): TaskList {
     current.find((l) => l.id === id) ??
     synced.find((l) => l.id === id) ??
     subscribed.find((l) => l.id === id) ??
+    builtin().find((l) => l.id === id) ??
     current.find((l) => l.id === defaultListId()) ??
     current[0]
   );
@@ -105,6 +106,14 @@ let subscribed: TaskList[] = [];
 
 export function setSubscribedCalendars(calendars: TaskList[]) {
   subscribed = calendars;
+}
+
+// Calendars that come with Project Life (schedule/holidays.ts). Asked for
+// each time, since their color is a setting.
+let builtin: () => TaskList[] = () => [];
+
+export function setBuiltinCalendars(calendars: () => TaskList[]) {
+  builtin = calendars;
 }
 
 // "#personal", "#stream", "#youtube", "#errands": a list by its id, its whole

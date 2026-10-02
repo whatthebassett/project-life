@@ -3,6 +3,7 @@ import { CalendarDays } from "lucide-react";
 import { Fragment } from "react";
 import { menuPoint } from "../components/ContextMenu";
 import { useNotes } from "../notes/NotesContext";
+import { openEventEditor } from "../schedule/EventEditorHost";
 import type { Screen } from "../shell/nav";
 import { eventMenu } from "./menus";
 import { Card, CardHeader, CardLink, clock, Empty, useRowMenu } from "./parts";
@@ -10,6 +11,7 @@ import type { HomeData } from "./useHome";
 
 // Today's timeline, with a "now" line between what's done and what's next.
 // Past events dim; the next one is highlighted; later ones get the live color.
+// Clicking one opens it in the event pop-up, right here on Home.
 export default function ScheduleCard({ home, onNavigate }: { home: HomeData; onNavigate: (s: Screen) => void }) {
   const { activate } = useNotes();
   const openMenu = useRowMenu("schedule", "Schedule");
@@ -43,14 +45,19 @@ export default function ScheduleCard({ home, onNavigate }: { home: HomeData; onN
           return (
             <Fragment key={e.id}>
               {i === lineBefore && nowLine}
-              <div
+              <button
+                type="button"
+                // Sample events aren't real ones, so they don't open.
+                disabled={Boolean(home.sample)}
+                title={`Open “${e.title}”`}
+                onClick={() => openEventEditor(e.id)}
                 onContextMenu={(ev) => {
                   ev.preventDefault();
                   ev.stopPropagation();
                   const { x, y } = menuPoint(ev);
                   openMenu(x, y, eventMenu(e, Boolean(home.sample), (name) => void activate(name)));
                 }}
-                className={clsx("flex min-h-[58px] items-center gap-[10px] rounded-[14px] py-2 pr-[10px]", next && "bg-accent-soft")}
+                className={clsx("flex min-h-[58px] w-full items-center gap-[10px] rounded-[14px] py-2 pr-[10px] text-left transition-colors", next ? "bg-accent-soft" : "enabled:hover:bg-panel2")}
               >
                 <div className={clsx("min-w-16 shrink-0 pr-0.5 text-right font-mono text-12 whitespace-nowrap", next ? "text-accent" : "text-muted")}>{clock(e.start)}</div>
                 <span className={clsx("mx-1 my-1 w-1 self-stretch rounded-[4px]", past ? "bg-panel2" : next ? "bg-accent" : "bg-accent2")} />
@@ -58,7 +65,7 @@ export default function ScheduleCard({ home, onNavigate }: { home: HomeData; onN
                   <div className={clsx("truncate text-14 font-medium", past ? "text-muted" : "text-text")}>{e.title}</div>
                   {e.meta && <div className="truncate text-12 text-muted">{e.meta}</div>}
                 </div>
-              </div>
+              </button>
             </Fragment>
           );
         })}

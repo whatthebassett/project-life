@@ -1,12 +1,15 @@
 import { useLayoutEffect, useRef, useState, type Ref } from "react";
 import clsx from "clsx";
-import { ImagePlus, ImageUp, Move, Smile, Trash2 } from "lucide-react";
+import { ImagePlus, ImageUp, Move, Plus, Smile, Tag as TagIcon, Trash2 } from "lucide-react";
 import { titleOf } from "../lib/api";
 import { menuPoint, type MenuItem } from "./ContextMenu";
 import { priorityColor, priorityLabel, type PriorityValue, type Tag } from "../lib/notebook";
 import { resolveAsset } from "../editor/images";
 import { ago } from "../home/time";
+import { fullDateTime } from "../lib/format";
 import { emojiFont } from "../notes/NoteIcon";
+import { tagChipStyle } from "./TagManager";
+import TagPicker from "./TagPicker";
 
 interface Props {
   title: string;
@@ -32,6 +35,11 @@ interface Props {
   path: string[];
   onOpenParent: (name: string) => void;
   tags: Tag[];
+  // Every tag, for the picker the tag row opens, and what it changes.
+  allTags: Tag[];
+  onSetTags: (ids: string[]) => void;
+  onCreateTag: (name: string) => void;
+  onManageTags: () => void;
   priority: PriorityValue;
   onPriority: (x: number, y: number) => void;
   modified?: number;
@@ -45,6 +53,12 @@ export default function NoteHeader(props: Props) {
   const [dropping, setDropping] = useState(false);
   const [broken, setBroken] = useState(false);
   const [box, setBox] = useState<HTMLTextAreaElement | null>(null);
+  // The tag picker, open under the chip that was clicked.
+  const [tagsAt, setTagsAt] = useState<DOMRect | null>(null);
+  const openTags = (e: React.MouseEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    setTagsAt((open) => (open ? null : r));
+  };
 
   // Repositioning: the spot the picture is being dragged to, until it's saved.
   const [moving, setMoving] = useState<[number, number] | null>(null);
@@ -115,11 +129,20 @@ export default function NoteHeader(props: Props) {
     e.stopPropagation();
   };
 
-  // The title grows onto more lines rather than scrolling sideways.
+  // The title grows onto more lines rather than scrolling sideways, and fits
+  // again when its width changes (the window, the page width, an icon beside it).
   useLayoutEffect(() => {
     if (!box) return;
-    box.style.height = "0px";
-    box.style.height = `${box.scrollHeight}px`;
+    let width = -1;
+    const fit = () => {
+      width = box.clientWidth;
+      box.style.height = "0px";
+      box.style.height = `${box.scrollHeight}px`;
+    };
+    fit();
+    const watch = new ResizeObserver(() => box.clientWidth !== width && fit());
+    watch.observe(box);
+    return () => watch.disconnect();
   }, [box, title]);
 
   const setRefs = (el: HTMLTextAreaElement | null) => {
@@ -225,75 +248,70 @@ export default function NoteHeader(props: Props) {
         </div>
       )}
 
-      {(addCover || !icon) && (
-        <div className="-mb-3 flex h-7 items-end gap-1">
-          {!icon && (
-            <button data-note-icon className={addButton} onClick={chooseIcon}>
-              <Smile size={13} /> Add icon
-            </button>
-          )}
-          {addCover && (
-            <button className={addButton} onClick={props.onChooseCover}>
-              <ImagePlus size={13} /> Add cover
-            </button>
-          )}
-        </div>
-      )}
-
-      {icon && (
-        <div className="group/icon -mb-2 flex items-end gap-1">
-          <button
-            data-note-icon
-            className="-ml-1.5 flex h-[58px] w-[58px] items-center justify-center rounded-[14px] text-[46px] leading-none transition-colors hover:bg-panel"
-            style={{ fontFamily: emojiFont }}
-            aria-label={`Note icon: ${icon}`}
-            aria-description="Enter changes it, Delete removes it"
-            title="Change icon"
-            onClick={chooseIcon}
-            onContextMenu={iconMenu}
-            onKeyDown={(e) => {
-              if (e.key !== "Delete" && e.key !== "Backspace") return;
-              e.preventDefault();
-              e.stopPropagation();
-              removeIcon(true);
-            }}
-          >
-            {icon}
+      <div className="-mb-3 flex h-7 items-end gap-1">
+        {icon ? (
+          <button className={addButton} onClick={(e) => removeIcon(e.detail === 0)}>
+            <Trash2 size={13} /> Remove icon
           </button>
-          <button
-            className={clsx(quietButton, "group-hover/icon:opacity-100")}
-            aria-label="Remove icon"
-            onClick={(e) => removeIcon(e.detail === 0)}
-          >
-            <Trash2 size={13} /> Remove
+        ) : (
+          <button data-note-icon className={addButton} onClick={chooseIcon}>
+            <Smile size={13} /> Add icon
           </button>
-        </div>
-      )}
+        )}
+        {addCover && (
+          <button className={addButton} onClick={props.onChooseCover}>
+            <ImagePlus size={13} /> Add cover
+          </button>
+        )}
+      </div>
 
       <div className="flex flex-col gap-3">
-        <textarea
-          ref={setRefs}
-          rows={1}
-          spellCheck={false}
-          aria-label="Note title"
-          placeholder="Untitled"
-          className="note-title m-0 block w-full resize-none overflow-hidden border-0 bg-transparent p-0 font-head text-40 leading-[1.1] font-bold tracking-[-0.015em] text-text outline-none placeholder:text-faint"
-          value={title}
-          onChange={(e) => props.onTitleChange(e.target.value.replace(/[\r\n]+/g, " "))}
-          onBlur={props.onTitleCommit}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              // Leaving the title saves it (onBlur); then on into the note.
-              e.preventDefault();
-              e.currentTarget.blur();
-              props.onEnterBody();
-            } else if (e.key === "Escape") {
-              e.preventDefault();
-              props.onTitleCancel();
-              e.currentTarget.blur();
-            }
-          }}
-        />
+        {/* The icon sits beside the title, level with its first line. */}
+        <div className="flex items-start gap-2.5">
+          {icon && (
+            <button
+              data-note-icon
+              className="-my-[3px] -ml-1.5 flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-[12px] text-[38px] leading-none transition-colors hover:bg-panel"
+              style={{ fontFamily: emojiFont }}
+              aria-label={`Note icon: ${icon}`}
+              aria-description="Enter changes it, Delete removes it"
+              title="Change icon"
+              onClick={chooseIcon}
+              onContextMenu={iconMenu}
+              onKeyDown={(e) => {
+                if (e.key !== "Delete" && e.key !== "Backspace") return;
+                e.preventDefault();
+                e.stopPropagation();
+                removeIcon(true);
+              }}
+            >
+              {icon}
+            </button>
+          )}
+          <textarea
+            ref={setRefs}
+            rows={1}
+            spellCheck={false}
+            aria-label="Note title"
+            placeholder="Untitled"
+            className="note-title m-0 block w-full resize-none overflow-hidden border-0 bg-transparent p-0 font-head text-40 leading-[1.1] font-bold tracking-[-0.015em] text-text outline-none placeholder:text-faint"
+            value={title}
+            onChange={(e) => props.onTitleChange(e.target.value.replace(/[\r\n]+/g, " "))}
+            onBlur={props.onTitleCommit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                // Leaving the title saves it (onBlur); then on into the note.
+                e.preventDefault();
+                e.currentTarget.blur();
+                props.onEnterBody();
+              } else if (e.key === "Escape") {
+                e.preventDefault();
+                props.onTitleCancel();
+                e.currentTarget.blur();
+              }
+            }}
+          />
+        </div>
 
         <div className="flex flex-wrap items-center gap-2 text-12">
           {props.path.length > 0 && (
@@ -319,12 +337,70 @@ export default function NoteHeader(props: Props) {
               {priorityLabel[props.priority]} priority
             </button>
           )}
+          {/* The note's tags: a click on one (or on Add tag) opens the picker. */}
           {props.tags.map((t) => (
-            <span key={t.Id} className="flex h-7 items-center rounded-[8px] bg-accent-soft px-[10px] font-medium text-accent">
+            <button
+              key={t.Id}
+              type="button"
+              data-tag-anchor
+              title="Change tags"
+              onClick={openTags}
+              className="flex h-7 items-center rounded-[8px] px-[10px] font-medium transition-[filter] hover:brightness-125"
+              style={tagChipStyle(t.Color)}
+            >
               #{t.Name}
-            </span>
+            </button>
           ))}
-          {props.modified !== undefined && props.modified > 0 && <span className="ml-1 text-muted">Edited {ago(props.modified, Date.now())}</span>}
+          {props.tags.length === 0 ? (
+            <button
+              type="button"
+              data-tag-anchor
+              aria-haspopup="dialog"
+              aria-expanded={Boolean(tagsAt)}
+              onClick={openTags}
+              className={clsx(
+                "flex h-7 items-center gap-1.5 rounded-[8px] border border-dashed px-[10px] transition-colors hover:border-faint hover:text-text",
+                tagsAt ? "border-faint text-text" : "border-line text-muted",
+              )}
+            >
+              <TagIcon size={12} /> Add tag
+            </button>
+          ) : (
+            <button
+              type="button"
+              data-tag-anchor
+              aria-label="Add or remove tags"
+              aria-haspopup="dialog"
+              aria-expanded={Boolean(tagsAt)}
+              title="Add a tag"
+              onClick={openTags}
+              className={clsx(
+                "flex h-7 w-7 items-center justify-center rounded-[8px] border border-dashed transition-colors hover:border-faint hover:text-text",
+                tagsAt ? "border-faint text-text" : "border-line text-muted",
+              )}
+            >
+              <Plus size={13} />
+            </button>
+          )}
+          {tagsAt && (
+            <TagPicker
+              anchor={tagsAt}
+              tags={props.allTags}
+              chosen={props.tags.map((t) => t.Id)}
+              onChange={props.onSetTags}
+              onCreate={props.onCreateTag}
+              onManage={() => {
+                setTagsAt(null);
+                props.onManageTags();
+              }}
+              onClose={() => setTagsAt(null)}
+            />
+          )}
+          {props.modified !== undefined && props.modified > 0 && (
+            <span className="ml-1 text-muted" title={`Edited ${ago(props.modified, Date.now())}`}>
+              Edited {fullDateTime(new Date(props.modified))}
+            </span>
+          )}
         </div>
       </div>
     </div>

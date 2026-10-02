@@ -7,6 +7,7 @@ import type { MenuItem } from "../components/ContextMenu";
 import NotePicker from "../components/NotePicker";
 import { meetingPlan, patchSynced } from "../accounts/actions";
 import { patchFeedEvent } from "./feeds";
+import { isHoliday } from "./holidays";
 import { appName, calendarKey, providerName, splitKey } from "../accounts/model";
 import { useAccounts } from "../accounts/useAccounts";
 import { openUrl, titleOf } from "../lib/api";
@@ -285,7 +286,11 @@ export default function EventPopup({ event, occ, isNew, events, now, openMenu, o
           {feed && (
             <div role="note" className="flex items-center gap-3 rounded-[14px] border border-line bg-panel py-2.5 pr-2.5 pl-3.5 text-13 text-muted">
               <TriangleAlert size={15} className="shrink-0 text-warn" />
-              <span className="flex-1">On “{feed}”, a calendar you subscribe to, so it's changed where it comes from. You can still link a note or task to it here.</span>
+              <span className="flex-1">
+                {isHoliday(event)
+                  ? `On “${feed}”, the calendar that comes with Project Life, so it can't be changed here.`
+                  : `On “${feed}”, a calendar you subscribe to, so it's changed where it comes from. You can still link a note or task to it here.`}
+              </span>
             </div>
           )}
           {remote && (remote.Series || readOnly) && (

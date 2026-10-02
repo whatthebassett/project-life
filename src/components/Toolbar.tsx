@@ -23,6 +23,7 @@ import {
   Undo2,
 } from "lucide-react";
 import clsx from "clsx";
+import BlocksHint from "./BlocksHint";
 import type { MenuItem } from "./ContextMenu";
 import { notedCallouts } from "../editor/callout";
 import { alignCells, cellVAlign, valignCells } from "../editor/tables";
@@ -213,7 +214,7 @@ export default function Toolbar({ editor, openMenu, keyFor, onEmoji, onLink, onI
             onEmoji(r.left, r.bottom + 4);
           }}
         />
-        <span className="ml-auto shrink-0 pl-4 font-mono text-11 whitespace-nowrap text-muted">Type / for blocks</span>
+        <BlocksHint className="ml-auto" />
       </div>
     </div>
   );

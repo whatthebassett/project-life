@@ -34,9 +34,12 @@ interface PopupProps {
   // Laid out as a column: header, body, footer.
   children: ReactNode;
   className?: string;
+  // Liquid glass (the command palette): the screen barely dims, and the
+  // pop-up is a pane of frosted glass it shows through (index.css).
+  glass?: boolean;
 }
 
-export function Popup({ onClose, onSubmit, width, height, labelledBy, label, children, className }: PopupProps) {
+export function Popup({ onClose, onSubmit, width, height, labelledBy, label, children, className, glass }: PopupProps) {
   const id = useId();
   const overlay = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLDivElement>(null);
@@ -103,7 +106,7 @@ export function Popup({ onClose, onSubmit, width, height, labelledBy, label, chi
       <div
         data-popup-scrim
         aria-hidden="true"
-        className="popup-scrim absolute inset-0 bg-scrim backdrop-blur-[6px]"
+        className={clsx("popup-scrim absolute inset-0", glass ? "glass-scrim" : "bg-scrim backdrop-blur-[6px]")}
         onMouseDown={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
@@ -117,7 +120,8 @@ export function Popup({ onClose, onSubmit, width, height, labelledBy, label, chi
         aria-label={labelledBy ? undefined : label}
         tabIndex={-1}
         className={clsx(
-          "popup-panel relative flex flex-col overflow-hidden rounded-[28px] border border-line bg-bg text-text shadow-[0_40px_120px_rgba(0,0,0,0.55)] outline-none",
+          "popup-panel relative flex flex-col overflow-hidden rounded-[28px] text-text outline-none",
+          glass ? "glass-panel" : "border border-line bg-bg shadow-[0_40px_120px_rgba(0,0,0,0.55)]",
           className,
         )}
         style={{ width: `min(${width}px, 100%)`, ...(height ? { height: `min(${height}px, 100%)` } : { maxHeight: "100%" }) }}

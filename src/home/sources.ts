@@ -23,8 +23,9 @@ export interface HomeHabit {
   name: string;
   // The streak before today.
   streak: number;
-  // This week before today, Monday first: done or not.
+  // This week before today, Monday first: done or not, and which days those are.
   past: boolean[];
+  pastDays?: string[];
   doneToday: boolean;
 }
 

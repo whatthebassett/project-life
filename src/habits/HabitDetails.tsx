@@ -5,6 +5,7 @@ import { menuPoint, type MenuItem } from "../components/ContextMenu";
 import { addDays, fromYmd, ymd } from "../tasks/dates";
 import { SectionLabel } from "../ui/bits";
 import { HabitIcon } from "./icons";
+import { dayName, fillDay } from "./actions";
 import { dayMenu } from "./menus";
 import { bestStreak, currentStreak, doneOn, frequencyLabel, goalLabel, hueColor, hueSoft, level, rate30, weekStartOf, reminderLabel, todLabel, totalDone, type Habit, type HabitRules } from "./model";
 
@@ -87,15 +88,26 @@ export default function HabitDetails({ h, today, rules, onEdit, openMenu }: Prop
               </span>
             ))}
           </div>
-          <div role="img" aria-label={`Last 12 weeks: done on ${rate} percent of the last 30 days`} className="grid flex-1 grid-flow-col grid-cols-12 grid-rows-[repeat(7,17px)] gap-1">
+          {/* A click on a day fills it in, or clears it; right-click for more. */}
+          <div role="group" aria-label={`Last 12 weeks: done on ${rate} percent of the last 30 days`} className="grid flex-1 grid-flow-col grid-cols-12 grid-rows-[repeat(7,17px)] gap-1">
             {cells.map((day) => {
               const future = day > today;
               const lv = future ? 0 : level(h, day);
+              const Cell = future ? "span" : "button";
               return (
-                <span
+                <Cell
                   key={day}
-                  title={fromYmd(day).toLocaleDateString(locale(), { weekday: "short", month: "short", day: "numeric" })}
-                  className="rounded-[4px] border"
+                  {...(future
+                    ? {}
+                    : {
+                        type: "button" as const,
+                        tabIndex: -1,
+                        "aria-pressed": doneOn(h, day),
+                        "aria-label": `${doneOn(h, day) ? "Clear" : "Mark done"} ${day === today ? "today" : dayName(day, today)}`,
+                        onClick: () => fillDay(h, day, today),
+                      })}
+                  title={`${fromYmd(day).toLocaleDateString(locale(), { weekday: "short", month: "short", day: "numeric" })}${future ? "" : doneOn(h, day) ? ". Click to clear it." : ". Click to mark it done."}`}
+                  className={future ? "rounded-[4px] border" : "cursor-pointer rounded-[4px] border transition-[box-shadow] hover:shadow-[0_0_0_2px_var(--line)]"}
                   style={{
                     background: future ? "transparent" : lv ? color : "var(--panel2)",
                     opacity: future ? 1 : opacity[lv],

@@ -161,7 +161,7 @@ export default function UpNext({ home, onNavigate }: { home: HomeData; onNavigat
         <div className="flex-1" />
         <div className="flex gap-[10px]">{actions}</div>
       </div>
-      <div className="flex w-[150px] shrink-0 flex-col items-end justify-center gap-0.5 border-l border-line">
+      <div className="flex min-w-[150px] shrink-0 flex-col items-end justify-center gap-0.5">
         <div className="font-head text-96 leading-[0.9] font-normal tracking-[-0.04em]">{count.value}</div>
         <div className="font-mono text-12 tracking-[0.14em] text-muted">{count.label}</div>
       </div>

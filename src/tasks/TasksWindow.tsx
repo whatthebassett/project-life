@@ -12,6 +12,7 @@ import { loadSettings } from "../lib/settings";
 import { SegmentedControl } from "../ui/SegmentedControl";
 import { Toaster } from "../ui/Toast";
 import AppMenu from "../components/AppMenu";
+import Tooltips from "../components/Tooltips";
 import { addTask, deleteTasks, toggleTask } from "./actions";
 import { formatDue, startOfDay } from "./dates";
 import { listFor } from "./lists";
@@ -225,6 +226,7 @@ export default function TasksWindow() {
       <Toaster />
       <ContextMenu menu={menu} onClose={() => setMenu(null)} />
       <AppMenu />
+      <Tooltips />
     </div>
   );
 }

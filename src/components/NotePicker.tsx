@@ -10,7 +10,7 @@ import { zoomOut } from "../lib/motion";
 interface Props {
   notes: NoteInfo[];
   notebook: Notebook;
-  // Opening into a new tab (Ctrl+T) or switching the current one (Ctrl+P).
+  // Opening into a new tab, or in place of the current one.
   newTab: boolean;
   onPick: (name: string) => void;
   onClose: () => void;
@@ -27,8 +27,8 @@ function score(title: string, q: string): number {
   return t.includes(q) ? 1 : -1;
 }
 
-// The note switcher (Ctrl+P) and new tab (Ctrl+T): a search bar and nothing
-// else. Typing shows the notes that match; ↓ on an empty bar shows the ones
+// Picking a note to link (from a task, event or goal): a search bar and
+// nothing else. Typing shows the notes that match; ↓ on an empty bar shows the ones
 // edited most recently. Enter opens, Escape closes.
 export default function NotePicker({ notes, notebook, newTab, onPick, onClose }: Props) {
   const [query, setQuery] = useState("");

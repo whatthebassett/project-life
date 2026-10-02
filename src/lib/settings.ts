@@ -49,6 +49,9 @@ export interface Settings {
   // Schedule: the view, and the calendars hidden from it.
   ScheduleView?: "week" | "month";
   ScheduleHidden?: string[];
+  // The built-in US Holidays calendar (on unless false), and its color.
+  Holidays?: boolean;
+  HolidayColor?: string;
   // Habits (Settings → Habits and goals, Phase 7): the hour the day ends
   // (3 = 3 AM), and whether one missed day a week keeps a streak.
   HabitDayEnds?: number;

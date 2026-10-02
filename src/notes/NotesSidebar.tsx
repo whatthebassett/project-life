@@ -431,7 +431,6 @@ export default function NotesSidebar({ trashCount }: { trashCount: number }) {
           aria-label="Find a note"
           className="min-w-0 flex-1 border-0 bg-transparent text-13 text-text"
         />
-        <span className="shrink-0 rounded-[6px] border border-line px-1.5 py-[3px] font-mono text-11">Ctrl P</span>
       </label>
 
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Show">

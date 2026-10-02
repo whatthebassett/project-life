@@ -1,12 +1,13 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import clsx from "clsx";
-import { ArrowRight, BookOpen, CalendarPlus, FilePlus, FileText, ListTodo, Lock, LockOpen, Palette, PanelLeft, PanelRight, PanelTopOpen, Settings as SettingsIcon, Terminal, Type } from "lucide-react";
+import { ArrowRight, Book, BookOpen, CalendarPlus, FilePlus, FileText, ListTodo, Lock, LockOpen, Palette, PanelLeft, PanelRight, PanelTopOpen, Settings as SettingsIcon, Terminal, Type } from "lucide-react";
 import { Popup } from "../ui/Popup";
 import { toast } from "../ui/Toast";
 import { inTauri, titleOf } from "../lib/api";
-import { priorityLabel, type PriorityValue } from "../lib/notebook";
+import { parentOf, priorityLabel, type PriorityValue } from "../lib/notebook";
 import { useSettings } from "../lib/SettingsContext";
 import { themes } from "../lib/themes";
+import { ago } from "../home/time";
 import { useNotes } from "../notes/NotesContext";
 import { addEvent, parseQuickEvent } from "../schedule/actions";
 import { repeatLabels } from "../schedule/events";
@@ -37,11 +38,13 @@ interface Row {
   detail?: string;
   hint?: string;
   run: () => void;
+  // Ctrl+Enter or Ctrl+click: a note opens the other way (a new tab, or in place).
+  alt?: () => void;
 }
 
 const modes: { id: PaletteMode; label: string; icon: ReactNode; placeholder: string }[] = [
-  { id: "task", label: "Task", icon: <ListTodo size={18} />, placeholder: "Add a task, like: Pay rent fri 5pm !high #personal" },
-  { id: "note", label: "Note", icon: <FileText size={18} />, placeholder: "Add a note, like: Ideas for the stream #ideas" },
+  { id: "task", label: "Task", icon: <ListTodo size={18} />, placeholder: "Add a task, open a note, or run a command" },
+  { id: "note", label: "Note", icon: <FileText size={18} />, placeholder: "Find a note, or add one, like: Ideas #stream" },
   { id: "event", label: "Event", icon: <CalendarPlus size={18} />, placeholder: "Add an event, like: Haircut sat 3pm" },
 ];
 
@@ -49,11 +52,29 @@ const modes: { id: PaletteMode; label: string; icon: ReactNode; placeholder: str
 const prefix = /^\s*(task|t|note|n|event|e)\s*:\s*/i;
 const prefixMode: Record<string, PaletteMode> = { task: "task", t: "task", note: "note", n: "note", event: "event", e: "event" };
 
-const sectionNames = { create: "", commands: "Commands", notes: "Notes" };
+// How well a note's title matches every word typed: the start of the title,
+// then the start of a word, then anywhere. -1 is no match.
+function score(title: string, words: string[]): number {
+  const t = title.toLowerCase();
+  let total = 0;
+  for (const w of words) {
+    if (t.startsWith(w)) total += 3;
+    else if (new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`).test(t)) total += 2;
+    else if (t.includes(w)) total += 1;
+    else return -1;
+  }
+  return total;
+}
 
-// The command palette (Ctrl+K): type to add a task, note or event, the way
-// quick add reads them, or pick a command or a note to open. The top row
-// says exactly what Enter will add. A leading ">" searches commands only.
+function Key({ children }: { children: ReactNode }) {
+  return <kbd className="glass-key">{children}</kbd>;
+}
+
+// The command palette (Ctrl+T): type to add a task, note or event, the way
+// quick add reads them, jump to a note (Enter here, Ctrl+Enter in a new tab),
+// or run a command. The top row says exactly what Enter will add; a note
+// whose title is exactly what's typed goes above it. A leading ">" searches
+// commands only.
 export default function CommandPalette({ initial, onClose, onNavigate, onSettings, onGuide }: Props) {
   const { settings, update } = useSettings();
   const notes = useNotes();
@@ -62,6 +83,8 @@ export default function CommandPalette({ initial, onClose, onNavigate, onSetting
   const [active, setActive] = useState(0);
   const listId = useId();
   const list = useRef<HTMLDivElement>(null);
+  const opened = useMemo(() => Date.now(), []);
+  const newTab = initial.newTab === true;
 
   // A typed prefix wins over the switch.
   const typed = prefix.exec(text);
@@ -69,6 +92,7 @@ export default function CommandPalette({ initial, onClose, onNavigate, onSetting
   const body = typed ? text.slice(typed[0].length) : text;
   const commandsOnly = text.trimStart().startsWith(">");
   const query = (commandsOnly ? text.trimStart().slice(1) : body).trim().toLowerCase();
+  const words = query.split(/\s+/).filter(Boolean);
 
   const now = new Date();
   const run = (f: () => void) => () => {
@@ -135,7 +159,7 @@ export default function CommandPalette({ initial, onClose, onNavigate, onSetting
   const commands: Row[] = [
     ...navItems.map<Row>((n) => ({ id: `go:${n.id}`, section: "commands", icon: <ArrowRight size={16} />, label: `Go to ${n.label}`, hint: n.id === "home" ? k("app.home") : undefined, run: run(() => onNavigate(n.id)) })),
     { id: "new-note", section: "commands", icon: <FilePlus size={16} />, label: "New note", hint: k("app.new"), run: run(() => (onNavigate("notes"), notes.actions.newNote())) },
-    { id: "new-task", section: "commands", icon: <ListTodo size={16} />, label: "New task", hint: k("app.newTask"), run: run(() => requestTasks({ kind: "new" })) },
+    { id: "new-task", section: "commands", icon: <ListTodo size={16} />, label: "New task…", detail: "With every detail", run: run(() => requestTasks({ kind: "new" })) },
     { id: "new-event", section: "commands", icon: <CalendarPlus size={16} />, label: "New event…", hint: k("app.newEvent"), run: run(() => requestSchedule({ kind: "new" })) },
     { id: "settings", section: "commands", icon: <SettingsIcon size={16} />, label: "Open settings", hint: k("app.settings"), run: run(onSettings) },
     { id: "guide", section: "commands", icon: <BookOpen size={16} />, label: "Open the guide", hint: k("app.guide"), run: run(onGuide) },
@@ -171,28 +195,46 @@ export default function CommandPalette({ initial, onClose, onNavigate, onSetting
       .map<Row>((t) => ({ id: `theme:${t.id}`, section: "commands", icon: <Palette size={16} />, label: `Theme: ${t.name}`, detail: t.mood, run: run(() => update({ Theme: t.id })) })),
   ];
 
-  const matches = (label: string) => query.split(/\s+/).every((w) => label.toLowerCase().includes(w));
+  const matches = (label: string) => words.every((w) => label.toLowerCase().includes(w));
 
-  // With nothing typed: every command and the five notes changed last.
+  // With nothing typed: the notes changed last, then every command.
   const shownCommands = (query ? commands.filter((c) => matches(`${c.label} ${c.detail ?? ""}`)) : commands).slice(0, query ? 8 : 20);
-  const shownNotes: Row[] = commandsOnly
+  const noteLimit = mode === "note" ? 8 : query ? 6 : 5;
+  const found = commandsOnly
     ? []
-    : [...notes.notes]
-        .filter((n) => !query || matches(titleOf(n.name)))
-        .sort((a, b) => b.modified - a.modified)
-        .slice(0, query ? 6 : 5)
-        .map((n) => {
-          const icon = notes.iconFor(n.name);
-          return {
-            id: `note:${n.name}`,
-            section: "notes",
-            icon: icon ? <span className="text-15 leading-none">{icon}</span> : <FileText size={16} />,
-            label: titleOf(n.name),
-            run: run(() => void notes.activate(n.name)),
-          };
-        });
+    : query
+      ? notes.notes
+          .map((note) => ({ note, rank: score(titleOf(note.name), words) }))
+          .filter((r) => r.rank >= 0)
+          .sort((a, b) => b.rank - a.rank || b.note.modified - a.note.modified)
+          .slice(0, noteLimit)
+          .map((r) => r.note)
+      : [...notes.notes].sort((a, b) => b.modified - a.modified).slice(0, noteLimit);
+  const shownNotes = found.map<Row>((n) => {
+    const icon = notes.iconFor(n.name);
+    const parent = notes.notebook ? parentOf(notes.notebook, n.name) : undefined;
+    const hasPages = notes.notebook ? Object.values(notes.notebook.pages.Parents).some((p) => p.toLowerCase() === n.name.toLowerCase()) : false;
+    const here = run(() => void notes.activate(n.name));
+    const inNew = run(() => void notes.activate(n.name, true));
+    return {
+      id: `note:${n.name}`,
+      section: "notes",
+      icon: icon ? <span className="text-15 leading-none">{icon}</span> : hasPages ? <Book size={16} /> : <FileText size={16} />,
+      label: titleOf(n.name),
+      detail: [parent ? `in ${titleOf(parent)}` : null, n.modified > 0 ? `edited ${ago(n.modified, opened)}` : null].filter(Boolean).join(" · ") || undefined,
+      run: newTab ? inNew : here,
+      alt: newTab ? here : inNew,
+    };
+  });
+  // A note titled exactly what's typed is surely the one wanted: it goes first.
+  const exact = shownNotes.length > 0 && shownNotes[0].label.toLowerCase() === body.trim().toLowerCase();
   // In Note and Event mode the commands step aside; notes stay (a note may already exist).
-  const rows = [...(createRow ? [createRow] : []), ...(mode === "task" || commandsOnly ? shownCommands : []), ...shownNotes];
+  const rows = [
+    ...(exact ? [shownNotes[0]] : []),
+    ...(createRow ? [createRow] : []),
+    ...(exact ? shownNotes.slice(1) : shownNotes),
+    ...(mode === "task" || commandsOnly ? shownCommands : []),
+  ];
   const at = Math.min(active, Math.max(rows.length - 1, 0));
 
   useEffect(() => setActive(0), [text, picked]);
@@ -207,13 +249,15 @@ export default function CommandPalette({ initial, onClose, onNavigate, onSetting
     if (typed) setText(body);
   };
 
+  const choose = (r: Row | undefined, other: boolean) => (other && r?.alt ? r.alt() : r?.run());
+
   const onKey = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
       if (rows.length) setActive((at + (e.key === "ArrowDown" ? 1 : -1) + rows.length) % rows.length);
     } else if (e.key === "Enter") {
       e.preventDefault();
-      rows[at]?.run();
+      choose(rows[at], e.ctrlKey);
     } else if (e.key === "Tab") {
       e.preventDefault();
       cycle(e.shiftKey ? -1 : 1);
@@ -221,26 +265,29 @@ export default function CommandPalette({ initial, onClose, onNavigate, onSetting
   };
 
   const current = modes.find((m) => m.id === mode)!;
+  const modeIndex = modes.findIndex((m) => m.id === mode);
   let lastSection: Row["section"] | null = null;
+  const sectionName = (s: Row["section"]) => (s === "commands" ? "Commands" : s === "notes" ? (query ? "Notes" : "Recent notes") : "");
 
   return (
-    <Popup onClose={onClose} width={680} label="Command palette" className="overflow-hidden">
-      <div className="flex h-16 shrink-0 items-center gap-3 border-b border-line pr-3 pl-5">
+    <Popup onClose={onClose} width={680} label="Command palette" glass>
+      <div className="glass-divider flex h-16 shrink-0 items-center gap-3 border-b pr-3 pl-5">
         <span className="text-accent">{commandsOnly ? <Terminal size={18} /> : current.icon}</span>
         <input
           autoFocus
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKey}
-          placeholder={current.placeholder}
+          placeholder={newTab && mode === "note" ? "Open a note in a new tab, or add one" : current.placeholder}
           role="combobox"
           aria-expanded={rows.length > 0}
           aria-controls={listId}
           aria-activedescendant={rows.length ? `${listId}-${at}` : undefined}
-          aria-label={`Add a ${mode}, or search commands and notes`}
+          aria-label={`Add a ${mode}, or search notes and commands`}
           className="h-full min-w-0 flex-1 border-0 bg-transparent text-16 text-text outline-none placeholder:text-muted"
         />
-        <div role="radiogroup" aria-label="What to add" className="flex shrink-0 gap-1 rounded-[12px] bg-panel2 p-[3px]">
+        <div role="radiogroup" aria-label="What to add" className="glass-seg relative grid shrink-0 grid-cols-3 rounded-full p-[3px]">
+          <span aria-hidden="true" className="glass-thumb absolute top-[3px] bottom-[3px] left-[3px] w-[62px] rounded-full" style={{ transform: `translateX(${modeIndex * 100}%)` }} />
           {modes.map((m) => (
             <button
               key={m.id}
@@ -252,7 +299,7 @@ export default function CommandPalette({ initial, onClose, onNavigate, onSetting
                 setPicked(m.id);
                 if (typed) setText(body);
               }}
-              className={clsx("h-8 rounded-[9px] px-3 text-13 font-medium transition-colors", mode === m.id ? "bg-panel text-text shadow-sm" : "text-muted hover:text-text")}
+              className={clsx("relative h-8 w-[62px] rounded-full text-13 font-medium transition-colors", mode === m.id ? "text-text" : "text-muted hover:text-text")}
             >
               {m.label}
             </button>
@@ -263,8 +310,9 @@ export default function CommandPalette({ initial, onClose, onNavigate, onSetting
       <div ref={list} id={listId} role="listbox" aria-label="Results" className="max-h-[440px] min-h-0 overflow-y-auto p-2">
         {rows.length === 0 && <div className="px-3 py-6 text-center text-13 text-muted">Nothing matches “{query}”.</div>}
         {rows.map((r, i) => {
-          const heading = r.section !== lastSection && sectionNames[r.section] ? sectionNames[r.section] : null;
+          const heading = r.section !== lastSection ? sectionName(r.section) : "";
           lastSection = r.section;
+          const on = i === at;
           return (
             <div key={r.id}>
               {heading && <div className="px-3 pt-3 pb-1 font-mono text-10 tracking-[0.12em] text-muted uppercase">{heading}</div>}
@@ -272,35 +320,51 @@ export default function CommandPalette({ initial, onClose, onNavigate, onSetting
                 id={`${listId}-${i}`}
                 data-index={i}
                 role="option"
-                aria-selected={i === at}
-                onMouseMove={() => i !== at && setActive(i)}
-                onClick={r.run}
-                className={clsx(
-                  "flex cursor-default items-center gap-3 rounded-[12px] px-3",
-                  r.section === "create" ? "min-h-14 py-2" : "h-10",
-                  i === at ? "bg-accent-soft text-text" : "text-text",
-                )}
+                aria-selected={on}
+                onMouseMove={() => !on && setActive(i)}
+                onClick={(e) => choose(r, e.ctrlKey)}
+                className={clsx("glass-row flex cursor-default items-center gap-3 rounded-[14px] px-2.5", r.section === "create" ? "min-h-14 py-2" : "min-h-11 py-1", on && "is-active")}
               >
-                <span className={clsx("flex w-5 shrink-0 justify-center", i === at ? "text-accent" : "text-muted")}>{r.icon}</span>
+                <span className="glass-tile flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px]">{r.icon}</span>
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className={clsx("truncate", r.section === "create" ? "text-15 font-semibold" : "text-14")}>{r.label}</span>
                   {r.detail && <span className="truncate text-12 text-muted">{r.detail}</span>}
                 </span>
-                {r.hint && <span className="shrink-0 font-mono text-11 text-muted">{r.hint}</span>}
-                {i === at && r.section === "create" && <span className="shrink-0 rounded-[7px] border border-line px-[7px] py-0.5 font-mono text-11 text-muted">Enter</span>}
+                {r.hint && !(on && r.alt) && <span className="shrink-0 font-mono text-11 text-muted">{r.hint}</span>}
+                {on && r.alt && (
+                  <span className="flex shrink-0 items-center gap-1.5 text-11 text-muted">
+                    <Key>Enter</Key>
+                    {newTab ? "new tab" : "open"}
+                    <Key>Ctrl Enter</Key>
+                    {newTab ? "here" : "new tab"}
+                  </span>
+                )}
+                {on && r.section === "create" && <Key>Enter</Key>}
               </div>
             </div>
           );
         })}
       </div>
 
-      <footer className="flex shrink-0 flex-wrap gap-x-4 gap-y-1 border-t border-line bg-side px-5 py-2.5 font-mono text-11 text-muted">
-        <span>↑↓ move</span>
-        <span>Enter run</span>
-        <span>Tab task, note or event</span>
-        <span>note: event: pick too</span>
-        <span>&gt; commands only</span>
-        <span>Esc close</span>
+      <footer className="glass-divider glass-footer flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1.5 border-t px-5 py-2.5 text-11 text-muted">
+        <span className="flex items-center gap-1.5">
+          <Key>↑↓</Key> move
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Key>Enter</Key> run
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Key>Ctrl Enter</Key> {newTab ? "note here" : "note in a new tab"}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Key>Tab</Key> task, note or event
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Key>&gt;</Key> commands only
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Key>Esc</Key> close
+        </span>
       </footer>
     </Popup>
   );

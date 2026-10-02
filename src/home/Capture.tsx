@@ -3,11 +3,11 @@ import { useNotes } from "../notes/NotesContext";
 import { openPalette } from "../palette/open";
 
 // Home's capture box: it looks like a search field and opens the command
-// palette (Ctrl+K from anywhere), where a task, note or event is added, or a
+// palette (Ctrl+T from anywhere), where a task, note or event is added, or a
 // command or note picked.
 export default function Capture() {
   const { keyFor } = useNotes();
-  const keys = keyFor("app.capture") || "Ctrl+K";
+  const keys = keyFor("app.capture") || "Ctrl+T";
   return (
     <div className="flex shrink items-center gap-[10px]">
       <button

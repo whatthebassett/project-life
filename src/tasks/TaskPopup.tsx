@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { MenuItem } from "../components/ContextMenu";
+import BlocksHint from "../components/BlocksHint";
 import NotePicker from "../components/NotePicker";
 import VisualEditor, { type EditorCommands } from "../components/VisualEditor";
 import type { CaretConfig } from "../editor/caret";
@@ -318,7 +319,7 @@ export default function TaskPopup({ task, onClose, openMenu }: Props) {
                     </span>
                   ))}
                   <div className="flex-1" />
-                  <span className="px-2 font-mono text-11">Type / for blocks</span>
+                  <BlocksHint />
                 </div>
                 <div className="task-desc">
                   <VisualEditor

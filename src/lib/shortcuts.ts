@@ -15,11 +15,12 @@ export interface ShortcutCommand {
 }
 
 export const shortcutCommands: ShortcutCommand[] = [
-  { id: "app.capture", name: "Command palette", group: "Everywhere", keys: "Ctrl+K" },
+  // Adding a task, note or event, opening a note (here or in a new tab), and
+  // every command: one palette.
+  { id: "app.capture", name: "Command palette", group: "Everywhere", keys: "Ctrl+T" },
   { id: "app.home", name: "Go to Home", group: "Everywhere", keys: "Alt+Home" },
   { id: "app.settings", name: "Settings", group: "Everywhere", keys: "Ctrl+," },
   { id: "app.guide", name: "Guide", group: "Everywhere", keys: "F1" },
-  { id: "app.newTask", name: "New task", group: "Everywhere", keys: "Ctrl+Shift+T" },
   { id: "app.newEvent", name: "New event", group: "Everywhere", keys: "Ctrl+E" },
   { id: "app.larger", name: "Larger text", group: "Everywhere", keys: "Ctrl+=" },
   { id: "app.smaller", name: "Smaller text", group: "Everywhere", keys: "Ctrl+-" },
@@ -49,8 +50,6 @@ export const shortcutCommands: ShortcutCommand[] = [
   { id: "app.wrap", name: "Word wrap (Markdown mode)", group: "Notes", keys: "" },
   { id: "app.lines", name: "Line numbers (Markdown mode)", group: "Notes", keys: "" },
 
-  { id: "app.newTab", name: "Open a note in a new tab", group: "Tabs", keys: "Ctrl+T" },
-  { id: "app.switch", name: "Switch note", group: "Tabs", keys: "Ctrl+P" },
   { id: "app.closeTab", name: "Close tab", group: "Tabs", keys: "Ctrl+W" },
   { id: "app.closeOtherTabs", name: "Close other tabs", group: "Tabs", keys: "" },
   { id: "app.nextTab", name: "Next tab", group: "Tabs", keys: "Ctrl+Tab" },
@@ -195,7 +194,7 @@ export const formattingDefaults = new Set(
 );
 
 // Two commands can share keys only when one works inside a note and the
-// other everywhere else (Ctrl+K: link, or quick capture).
+// other everywhere else.
 export function clashes(a: ShortcutGroup, b: ShortcutGroup): boolean {
   const pair = new Set([a, b]);
   return !(pair.has("Everywhere") && pair.has("Formatting") && a !== b);

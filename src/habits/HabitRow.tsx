@@ -2,18 +2,19 @@ import clsx from "clsx";
 import { Check, Flame, Minus, Pause, Play, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { addDays, fromYmd, ymd } from "../tasks/dates";
-import { startTimer, stepDay, stopTimer, toggleDay } from "./actions";
+import { dayName, fillDay, startTimer, stepDay, stopTimer, toggleDay } from "./actions";
 import { HabitIcon } from "./icons";
 import { currentStreak, dayState, doneOn, goalLabel, hueColor, hueSoft, weekStartOf, valueOn, weekCount, type Habit, type HabitRules } from "./model";
 
 
 // The week strip: done filled, part-done half filled, missed outlined, today
-// outlined in the habit's color, days to come dashed.
+// outlined in the habit's color, days to come dashed. A click on any day so
+// far fills it in (or clears it), for a day you did it but didn't tick it.
 export function WeekStrip({ h, today, size = "md" }: { h: Habit; today: string; size?: "sm" | "md" }) {
   const mon = fromYmd(weekStartOf(today));
   const color = hueColor(h.Hue);
   return (
-    <div aria-label={`This week: ${weekCount(h, today)} done`} className="flex gap-[5px]">
+    <div role="group" aria-label={`This week: ${weekCount(h, today)} done`} className="flex gap-[5px]">
       {[0, 1, 2, 3, 4, 5, 6].map((i) => {
         const day = ymd(addDays(mon, i));
         const name = fromYmd(day).toLocaleDateString("en-US", { weekday: "long" });
@@ -31,7 +32,25 @@ export function WeekStrip({ h, today, size = "md" }: { h: Habit; today: string; 
                     ? { borderColor: "transparent", background: "var(--panel2)" }
                     : { borderColor: "var(--faint)" };
         const title = `${name}${day === today ? " (today)" : ""}: ${state === "done" ? "done" : state === "partial" ? `${valueOn(h, day)} of ${h.Target}` : state === "missed" ? "missed" : state === "off" ? "not due" : ""}`;
-        return <span key={i} title={title} className={clsx("rounded-[5px] border-[1.5px]", size === "md" ? "h-[30px] w-3.5" : "h-6 w-3")} style={style} />;
+        const box = clsx("rounded-[5px] border-[1.5px]", size === "md" ? "h-[30px] w-3.5" : "h-6 w-3");
+        if (state === "future") return <span key={i} title={title} className={box} style={style} />;
+        const done = doneOn(h, day);
+        const when = day === today ? "today" : dayName(day, today);
+        return (
+          <button
+            key={i}
+            type="button"
+            // Keyboards use the check button for today, and the habit's menu
+            // (Mark yesterday done) or the history's for other days.
+            tabIndex={-1}
+            aria-pressed={done}
+            aria-label={`${done ? "Clear" : "Mark done"} ${when}: ${h.Name}`}
+            title={`${title}. Click to ${done ? "clear it" : "mark it done"}.`}
+            onClick={() => fillDay(h, day, today)}
+            className={clsx(box, "cursor-pointer transition-[box-shadow] hover:shadow-[0_0_0_2px_var(--line)]")}
+            style={style}
+          />
+        );
       })}
     </div>
   );

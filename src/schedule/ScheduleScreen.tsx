@@ -1,7 +1,7 @@
 import { dayOfWeek } from "../lib/format";
 import { locale } from "../lib/format";
 import clsx from "clsx";
-import { CalendarDays, CalendarPlus, CalendarRange, Check, ChevronLeft, ChevronRight, Copy, Eye, EyeOff, FileText, FileUp, Focus, Link, ListTodo, Maximize2, Palette, Pencil, Plus, RefreshCw, Rss, Trash2, Video } from "lucide-react";
+import { CalendarDays, CalendarPlus, CalendarRange, Check, ChevronLeft, ChevronRight, Copy, Eye, EyeOff, FileText, FileUp, Focus, Link, ListTodo, Maximize2, Palette, PartyPopper, Pencil, Plus, RefreshCw, Rss, Trash2, Video } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { connectAccount } from "../accounts/actions";
 import { appName, calendarKey, splitKey } from "../accounts/model";
@@ -26,6 +26,7 @@ import { ImportDialog, NewCalendarDialog, RenameCalendarDialog, SubscribeDialog 
 import EventPopup from "./EventPopup";
 import { freeSlot, fromStamp, isReadOnly, joinUrlOf, localStamp, occurrences, type CalEvent, type Occurrence } from "./events";
 import { feedKey, recolorFeed, refreshFeed, renameFeed, unsubscribe, useFeeds } from "./feeds";
+import { holidayCalendar, HOLIDAYS_CAL } from "./holidays";
 import { joinState, shortTime, softOf } from "./look";
 import MonthView, { monthGrid } from "./MonthView";
 import { subscribeScheduleRequests, takeScheduleRequest } from "./nav";
@@ -95,6 +96,8 @@ export default function ScheduleScreen() {
     return new Set(occurrences(visibleEvents, start, end).map((o) => ymd(o.start)));
   }, [visibleEvents, focus]);
 
+  const holidaysShown = settings.Holidays !== false;
+  const holidays = holidayCalendar();
   const calendars: CalendarRow[] = [
     ...lists.map<CalendarRow>((l) => ({
       id: l.Id,
@@ -105,6 +108,10 @@ export default function ScheduleScreen() {
       kind: "list",
     })),
     { id: TASKS_CAL, name: "Tasks due", color: "var(--muted)", on: !hidden.has(TASKS_CAL), count: tasksDue.length, kind: "tasks" },
+    // The built-in US holidays, with your own calendars, unless they've been removed.
+    ...(holidaysShown
+      ? [{ id: HOLIDAYS_CAL, name: holidays.name, color: holidays.color, on: !hidden.has(HOLIDAYS_CAL), count: all.filter((o) => o.event.Calendar === HOLIDAYS_CAL).length, kind: "holidays" } as CalendarRow]
+      : []),
     // Connected accounts' calendars, under the account they come from.
     ...accounts.flatMap((a) =>
       a.Calendars.filter((c) => c.On).map((c) => {
@@ -399,6 +406,22 @@ export default function ScheduleScreen() {
         { label: "Unsubscribe", icon: <Trash2 size={13} />, danger: true, onSelect: () => unsubscribe(feed.Id) },
       ];
     }
+    if (c.kind === "holidays") {
+      return [
+        { type: "separator" },
+        colorMenu(holidays.tone, (color) => update({ HolidayColor: color })),
+        { type: "separator" },
+        {
+          label: "Remove US Holidays",
+          icon: <Trash2 size={13} />,
+          danger: true,
+          onSelect: () => {
+            update({ Holidays: false });
+            toast("Removed US Holidays", () => update({ Holidays: true }));
+          },
+        },
+      ];
+    }
     return [];
   };
 
@@ -408,6 +431,8 @@ export default function ScheduleScreen() {
       { label: "New calendar…", icon: <CalendarPlus size={13} />, onSelect: () => setCalDialog("new") },
       { label: "Subscribe by link…", icon: <Rss size={13} />, onSelect: () => setCalDialog("subscribe") },
       { label: "Import a file (.ics)…", icon: <FileUp size={13} />, onSelect: () => setCalDialog("import") },
+      { type: "separator" },
+      { label: "US Holidays", icon: <PartyPopper size={13} />, checked: holidaysShown, onSelect: () => update({ Holidays: !holidaysShown }) },
     ]);
   };
 
