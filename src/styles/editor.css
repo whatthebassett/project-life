@@ -1044,6 +1044,84 @@ body.block-dragging * {
 }
 
 
+/* A panel that slides in beside the note (the table of contents' options). */
+.sidebar-slide {
+  transition: width 220ms cubic-bezier(0.2, 0, 0, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-slide {
+    transition: none;
+  }
+}
+
+/* A BetterTTV or 7TV emote (editor/emotes.ts): its picture, about as tall as
+   a line of text, sitting on the baseline like an emoji. While its name isn't
+   known it shows as :Name:. */
+.ProseMirror .emote {
+  display: inline-block;
+  vertical-align: -0.38em;
+  line-height: 1;
+  border-radius: 4px;
+}
+.ProseMirror .emote img {
+  display: block;
+  height: 1.75em;
+  width: auto;
+  max-width: 6em;
+  object-fit: contain;
+}
+.ProseMirror .emote.is-unknown {
+  vertical-align: baseline;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--muted);
+}
+.ProseMirror .emote.ProseMirror-selectednode {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* A link to another note (editor/noteLinks.ts): a chip with a page icon, in
+   the accent; faded and struck through when its note has gone. */
+.ProseMirror .note-link {
+  display: inline;
+  padding: 0.05em 0.35em 0.05em 1.35em;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent) no-repeat 0.35em 50% / 0.85em;
+  color: var(--accent-text);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  position: relative;
+}
+.ProseMirror .note-link::before {
+  content: "";
+  position: absolute;
+  left: 0.35em;
+  top: 50%;
+  width: 0.85em;
+  height: 0.85em;
+  transform: translateY(-50%);
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z'/%3E%3Cpath d='M14 2v4a2 2 0 0 0 2 2h4'/%3E%3Cpath d='M10 13h4'/%3E%3Cpath d='M10 17h4'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z'/%3E%3Cpath d='M14 2v4a2 2 0 0 0 2 2h4'/%3E%3Cpath d='M10 13h4'/%3E%3Cpath d='M10 17h4'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.ProseMirror .note-link:hover {
+  background-color: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.ProseMirror .note-link.is-missing {
+  background-color: var(--hover);
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent);
+}
+/* The link's own underline would double the chip's. */
+.ProseMirror a:has(> .note-link) {
+  text-decoration: none;
+}
+
 /* Table of contents (editor/toc.ts): a card listing the note's headings, each
    one a link; nested headings step in, with a guide line down the left. */
 .ProseMirror .toc {
@@ -1058,6 +1136,38 @@ body.block-dragging * {
 .ProseMirror .toc.ProseMirror-selectednode {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+/* Edit, in the card's corner while it's selected or pointed at: opens the
+   panel for its layout, bullets and numbering (components/TocPanel.tsx). */
+.ProseMirror .toc {
+  position: relative;
+}
+.ProseMirror .toc-edit {
+  position: absolute;
+  top: 0.45em;
+  right: 0.5em;
+  display: none;
+  align-items: center;
+  gap: 4px;
+  padding: 0 0.5em;
+  border-radius: 5px;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--muted);
+  cursor: pointer;
+}
+.ProseMirror .toc:hover .toc-edit,
+.ProseMirror .toc.ProseMirror-selectednode .toc-edit {
+  display: flex;
+}
+.ProseMirror .toc.ProseMirror-selectednode .toc-edit {
+  background: var(--hover);
+  color: var(--fg);
+}
+.ProseMirror .toc-edit:hover {
+  background: var(--active);
+  color: var(--fg);
 }
 .ProseMirror .toc-title {
   margin-bottom: 0.35em;
@@ -1077,8 +1187,14 @@ body.block-dragging * {
   list-style: none;
 }
 .ProseMirror .toc-item {
+  /* Positioned, so a layout change can glide it by left and top (toc.ts: glide). */
+  position: relative;
   margin: 0;
   padding: 0;
+}
+/* While a layout change plays, nothing shows outside the card. */
+.ProseMirror .toc[data-gliding] {
+  overflow: clip;
 }
 .ProseMirror .toc-item::before { content: none; }
 .ProseMirror .toc-level-1 { padding-left: 1.1em; }
@@ -1105,6 +1221,52 @@ body.block-dragging * {
 .ProseMirror .toc-link:hover {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   color: var(--accent-text);
+}
+/* A bullet or an outline number (1, 1.1 …) in front of each heading. */
+.ProseMirror .toc:not([data-markers="none"]) .toc-link {
+  display: flex;
+  gap: 0.5em;
+}
+.ProseMirror .toc-marker {
+  flex: none;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+/* Columns: the same list, flowing down two columns. */
+.ProseMirror .toc[data-layout="columns"] .toc-list {
+  columns: 2;
+  column-gap: 1.6em;
+}
+.ProseMirror .toc[data-layout="columns"] .toc-item {
+  break-inside: avoid;
+}
+/* Inline: every heading on one row, a dot between them, nothing stepped in. */
+.ProseMirror .toc[data-layout="inline"] .toc-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.ProseMirror .toc[data-layout="inline"] .toc-item {
+  display: flex;
+  align-items: center;
+  padding-left: 0;
+}
+.ProseMirror .toc[data-layout="inline"] .toc-item + .toc-item::before {
+  content: "·";
+  margin: 0 0.5em 0 0.05em;
+  color: var(--muted);
+}
+/* Bullets already sit between the headings. */
+.ProseMirror .toc[data-layout="inline"][data-markers="bullets"] .toc-item + .toc-item::before {
+  content: none;
+}
+.ProseMirror .toc[data-layout="inline"][data-markers="bullets"] .toc-list {
+  column-gap: 0.7em;
+}
+.ProseMirror .toc[data-layout="inline"] .toc-item .toc-link {
+  width: auto;
+  box-shadow: none;
+  border-radius: 5px;
 }
 /* The heading a contents link jumped to glows for a moment. */
 .ProseMirror .toc-target {

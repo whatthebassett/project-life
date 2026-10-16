@@ -30,6 +30,7 @@ import { useAllEvents } from "../schedule/useEvents";
 import { requestTasks } from "../tasks/nav";
 import { useTasks } from "../tasks/useTasks";
 import { Icon } from "../ui/icons";
+import { toast } from "../ui/Toast";
 
 // The Notes screen (Notes.dc.html): the notebook, then tabs, the note's bar,
 // the page and a status line, then On this page and Details on the right.
@@ -353,6 +354,15 @@ function Page() {
             todoLinks={todoLinks}
             onOpenTodo={(id) => requestTasks({ kind: "open", id })}
             todoMenu={n.todoMenu}
+            notes={n.notes}
+            currentNote={name}
+            noteIcon={n.iconFor}
+            onOpenNote={(target, newTab) => {
+              // A link to a note that's been renamed or deleted has nowhere to go.
+              const found = n.notes.find((x) => x.name.toLowerCase() === target.toLowerCase());
+              if (found) void n.activate(found.name, newTab);
+              else toast(`“${titleOf(target)}” isn't in your notes any more`);
+            }}
             spot={spotFor(n.editing, "visual")}
             onSpot={(spot: EditorSpot) => n.editing && rememberSpot(n.editing, "visual", spot)}
           />

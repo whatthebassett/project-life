@@ -10,7 +10,7 @@ import { LOCAL, localFeedUrl, topics } from "./feeds";
 import { cachedFeed, isFresh, loadFeed, mergeHeadlines, staleAfter, type Feed, type FeedResult } from "./news";
 import { copyLink } from "./menus";
 import NewsSourcesPopup from "./NewsSourcesPopup";
-import { Card, CardLink, Empty, useRowMenu } from "./parts";
+import { Card, CardLink, Empty, Tiny, useRowMenu } from "./parts";
 import { newsSources, newsTopic, weatherPlace, type NewsSource } from "./prefs";
 import { age } from "./time";
 import type { HomeData } from "./useHome";
@@ -155,7 +155,7 @@ export default function NewsCard({ home }: { home: HomeData }) {
         <div className="flex min-w-0 items-center gap-4">
           <h2 className="m-0 shrink-0 text-16 font-semibold">News</h2>
           {/* On a narrow card the topics scroll sideways, without a scrollbar in the way. */}
-          <div role="group" aria-label="News topics" className="flex min-w-0 gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div role="group" aria-label="News topics" className="hidden min-w-0 gap-1.5 overflow-x-auto [scrollbar-width:none] roomy:flex [&::-webkit-scrollbar]:hidden">
             {["All", ...available].map((t) => (
               <Chip key={t} variant="pill" selected={t === topic} onClick={() => update({ HomeNewsTopic: t })}>
                 {t}
@@ -163,43 +163,51 @@ export default function NewsCard({ home }: { home: HomeData }) {
             ))}
           </div>
         </div>
-        <span className="shrink-0 whitespace-nowrap">
+        <span className="hidden shrink-0 whitespace-nowrap @[24rem]:inline">
           <CardLink onClick={() => setManaging(true)}>Manage sources</CardLink>
         </span>
       </div>
       {empty ? (
-        <Empty>{empty}</Empty>
+        <Empty className="tiny:line-clamp-3">{empty}</Empty>
       ) : (
-        <div className="-mx-2 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-2">
-          {shown.map((h, i) => {
-            const color = topicColor(h.topic);
-            return (
-              <button
-                key={h.key}
-                type="button"
-                onClick={() => void openUrl(h.link)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const { x, y } = menuPoint(e);
-                  openMenu(x, y, headlineMenu(h));
-                }}
-                title={h.title}
-                className="flex min-w-0 shrink-0 items-center gap-[14px] rounded-[14px] px-2 py-2 text-left transition-colors hover:bg-panel2"
-              >
-                <Thumb headline={h} color={color} sample={Boolean(home.sample)} lookUp={i < 8} />
-                <span className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="flex gap-2 font-mono text-11 text-muted">
-                    <span style={{ color }}>{h.topic}</span>
-                    <span className="truncate">{h.source}</span>
-                    <span className="shrink-0">{age(h.published, now)}</span>
+        <>
+          <Tiny>
+            <span className="font-medium text-text">{shown[0]?.title}</span>
+          </Tiny>
+          <div className="-mx-2 hidden min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-2 roomy:flex">
+            {shown.map((h, i) => {
+              const color = topicColor(h.topic);
+              return (
+                <button
+                  key={h.key}
+                  type="button"
+                  onClick={() => void openUrl(h.link)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const { x, y } = menuPoint(e);
+                    openMenu(x, y, headlineMenu(h));
+                  }}
+                  title={h.title}
+                  className="flex min-w-0 shrink-0 items-center gap-[14px] rounded-[14px] px-2 py-2 text-left transition-colors hover:bg-panel2"
+                >
+                  {/* A small card has room for the words, not the pictures. */}
+                  <span className="hidden shrink-0 @[20rem]:flex">
+                    <Thumb headline={h} color={color} sample={Boolean(home.sample)} lookUp={i < 8} />
                   </span>
-                  <span className="line-clamp-2 text-14 leading-[1.4] font-medium text-text">{h.title}</span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                  <span className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="flex gap-2 font-mono text-11 text-muted">
+                      <span style={{ color }}>{h.topic}</span>
+                      <span className="truncate">{h.source}</span>
+                      <span className="shrink-0">{age(h.published, now)}</span>
+                    </span>
+                    <span className="line-clamp-2 text-14 leading-[1.4] font-medium text-text">{h.title}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </>
       )}
       {managing && <NewsSourcesPopup onClose={() => setManaging(false)} />}
     </Card>

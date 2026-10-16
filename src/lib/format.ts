@@ -18,17 +18,38 @@ export function clockShort(d: Date): string {
   return hour12() ? text.replace(/:00(?=\s)/, "") : text;
 }
 
+// "7th", "22nd", "13th".
+export function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+export type DateFormat = "short" | "full" | "dmy" | "iso";
+
+// A date written out: "Wednesday, October 7th, 2026" (in the UK, "Wednesday,
+// 7th October 2026").
+function fullDate(d: Date): string {
+  const weekday = d.toLocaleDateString(locale(), { weekday: "long" });
+  const month = d.toLocaleDateString(locale(), { month: "long" });
+  const day = ordinal(d.getDate());
+  return locale() === "en-GB" ? `${weekday}, ${day} ${month} ${d.getFullYear()}` : `${weekday}, ${month} ${day}, ${d.getFullYear()}`;
+}
+
 // A date on its own, in the chosen format: "Fri, Sep 25" (the year when it
-// isn't this one), "25 Sep 2026", or "2026-09-25".
-export function dateText(d: Date, today = new Date(), format?: "short" | "dmy" | "iso"): string {
+// isn't this one), "Friday, September 25th, 2026", "25 Sep 2026", or
+// "2026-09-25".
+export function dateText(d: Date, today = new Date(), format?: DateFormat): string {
   const f = format ?? currentSettings().DateFormat ?? "short";
+  if (f === "full") return fullDate(d);
   if (f === "iso") return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   if (f === "dmy") return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   return d.toLocaleDateString(locale(), { weekday: "short", month: "short", day: "numeric", year: d.getFullYear() === today.getFullYear() ? undefined : "numeric" });
 }
 
 // A moment in full, in the chosen format: "Wednesday, September 30, 2026 at
-// 5:30 PM", "30 September 2026 at 17:30", or "2026-09-30 at 17:30".
+// 5:30 PM" ("September 30th" with the full date format), "30 September 2026
+// at 17:30", or "2026-09-30 at 17:30".
 export function fullDateTime(d: Date): string {
   const f = currentSettings().DateFormat ?? "short";
   const day =
@@ -36,7 +57,9 @@ export function fullDateTime(d: Date): string {
       ? dateText(d, d, "iso")
       : f === "dmy"
         ? d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
-        : d.toLocaleDateString(locale(), { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+        : f === "full"
+          ? fullDate(d)
+          : d.toLocaleDateString(locale(), { weekday: "long", month: "long", day: "numeric", year: "numeric" });
   return `${day} at ${clockText(d)}`;
 }
 

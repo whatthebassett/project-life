@@ -2,17 +2,35 @@ import { Extension, InputRule } from "@tiptap/core";
 import { PluginKey } from "@tiptap/pm/state";
 import Suggestion, { type SuggestionProps } from "@tiptap/suggestion";
 import { emojiNow, loadEmoji, nativeOf, rememberEmoji, searchEmoji, type Emoji } from "../lib/emoji";
+import { searchEmotes, type Emote } from "../lib/emotes";
+import { emotesOn } from "./emotes";
+
+// A match for ":query": an emoji, or a BetterTTV or 7TV emote.
+export type SuggestItem = { kind: "emoji"; emoji: Emoji } | { kind: "emote"; emote: Emote };
 
 export interface EmojiSuggestState {
-  items: Emoji[];
+  items: SuggestItem[];
   query: string;
   index: number;
   rect: DOMRect | null;
-  select: (e: Emoji) => void;
+  select: (item: SuggestItem) => void;
 }
 
-// Type ":" and a few letters for matching emoji; Enter or Tab inserts one.
-// Typing the whole ":shortcode:" turns it into the emoji too.
+// Emoji and emotes for what's typed: emotes whose name starts with it first,
+// then emoji, then the other emotes.
+async function suggestions(query: string): Promise<SuggestItem[]> {
+  if (!query.length) return [];
+  const emoji = searchEmoji(await loadEmoji(), query, 40).map((e): SuggestItem => ({ kind: "emoji", emoji: e }));
+  if (!emotesOn()) return emoji;
+  const q = query.toLowerCase();
+  const emotes = searchEmotes(query, 24).map((e): SuggestItem => ({ kind: "emote", emote: e }));
+  const leading = emotes.filter((i) => i.kind === "emote" && i.emote.name.toLowerCase().startsWith(q));
+  return [...leading, ...emoji, ...emotes.filter((i) => !leading.includes(i))].slice(0, 48);
+}
+
+// Type ":" and a few letters for matching emoji and emotes; Enter or Tab
+// inserts one. Typing the whole ":shortcode:" turns it into the emoji too
+// (and a whole ":Name:" into its emote; editor/emotes.ts).
 export const EmojiSuggest = Extension.create<{ onState: (state: EmojiSuggestState | null) => void }>({
   name: "emojiSuggest",
 
@@ -23,7 +41,7 @@ export const EmojiSuggest = Extension.create<{ onState: (state: EmojiSuggestStat
   addProseMirrorPlugins() {
     const options = this.options;
     return [
-      Suggestion<Emoji>({
+      Suggestion<SuggestItem>({
         editor: this.editor,
         pluginKey: new PluginKey("emojiSuggest"),
         char: ":",
@@ -35,15 +53,19 @@ export const EmojiSuggest = Extension.create<{ onState: (state: EmojiSuggestStat
         },
         // Nothing for a lone ":" (it's usually punctuation); the data loads on
         // the first letter.
-        items: async ({ query }) => (query.length ? searchEmoji(await loadEmoji(), query, 40) : []),
+        items: ({ query }) => suggestions(query),
         command: ({ editor, range, props }) => {
-          const native = nativeOf(props);
+          if (props.kind === "emote") {
+            editor.chain().focus().deleteRange(range).insertEmote(props.emote.name).run();
+            return;
+          }
+          const native = nativeOf(props.emoji);
           editor.chain().focus().deleteRange(range).insertContent(native).run();
           rememberEmoji(native);
         },
         render: () => {
           let index = 0;
-          let props: SuggestionProps<Emoji> | null = null;
+          let props: SuggestionProps<SuggestItem> | null = null;
           const publish = () => {
             if (!props || props.items.length === 0) return options.onState(null);
             const p = props;

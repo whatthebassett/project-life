@@ -10,10 +10,12 @@ export interface League {
   path: string;
 }
 
+// In the order they're shown: the pills, the Leagues menu, and each day's
+// games when every league is showing.
 export const leagues: League[] = [
+  { id: "mlb", name: "MLB", path: "baseball/mlb" },
   { id: "nfl", name: "NFL", path: "football/nfl" },
   { id: "nba", name: "NBA", path: "basketball/nba" },
-  { id: "mlb", name: "MLB", path: "baseball/mlb" },
   { id: "nhl", name: "NHL", path: "hockey/nhl" },
 ];
 
@@ -172,10 +174,15 @@ function network(competition: Json | undefined): string | undefined {
 
 // Day by day, so the date labels read in order: today, then the days ahead,
 // then earlier days (a week's NFL scoreboard has Thursday's game). Within a
-// day: followed teams' games first, then live, then upcoming by start time,
-// then finished (the latest first).
+// day: followed teams' games first, then league by league (MLB, NFL, NBA,
+// NHL), and in each league live games, then upcoming by start time, then
+// finished (the latest first).
 export function orderGames(games: Game[], followed: (g: Game) => boolean, now = new Date()): Game[] {
   const rank = { in: 0, pre: 1, post: 2 };
+  const leagueOrder = (g: Game) => {
+    const i = leagues.findIndex((l) => l.id === g.league);
+    return i < 0 ? leagues.length : i;
+  };
   const midnight = (t: number | Date) => {
     const d = new Date(t);
     return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
@@ -191,6 +198,8 @@ export function orderGames(games: Game[], followed: (g: Game) => boolean, now = 
     if (d) return d;
     const f = Number(followed(b)) - Number(followed(a));
     if (f) return f;
+    const l = leagueOrder(a) - leagueOrder(b);
+    if (l) return l;
     if (a.state !== b.state) return rank[a.state] - rank[b.state];
     return a.state === "post" ? b.start - a.start : a.start - b.start;
   });

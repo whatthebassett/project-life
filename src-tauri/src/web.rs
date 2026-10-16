@@ -260,16 +260,17 @@ pub fn fetch_calendar(url: String) -> Result<String, String> {
     Ok(text)
 }
 
-// Scores and stock prices for Home's Sports and Markets cards: ESPN's
-// scoreboards and Yahoo Finance's charts and search. Only those services, and
-// under Project Life's own name. Up to 3 MB.
+// Scores and stock prices for Home's Sports and Markets cards (ESPN's
+// scoreboards, Yahoo Finance's charts and search), and the emote lists for
+// notes (BetterTTV, 7TV, and api.ivr.fi for a Twitch channel's id). Only
+// those services, and under Project Life's own name. Up to 3 MB.
 #[tauri::command(async)]
 pub fn fetch_data(url: String) -> Result<String, String> {
     let parsed = url::Url::parse(&url).map_err(err)?;
     let host = parsed.host_str().unwrap_or_default();
-    let allowed = ["site.web.api.espn.com", "query1.finance.yahoo.com", "query2.finance.yahoo.com"];
+    let allowed = ["site.web.api.espn.com", "query1.finance.yahoo.com", "query2.finance.yahoo.com", "api.betterttv.net", "7tv.io", "api.ivr.fi"];
     if parsed.scheme() != "https" || !allowed.contains(&host) {
-        return Err(format!("{host} isn't one of the services Home's cards use."));
+        return Err(format!("{host} isn't one of the services Project Life reads from."));
     }
     let (_, kind, bytes) = fetch_from(&url, "application/json", 3 * 1024 * 1024, 15, false, APP_AGENT)?;
     Ok(decode_text(&kind, &bytes))

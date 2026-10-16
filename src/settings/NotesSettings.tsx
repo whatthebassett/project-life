@@ -10,6 +10,7 @@ import { ListGroup, ListRow } from "../ui/bits";
 import { SegmentedControl } from "../ui/SegmentedControl";
 import { Switch } from "../ui/Switch";
 import { Seg, Toggle } from "./controls";
+import { emoteStatus, loadEmotes, onEmotesChange, allEmotes } from "../lib/emotes";
 
 // Settings → Notes: the editor, and where notes are kept. The folder part is
 // Checkpoint's (including 1.1.2's fix): copying into a folder that already
@@ -74,15 +75,22 @@ export default function NotesSettings() {
             ]}
           />
         </ListRow>
-        <ListRow label="Link previews" description="Point at a link to see the page's title and description">
+        <ListRow label="Link previews" description="Point at a link to see the page's picture, title and description under its bar">
           <Switch label="Link previews" checked={settings.LinkPreviews !== false} onChange={(v) => update({ LinkPreviews: v })} />
         </ListRow>
         <ListRow label="Smart links" description="A pasted or typed web address turns into a chip with the page's title. Right-click one to show it another way">
           <Switch label="Smart links" checked={settings.LinkTitles !== false} onChange={(v) => update({ LinkTitles: v })} />
         </ListRow>
+        <ListRow label="Extend links as you type" description="What you type right at the end of a link becomes part of the link">
+          <Switch label="Extend links as you type" checked={settings.ExtendLinks === true} onChange={(v) => update({ ExtendLinks: v })} />
+        </ListRow>
         <ListRow label="YouTube videos" description="A YouTube link on a line of its own plays in the note">
           <Switch label="YouTube videos" checked={settings.VideoEmbeds !== false} onChange={(v) => update({ VideoEmbeds: v })} />
         </ListRow>
+        <ListRow label="Twitch emotes" description="BetterTTV and 7TV emotes in notes: type :KEKW, or pick them in the emoji picker (Ctrl+;)">
+          <Switch label="Twitch emotes" checked={settings.Emotes !== false} onChange={(v) => update({ Emotes: v })} />
+        </ListRow>
+        {settings.Emotes !== false && <EmoteChannel />}
         <Seg
           label="Page width"
           value={settings.NoteWidth ?? "wide"}
@@ -169,5 +177,49 @@ export default function NotesSettings() {
         </Dialog>
       )}
     </>
+  );
+}
+
+// The Twitch channel whose BetterTTV and 7TV emotes join the global ones,
+// saved when you leave the box or press Enter, with how many emotes are in
+// and a way to load them again.
+function EmoteChannel() {
+  const { settings, update } = useSettings();
+  const [draft, setDraft] = useState(settings.TwitchChannel ?? "");
+  const [, redraw] = useState(0);
+  useEffect(() => onEmotesChange(() => redraw((n) => n + 1)), []);
+  useEffect(() => setDraft(settings.TwitchChannel ?? ""), [settings.TwitchChannel]);
+
+  const save = () => {
+    const channel = draft.trim().replace(/^@/, "").replace(/^https?:\/\/(www\.)?twitch\.tv\//i, "").replace(/\/.*$/, "");
+    if (channel !== (settings.TwitchChannel ?? "")) update({ TwitchChannel: channel || undefined });
+  };
+  const status = emoteStatus();
+  const count = allEmotes().length;
+  const channelCount = allEmotes().filter((e) => e.channel).length;
+  const said = status.loading
+    ? "Loading emotes…"
+    : count
+      ? `${count.toLocaleString()} emotes${channelCount ? `, ${channelCount.toLocaleString()} from ${status.channel}` : ""}${status.error ? `. ${status.error}` : ""}`
+      : (status.error ?? "No emotes loaded yet");
+
+  return (
+    <ListRow label="Twitch channel" description={said}>
+      <div className="flex shrink-0 items-center gap-2">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={save}
+          onKeyDown={(e) => e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur()}
+          placeholder="Channel name"
+          aria-label="Twitch channel"
+          spellCheck={false}
+          className="h-[38px] w-44 rounded-[11px] border border-line bg-panel2 px-3 text-13 text-text outline-none placeholder:text-muted focus:border-accent"
+        />
+        <Button size="md" disabled={status.loading} onClick={() => void loadEmotes(settings.TwitchChannel, true)}>
+          Reload
+        </Button>
+      </div>
+    </ListRow>
   );
 }

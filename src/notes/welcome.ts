@@ -49,13 +49,13 @@ Select some text and use a shortcut, or type the Markdown around it and it turns
 - ~~Strikethrough~~: Ctrl Shift X, or \`~~struck~~\`
 - \`Inline code\`: Ctrl E, or put it between backticks
 - ||A spoiler||: Ctrl Shift P, or \`||hidden||\`. It stays blurred until you click it.
-- [A link](https://tauri.app): Ctrl K, or \`[text](address)\`. Ctrl+click a link to open it.
+- [A link](https://tauri.app): Ctrl K, or \`[text](address)\`. Click a link for its bar (show it another way, open it, copy it), or Ctrl+click to open it straight away.
 
 It works whichever way you type: the marks first and then the words between them, or on keyboards where the backtick and tilde are dead keys.
 
 ## Headings
 
-Type **#**, **##** or **###** and a space at the start of a line, or press Ctrl 1, Ctrl 2 or Ctrl 3. Ctrl 0 turns a heading back into plain text. Headings show up in **On this page** on the right, and in the contents at the top of this note.
+Type **#**, **##** or **###** and a space at the start of a line, or press Ctrl 1, Ctrl 2 or Ctrl 3. Ctrl 0 turns a heading back into plain text. Headings show up in **On this page** on the right, and in the contents at the top of this note. Point at the contents and press **Edit** to lay them out as a list, two columns or one row, with bullets or numbers.
 
 ## Lists
 
@@ -119,7 +119,10 @@ Type **/date** to pick a day (and a time, if you like) from a calendar, **/today
 ## Pictures, links and emoji
 
 - **Pictures**: paste one, drop a file onto the page, or pick **Image** from the / menu. They're saved in the notes folder, beside your notes.
-- **Link previews**: point at a link for a moment to see the page's picture, title and description, with buttons to copy the link or open it in the browser.
+- **A link's bar**: click a link, or point at it for a moment, for a bar that shows it as its address, a chip, a card or (for YouTube) a video, opens the page in the browser, or copies the link. With Link previews on, pointing also shows the page's picture, title and description.
+- **Twitch emotes**: type \`:KEKW\` (or any BetterTTV or 7TV emote's name) and pick it, or find them in the emoji picker (Ctrl ;). Add your channel in Settings → Notes for its emotes too. In the file they're saved as \`:Name:\`.
+- **Links to other notes**: type \`\\\` and a few letters of a note's name, then Enter, for a link to that note. Click it to open the note, or Ctrl+click to open it in a new tab.
+- **Work links**: a Jira, Confluence or SharePoint link is named from its address (the issue key, the page's title, the file's name), since those pages need a sign-in to read.
 - **Smart links**: paste or type a web address and it turns into a chip with the site's icon and the page's title. Ctrl Z puts the address back. Right-click one and pick **Display as** to show it as the address, a chip, a card, or (for YouTube) a video that plays right in the note.
 - **Emoji**: type **:** and a word, like :tada, and pick from the list, or press **Ctrl ;** for all of them ✨
 - **Note icons**: point at the top of a note and choose **Add icon** to give it an emoji. It shows beside the note's name in the notebook and tabs.

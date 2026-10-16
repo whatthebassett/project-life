@@ -165,7 +165,7 @@ export default function SportsCard({ home }: { home: HomeData }) {
       <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
         <h2 className="m-0 shrink-0 text-16 font-semibold">Sports</h2>
         {chosen.length > 1 && (
-          <div role="group" aria-label="Leagues" className="flex min-w-0 gap-1.5 overflow-x-auto [scrollbar-width:none]">
+          <div role="group" aria-label="Leagues" className="hidden min-w-0 gap-1.5 overflow-x-auto [scrollbar-width:none] roomy:flex">
             {[{ id: "all", name: "All" }, ...chosen].map((l) => (
               <Chip key={l.id} variant="pill" selected={l.id === picked} onClick={() => update({ SportsLeague: l.id })}>
                 {l.name}
@@ -175,40 +175,51 @@ export default function SportsCard({ home }: { home: HomeData }) {
         )}
       </div>
       {empty ? (
-        <Empty>{empty}</Empty>
+        <Empty className="tiny:line-clamp-3">{empty}</Empty>
       ) : (
-        <div className="@container -mx-3 min-h-0 flex-1 overflow-y-auto">
-          <div className="grid gap-x-3 @xl:grid-cols-2">
-            {games.flatMap((g, i) => {
-              // A day label wherever the day changes, except before today's
-              // games at the top.
-              const day = midnight(new Date(g.start));
-              const changed = i === 0 ? daysFrom(now, g.start) !== 0 : day !== midnight(new Date(games[i - 1].start));
-              const row = (
-                <GameRow
-                  key={g.key}
-                  game={g}
-                  now={now}
-                  showLeague={picked === "all" && chosen.length > 1}
-                  followed={(t) => isFollowed(g.league, t)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const { x, y } = menuPoint(e);
-                    openMenu(x, y, gameMenu(g));
-                  }}
-                />
-              );
-              if (!changed) return [row];
-              const label = (
-                <div key={`${g.key}-day`} className="col-span-full flex h-7 items-center px-3 font-mono text-11 tracking-[0.12em] text-muted uppercase">
-                  {dayText(g.start, now)}
-                </div>
-              );
-              return [label, row];
-            })}
+        <>
+          {/* A small square: the first game on the list. */}
+          {games[0] && (
+            <div className="flex min-h-0 flex-1 flex-col gap-1 roomy:hidden">
+              {[games[0].away, games[0].home].map((t, i) => (
+                <TeamLine key={i} team={t} final={games[0].state === "post" && scored(games[0])} showScore={scored(games[0])} followed={isFollowed(games[0].league, t)} />
+              ))}
+              <span className="truncate pt-0.5 text-11 text-muted micro:hidden">{games[0].state === "in" ? liveText(games[0]) : whenText(games[0], now)}</span>
+            </div>
+          )}
+          <div className="@container -mx-3 hidden min-h-0 flex-1 overflow-y-auto roomy:block">
+            <div className="grid gap-x-3 @xl:grid-cols-2">
+              {games.flatMap((g, i) => {
+                // A day label wherever the day changes, except before today's
+                // games at the top.
+                const day = midnight(new Date(g.start));
+                const changed = i === 0 ? daysFrom(now, g.start) !== 0 : day !== midnight(new Date(games[i - 1].start));
+                const row = (
+                  <GameRow
+                    key={g.key}
+                    game={g}
+                    now={now}
+                    showLeague={picked === "all" && chosen.length > 1}
+                    followed={(t) => isFollowed(g.league, t)}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const { x, y } = menuPoint(e);
+                      openMenu(x, y, gameMenu(g));
+                    }}
+                  />
+                );
+                if (!changed) return [row];
+                const label = (
+                  <div key={`${g.key}-day`} className="col-span-full flex h-7 items-center px-3 font-mono text-11 tracking-[0.12em] text-muted uppercase">
+                    {dayText(g.start, now)}
+                  </div>
+                );
+                return [label, row];
+              })}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </Card>
   );

@@ -32,6 +32,12 @@ export interface Settings {
   NotesFormatBar?: boolean;
   LinkTitles?: boolean;
   VideoEmbeds?: boolean;
+  // Typing at the end of a link joins it (off unless true).
+  ExtendLinks?: boolean;
+  // BetterTTV and 7TV emotes in notes (on unless false), and the Twitch
+  // channel whose emotes join the global ones.
+  Emotes?: boolean;
+  TwitchChannel?: string;
   WordWrap?: boolean;
   LineNumbers?: boolean;
   DefaultCodeLanguage?: string;
@@ -73,7 +79,7 @@ export interface Settings {
   LastScreen?: string;
   WeekStart?: "sunday" | "monday";
   Clock?: "12" | "24";
-  DateFormat?: "short" | "dmy" | "iso";
+  DateFormat?: "short" | "full" | "dmy" | "iso";
   Language?: "en-US" | "en-GB";
   AutoUpdate?: boolean;
   UpdateChannel?: "stable" | "beta";
@@ -93,6 +99,8 @@ export interface Settings {
   // whether that's locked.
   HomeLayout?: unknown;
   HomeLocked?: boolean;
+  // The smallest a Home card can be made, each way, in px (100 unless set).
+  HomeSmallestCard?: number;
   // Home's Sports card: the leagues shown (nfl, nba, mlb, nhl), the one
   // picked, and teams followed ("nfl:BUF").
   SportsLeagues?: string[];

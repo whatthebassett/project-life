@@ -17,6 +17,7 @@ import {
   CalendarDays,
   CircleCheck,
   Clock,
+  FileText,
   Heading1,
   Heading2,
   Heading3,
@@ -37,11 +38,11 @@ import {
   TriangleAlert,
   type LucideIcon,
 } from "lucide-react";
-import { api, openUrl } from "../lib/api";
+import { api, openUrl, titleOf } from "../lib/api";
 import { Callout } from "../editor/callout";
 import { Spoiler } from "../editor/spoiler";
 import { SlashCommands, type SlashState } from "../editor/slash";
-import LinkHoverCard from "./LinkHoverCard";
+import LinkBar from "./LinkBar";
 import { VideoEmbeds, refreshVideoEmbeds } from "../editor/videoEmbeds";
 import { LinkTitles } from "../editor/linkTitles";
 import { NotedLink, SmartLinks } from "../editor/smartLinks";
@@ -54,15 +55,19 @@ import { TaskLinks, taskLinksKey, todoText, type TodoLink } from "../editor/task
 import { formatting } from "../editor/formatting";
 import { formattingDefaults, keyOf } from "../lib/shortcuts";
 import { EmojiSuggest, type EmojiSuggestState } from "../editor/emoji";
+import { NoteLinks, noteLinksChanged, noteOfHref, type NoteLinkState } from "../editor/noteLinks";
+import type { NoteInfo } from "../lib/api";
 import { EmojiGlyphs } from "../editor/emojiGlyphs";
 import { BlockLook } from "../editor/blocks";
 import { DateTime, nowAttrs, type DateTimeAttrs } from "../editor/dateTime";
 import { TableOfContents } from "../editor/toc";
+import { EmoteNode } from "../editor/emotes";
 import { LinePlaceholder } from "../editor/placeholder";
 import { MarkdownShortcuts } from "../editor/markdownShortcuts";
 import Calendar from "../tasks/Calendar";
 import BlockHandle from "./BlockHandle";
 import { nativeOf } from "../lib/emoji";
+import TocPanel from "./TocPanel";
 import { tableMenuItems } from "./Toolbar";
 import Dialog, { Button, Field, inputClass } from "./Dialog";
 import type { MenuItem } from "./ContextMenu";
@@ -96,6 +101,12 @@ interface Props {
   todoLinks?: Map<string, TodoLink>;
   onOpenTodo?: (taskId: string) => void;
   todoMenu?: (todo: { text: string; checked: boolean }) => MenuItem[];
+  // Links to other notes ("\" and a few letters): every note, the one being
+  // edited, its icon, and what a note link's click opens.
+  notes?: NoteInfo[];
+  currentNote?: string | null;
+  noteIcon?: (name: string) => string | null;
+  onOpenNote?: (name: string, newTab: boolean) => void;
 }
 
 export interface EditorCommands {
@@ -105,7 +116,9 @@ export interface EditorCommands {
 
 // The formatted editor. Mount it with a key per note: it takes the note's
 // Markdown once and reports Markdown back on every change.
-export default function VisualEditor({ initial, readable, caret, keys, keyFor, onChange, openMenu, onEmoji, onEditor, header, linkPreviews, videoEmbeds, spot, onSpot, commands, todoLinks, onOpenTodo, todoMenu }: Props) {
+export default function VisualEditor({ initial, readable, caret, keys, keyFor, onChange, openMenu, onEmoji, onEditor, header, linkPreviews, videoEmbeds, spot, onSpot, commands, todoLinks, onOpenTodo, todoMenu, notes, currentNote, noteIcon, onOpenNote }: Props) {
+  const noteLinksRef = useRef({ notes, currentNote, onOpenNote });
+  noteLinksRef.current = { notes, currentNote, onOpenNote };
   const todoLinksRef = useRef(todoLinks);
   todoLinksRef.current = todoLinks;
   const onOpenTodoRef = useRef(onOpenTodo);
@@ -113,7 +126,12 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
   const todoMenuRef = useRef(todoMenu);
   todoMenuRef.current = todoMenu;
   const [slash, setSlash] = useState<SlashState | null>(null);
+  // The table of contents whose look is being changed, in the panel that
+  // slides in beside the note; null while it's shut.
+  const [tocEdit, setTocEdit] = useState<{ pos: number } | null>(null);
+  const tocAt = useRef<number | null>(null);
   const [emoji, setEmoji] = useState<EmojiSuggestState | null>(null);
+  const [noteLink, setNoteLink] = useState<NoteLinkState | null>(null);
   const [linkDialog, setLinkDialog] = useState<{ href: string } | null>(null);
   // The calendar for a date chip: a new one at the cursor (pos null), or the
   // chip at pos being changed.
@@ -143,7 +161,10 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
         codeBlock: false,
         underline: false,
       }),
-      NotedLink.configure({ openOnClick: false, autolink: true, linkOnPaste: true }),
+      // Links keep how they're shown (URL, Inline, Card, Embed) in their
+      // Markdown title; see smartLinks.ts. Settings → Notes → Extend links as
+      // you type is read live.
+      NotedLink.configure({ openOnClick: false, autolink: true, linkOnPaste: true, extend: () => currentSettings().ExtendLinks === true }),
       NotedCodeBlock,
       NotedUnderline,
       Caret.configure({ config: () => caretRef.current }),
@@ -158,7 +179,11 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
       Callout,
       Spoiler,
       DateTime,
-      TableOfContents,
+      // Edit opens the panel for its block; pressed again on the block the
+      // panel is showing, it shuts it.
+      // BetterTTV and 7TV emotes, kept as :Name: in the file.
+      EmoteNode,
+      TableOfContents.configure({ onEdit: (pos) => setTocEdit((open) => (open && tocAt.current === pos ? null : { pos })) }),
       MarkdownShortcuts,
       // Grey hints where the cursor is (never saved): what an empty note can
       // do, then what fits the line at hand.
@@ -185,6 +210,12 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
         },
       }),
       EmojiSuggest.configure({ onState: setEmoji }),
+      NoteLinks.configure({
+        notes: () => noteLinksRef.current.notes ?? [],
+        current: () => noteLinksRef.current.currentNote ?? null,
+        open: (name, newTab) => noteLinksRef.current.onOpenNote?.(name, newTab),
+        onState: setNoteLink,
+      }),
       EmojiGlyphs,
       BlockLook,
       SlashCommands.configure({
@@ -196,7 +227,7 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
       }),
       TaskLinks.configure({ links: () => todoLinksRef.current ?? new Map(), open: (id) => onOpenTodoRef.current?.(id) }),
       VideoEmbeds.configure({ enabled: () => videoEmbedsRef.current }),
-      SmartLinks.configure({ fetch: api.fetchLinkPreview, open: (url) => void openUrl(url) }),
+      SmartLinks.configure({ fetch: api.fetchLinkPreview }),
       LinkTitles.configure({ fetch: api.fetchLinkPreview, enabled: () => currentSettings().LinkTitles !== false }),
     ],
     content: initial,
@@ -242,6 +273,18 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
         return true;
       },
       handleDOMEvents: {
+        // A click on a link never follows it: it brings up the link's bar
+        // (LinkBar.tsx), whose Open button, or Ctrl+click, opens the page.
+        // Links to other notes go on to NoteLinks, which opens them.
+        click: (_view, event) => {
+          const a = (event.target as HTMLElement | null)?.closest?.("a[href]");
+          if (a && !noteOfHref(a.getAttribute("href"))) event.preventDefault();
+          return false;
+        },
+        auxclick: (_view, event) => {
+          if ((event.target as HTMLElement | null)?.closest?.("a[href]")) event.preventDefault();
+          return false;
+        },
         // Right-clicking inside a group of selected table cells keeps them
         // selected, so the table menu (alignment and the rest) changes them
         // all. Otherwise the browser drops the cursor where you clicked first.
@@ -278,10 +321,6 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
   useEffect(() => {
     if (editor && !editor.isDestroyed) refreshVideoEmbeds(editor.view);
   }, [editor, videoEmbeds]);
-
-  // The editor's element, for the link hover card.
-  const [linkRoot, setLinkRoot] = useState<HTMLElement | null>(null);
-  useEffect(() => setLinkRoot(editor ? editor.view.dom : null), [editor]);
 
   // Back to where you were: the cursor, then the scroll once the page has
   // laid out (again a moment later, as pictures arrive, unless
@@ -404,6 +443,11 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
     };
   });
 
+  // Notes added, renamed or deleted: note links show whether theirs is still there.
+  useEffect(() => {
+    if (editor && !editor.isDestroyed) editor.view.dispatch(editor.state.tr.setMeta(noteLinksChanged, true));
+  }, [editor, notes]);
+
   // Tasks changed: redraw the to-do chips.
   useEffect(() => {
     if (editor && !editor.isDestroyed) editor.view.dispatch(editor.state.tr.setMeta(taskLinksKey, true));
@@ -438,18 +482,29 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
 
   return (
     <div className="flex h-full flex-col">
-      <div ref={scroller} className={clsx("noted-editor min-h-0 flex-1 overflow-y-auto", readable && "readable")}>
-        {header}
-        <div ref={blocksBox} className="relative px-10 pb-6">
-          <EditorContent editor={editor} className="relative" />
-          <BlockHandle editor={editor} wrapper={blocksBox} scroller={scroller} openMenu={openMenu} keyFor={keyFor} />
+      <div className="flex min-h-0 flex-1">
+        <div ref={scroller} className={clsx("noted-editor h-full min-w-0 flex-1 overflow-y-auto", readable && "readable")}>
+          {header}
+          <div ref={blocksBox} className="relative px-10 pb-6">
+            <EditorContent editor={editor} className="relative" />
+            <BlockHandle editor={editor} wrapper={blocksBox} scroller={scroller} openMenu={openMenu} keyFor={keyFor} />
+          </div>
+        </div>
+        {/* A table of contents' options slide in from the right, beside the
+            note: the outer box animates its width and the panel keeps its
+            own. It stays mounted while shut so it can slide away. */}
+        <div className="sidebar-slide flex h-full shrink-0 justify-end overflow-hidden" style={{ width: tocEdit ? TOC_PANEL_WIDTH : 0 }} inert={!tocEdit}>
+          <div className="h-full shrink-0 border-l border-line bg-side" style={{ width: TOC_PANEL_WIDTH }}>
+            <TocPanel editor={editor} target={tocEdit} at={tocAt} onClose={() => setTocEdit(null)} />
+          </div>
         </div>
       </div>
 
       {slash && slash.rect && <SlashMenu state={slash} />}
       {emoji && emoji.rect && <EmojiMenu state={emoji} />}
+      {noteLink && noteLink.rect && notes && <NoteLinkMenu state={noteLink} iconFor={noteIcon} />}
 
-      <LinkHoverCard root={linkRoot} enabled={linkPreviews} />
+      <LinkBar editor={editor} previews={linkPreviews} />
       {linkDialog && <LinkDialog href={linkDialog.href} onApply={applyLink} onClose={() => setLinkDialog(null)} />}
       {datePick && (
         <Calendar
@@ -473,8 +528,8 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
 // Calendar.tsx's width, so it lines up with the chip or cursor's left edge.
 const CALENDAR_WIDTH = 236;
 
-// The "/" menu (Notes.dc.html): blocks to add, grouped, each with its icon
-// and the Markdown (or slash word) that makes it. Keystrokes stay in the note,
+// The "/" menu (Notes.dc.html): blocks to add, grouped, each with its icon,
+// a few words on what it makes, and the Markdown (or slash word) that makes it. Keystrokes stay in the note,
 // so typing after the slash searches and the arrows move; pointing at a row
 // highlights it too.
 const slashIcons: Record<string, LucideIcon> = {
@@ -528,6 +583,8 @@ const slashHints: Record<string, string> = {
   today: "/today",
 };
 
+const TOC_PANEL_WIDTH = 272;
+
 const SLASH_WIDTH = 340;
 const SLASH_HEIGHT = 420;
 
@@ -571,19 +628,22 @@ function SlashMenu({ state }: { state: SlashState }) {
               <div
                 role="menuitem"
                 data-index={i}
-                title={item.description}
                 style={{ "--row": i, "--tint": item.tint } as React.CSSProperties}
-                className={clsx("slash-row menu-drop-row flex h-11 cursor-default items-center gap-3 rounded-[10px] px-[10px]", active && "is-active")}
+                className={clsx("slash-row menu-drop-row flex h-[50px] cursor-default items-center gap-3 rounded-[10px] px-[10px]", active && "is-active")}
                 onMouseMove={() => state.setIndex(i)}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   state.select(item);
                 }}
               >
-                <span className="slash-icon flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[8px]">
-                  <Icon size={16} strokeWidth={2} />
+                <span className="slash-icon flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px]">
+                  <Icon size={17} strokeWidth={2} />
                 </span>
-                <span className="slash-label min-w-0 flex-1 truncate text-14 font-medium">{item.label}</span>
+                {/* The block's name, and a few words on what it makes. */}
+                <span className="flex min-w-0 flex-1 flex-col gap-px">
+                  <span className="slash-label truncate text-14 leading-[1.3] font-medium">{item.label}</span>
+                  <span className="truncate text-12 leading-[1.3] text-muted">{item.description}</span>
+                </span>
                 {slashHints[item.id] && <span className="shrink-0 font-mono text-11 text-muted">{slashHints[item.id]}</span>}
               </div>
             </Fragment>
@@ -595,6 +655,58 @@ function SlashMenu({ state }: { state: SlashState }) {
             <span className="text-12">Press Esc to keep it as text.</span>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// Notes for "\query", best first (the ones edited last when nothing's typed
+// yet). Keys stay in the note; Enter or Tab links the one picked.
+function NoteLinkMenu({ state, iconFor }: { state: NoteLinkState; iconFor?: (name: string) => string | null }) {
+  const list = useRef<HTMLDivElement>(null);
+  const rect = state.rect!;
+  const height = 300;
+  const width = 300;
+
+  useEffect(() => {
+    list.current?.querySelector(`[data-index="${state.index}"]`)?.scrollIntoView({ block: "nearest" });
+  }, [state.index, state.items]);
+
+  return (
+    <div
+      role="listbox"
+      aria-label="Link a note"
+      className="menu-drop fixed z-50 flex flex-col overflow-hidden rounded-[14px] border border-line text-13 shadow-[0_18px_44px_rgba(0,0,0,0.4)]"
+      style={{ left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)), top: Math.min(rect.bottom + 6, window.innerHeight - height - 8), width, maxHeight: height, background: "var(--menu)" }}
+    >
+      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-line px-3 text-12 text-muted">
+        <FileText size={13} className="shrink-0" />
+        <span className="min-w-0 truncate">
+          Link a note{state.query ? <> matching <span className="font-medium text-text">{state.query}</span></> : ""}
+        </span>
+      </div>
+      <div ref={list} className="min-h-0 flex-1 overflow-y-auto p-1.5">
+        {state.items.map((note, i) => {
+          const icon = iconFor?.(note.name);
+          return (
+            <div
+              key={note.name}
+              data-index={i}
+              role="option"
+              aria-selected={i === state.index}
+              style={{ "--row": i } as React.CSSProperties}
+              className={clsx("menu-drop-row flex h-9 cursor-default items-center gap-2.5 rounded-[9px] px-2.5", i === state.index && "bg-active")}
+              onMouseDown={(ev) => {
+                ev.preventDefault();
+                state.select(note);
+              }}
+            >
+              <span className="flex w-4 shrink-0 justify-center text-muted">{icon ? <span className="text-14 leading-none">{icon}</span> : <FileText size={14} />}</span>
+              <span className="min-w-0 flex-1 truncate">{titleOf(note.name)}</span>
+            </div>
+          );
+        })}
+        {state.items.length === 0 && <div className="px-2.5 py-3 text-12 text-muted">No note matches “{state.query}”. Esc keeps it as text.</div>}
       </div>
     </div>
   );
@@ -616,24 +728,39 @@ function EmojiMenu({ state }: { state: EmojiSuggestState }) {
       style={{ left: Math.min(rect.left, window.innerWidth - 296), top: Math.min(rect.bottom + 4, window.innerHeight - height - 8), maxHeight: height, background: "var(--menu)" }}
     >
       <div className="flex h-7 shrink-0 items-center gap-1.5 px-3 text-[11.5px] text-muted">
-        Emoji matching <span className="font-mono text-fg">:{state.query}</span>
+        Emoji and emotes matching <span className="font-mono text-fg">:{state.query}</span>
       </div>
       <div ref={list} className="min-h-0 flex-1 overflow-y-auto p-1 pt-0">
-        {state.items.map((e, i) => (
+        {state.items.map((item, i) => (
           <div
-            key={e.id}
+            key={item.kind === "emote" ? `emote:${item.emote.name}` : item.emoji.id}
             style={{ "--row": i } as React.CSSProperties}
             className={clsx("menu-drop-row flex min-h-[30px] cursor-default items-center gap-2.5 rounded-md px-2 py-0.5", i === state.index && "bg-active")}
             onMouseDown={(ev) => {
               ev.preventDefault();
-              state.select(e);
+              state.select(item);
             }}
           >
-            <span className="text-center leading-none" style={{ fontFamily: '"Segoe UI Emoji", sans-serif', fontSize: "var(--emoji-menu, 23px)", minWidth: "1.3em" }}>
-              {nativeOf(e)}
-            </span>
-            <span className="min-w-0 flex-1 truncate font-mono text-[12px]">:{e.id}:</span>
-            <span className="max-w-[45%] shrink truncate text-[11px] text-muted">{e.name}</span>
+            {item.kind === "emote" ? (
+              <>
+                <span className="flex h-[26px] items-center justify-center" style={{ minWidth: "1.3em" }}>
+                  <img src={item.emote.url} alt="" className="max-h-[24px] max-w-[48px] object-contain" />
+                </span>
+                <span className="min-w-0 flex-1 truncate font-mono text-[12px]">:{item.emote.name}:</span>
+                <span className="max-w-[45%] shrink truncate text-[11px] text-muted">
+                  {item.emote.source}
+                  {item.emote.channel ? " · channel" : ""}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-center leading-none" style={{ fontFamily: '"Segoe UI Emoji", sans-serif', fontSize: "var(--emoji-menu, 23px)", minWidth: "1.3em" }}>
+                  {nativeOf(item.emoji)}
+                </span>
+                <span className="min-w-0 flex-1 truncate font-mono text-[12px]">:{item.emoji.id}:</span>
+                <span className="max-w-[45%] shrink truncate text-[11px] text-muted">{item.emoji.name}</span>
+              </>
+            )}
           </div>
         ))}
       </div>

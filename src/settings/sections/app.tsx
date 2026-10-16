@@ -1,5 +1,6 @@
 import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { useEffect, useRef, useState } from "react";
+import { SMALLEST, smallestCard, smallestChoices } from "../../home/HomeGrid";
 import { PlaceSearch } from "../../home/WeatherCard";
 import NewsSourcesPopup from "../../home/NewsSourcesPopup";
 import { shortPlace, temperatureUnit, weatherPlace, type Place } from "../../home/prefs";
@@ -200,6 +201,7 @@ export function General() {
           onChange={(v) => update({ DateFormat: v })}
           options={[
             { value: "short", label: withFormat("short") },
+            { value: "full", label: withFormat("full") },
             { value: "dmy", label: withFormat("dmy") },
             { value: "iso", label: withFormat("iso") },
           ]}
@@ -254,14 +256,14 @@ export function Appearance() {
     <>
       <div className="flex flex-col gap-3">
         <SectionLabel>Theme</SectionLabel>
-        <div role="radiogroup" aria-label="Theme" className="grid grid-cols-5 gap-3">
+        <div role="radiogroup" aria-label="Theme" className="grid grid-cols-4 gap-3">
           {themes.map((t) => (
             <ThemeCard key={t.id} theme={t} selected={t.id === selected} onPick={() => update({ Theme: t.id })} />
           ))}
         </div>
       </div>
       <ListGroup title="COLOR">
-        <Toggle label="Match Windows light and dark" desc="A light theme when Windows is light: Daylight, or Peach if that's your pick" value={Boolean(settings.MatchWindows)} onChange={(v) => update({ MatchWindows: v })} />
+        <Toggle label="Match Windows light and dark" desc="Light when Windows is light, dark when it's dark. Dark and Light swap for each other; other themes switch to Daylight or Midnight" value={Boolean(settings.MatchWindows)} onChange={(v) => update({ MatchWindows: v })} />
         <Swatches
           label="Accent color"
           desc="Leave on Theme to use each theme's own accent"
@@ -368,6 +370,13 @@ export function HomeScreenSettings() {
       </ListGroup>
       <ListGroup title="LAYOUT">
         <Toggle label="Lock the cards" desc="So they can't be moved or resized by accident" value={settings.HomeLocked === true} onChange={(v) => update({ HomeLocked: v })} />
+        <Choice
+          label="Smallest card size"
+          desc="How small a card can be made. Cards already smaller grow to fit."
+          value={smallestCard(settings)}
+          onChange={(v) => update({ HomeSmallestCard: v })}
+          options={smallestChoices.map((px) => ({ value: px, label: px === SMALLEST ? `${px} × ${px} (smallest)` : `${px} × ${px}` }))}
+        />
         <Action label="Card layout" desc={settings.HomeLayout ? "Moved and resized" : "As it started"} action="Reset" disabled={!settings.HomeLayout} onClick={() => update({ HomeLayout: undefined })} />
       </ListGroup>
       <ListGroup title="NEWS AND WEATHER">

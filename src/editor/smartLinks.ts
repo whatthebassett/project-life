@@ -1,5 +1,5 @@
 import { Extension } from "@tiptap/core";
-import { Link } from "@tiptap/extension-link";
+import { Link, type LinkOptions } from "@tiptap/extension-link";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { Mark, Node as PMNode } from "@tiptap/pm/model";
@@ -26,7 +26,43 @@ export const viewTitle = (v: LinkView | null) => (v && v !== "url" ? `view:${v}`
 
 // The link mark, keeping a view out of the page: it's for the note file, and
 // as a title attribute it would pop up as the link's tooltip.
-export const NotedLink = Link.extend({
+export interface NotedLinkOptions extends LinkOptions {
+  // Settings → Editing → Extend links as you type, read live.
+  extend: () => boolean;
+}
+
+export const NotedLink = Link.extend<NotedLinkOptions>({
+  addOptions() {
+    return { ...this.parent!(), extend: () => false };
+  },
+
+  // Typing at a link's edge is ordinary text, not more of the link. (The link
+  // mark is otherwise inclusive whenever autolink is on.) The setting brings
+  // that back at a link's end, below.
+  inclusive() {
+    return false;
+  },
+
+  addProseMirrorPlugins() {
+    const { options, type } = this;
+    return [
+      ...(this.parent?.() ?? []),
+      // With the setting on, a cursor at the end of a link carries the link,
+      // so what's typed there joins it. Marks picked by hand are left alone,
+      // as is stepping out of the link with →.
+      new Plugin({
+        key: new PluginKey("extendLinks"),
+        appendTransaction: (_trs, _old, state) => {
+          if (!options.extend() || state.storedMarks || !state.selection.empty) return null;
+          const { $from } = state.selection;
+          const link = $from.nodeBefore?.marks.find((m) => m.type === type);
+          if (!link || link.isInSet($from.nodeAfter?.marks ?? [])) return null;
+          return state.tr.setStoredMarks(link.addToSet($from.marks()));
+        },
+      }),
+    ];
+  },
+
   addAttributes() {
     return {
       ...this.parent?.(),
@@ -40,7 +76,6 @@ export const NotedLink = Link.extend({
 
 export interface SmartLinkOptions {
   fetch: (url: string) => Promise<LinkPreview | null>;
-  open: (url: string) => void;
 }
 
 const key = new PluginKey("smartLinks");
@@ -53,7 +88,7 @@ export const SmartLinks = Extension.create<SmartLinkOptions>({
   name: "smartLinks",
 
   addOptions() {
-    return { fetch: async () => null, open: () => {} };
+    return { fetch: async () => null };
   },
 
   addProseMirrorPlugins() {
@@ -154,11 +189,14 @@ function loadIcon(src: string): Promise<string | null> {
   });
 }
 
-// The card beneath a line, for a link shown as a card.
+// The card beneath a line, for a link shown as a card. Like the link itself,
+// clicking or pointing at it brings up the link's bar (components/LinkBar.tsx),
+// which finds the link by the card's data-href.
 function card(url: string, options: SmartLinkOptions): HTMLElement {
   const el = document.createElement("div");
   el.className = "link-card";
   el.contentEditable = "false";
+  el.dataset.href = url;
   el.innerHTML = `<div class="link-card-body"><div class="link-card-title"></div><div class="link-card-desc"></div><div class="link-card-site"></div></div>`;
   const title = el.querySelector(".link-card-title") as HTMLElement;
   const desc = el.querySelector(".link-card-desc") as HTMLElement;
@@ -166,11 +204,6 @@ function card(url: string, options: SmartLinkOptions): HTMLElement {
   title.textContent = hostOf(url);
   site.textContent = url;
   desc.hidden = true;
-  el.title = url;
-  el.addEventListener("click", (e) => {
-    e.preventDefault();
-    options.open(url);
-  });
   void previewFor(url, options.fetch).then((preview) => {
     if (!preview) return;
     if (preview.title) title.textContent = preview.title;

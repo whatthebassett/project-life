@@ -132,7 +132,8 @@ export async function loadWeather(place: Place, unit: "C" | "F"): Promise<Weathe
     ].join(","),
     hourly: "temperature_2m,weather_code,precipitation_probability,is_day",
     timezone: "auto",
-    forecast_days: "5",
+    // Today and nine more; Home's card shows as many as it has room for.
+    forecast_days: "10",
   });
   if (unit === "F") {
     params.set("temperature_unit", "fahrenheit");

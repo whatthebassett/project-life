@@ -168,7 +168,7 @@ export default function StocksCard({ home }: { home: HomeData }) {
           onClick={() => setSearching((s) => !s)}
           aria-label={searching ? "Close search" : "Add a symbol"}
           title={searching ? "Close search" : "Add a symbol"}
-          className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[9px] border border-line text-muted transition-colors hover:text-text"
+          className="hidden h-[30px] w-[30px] shrink-0 items-center justify-center rounded-[9px] border border-line text-muted transition-colors hover:text-text roomy:flex"
         >
           {searching ? <X size={15} /> : <Plus size={16} strokeWidth={2} />}
         </button>
@@ -178,7 +178,21 @@ export default function StocksCard({ home }: { home: HomeData }) {
         <SymbolSearch have={symbols} onAdd={add} onCancel={() => setSearching(false)} />
       ) : (
         <>
-          <div className="grid grid-cols-3 gap-2">
+          {/* A small square: how each index is doing. */}
+          <div className="flex min-h-0 flex-1 flex-col gap-1.5 roomy:hidden">
+            {INDEXES.map(({ symbol, label }) => {
+              const q = results[symbol]?.quote;
+              return (
+                <div key={symbol} className="flex items-baseline justify-between gap-2 font-mono text-11">
+                  <span className="truncate text-muted">{label.replace(" 500", "")}</span>
+                  <span className="shrink-0 tabular-nums" style={{ color: q ? tone(q) : undefined }}>
+                    {q ? `${up(q) ? "▲" : "▼"} ${Math.abs(q.changePct).toFixed(2)}%` : "—"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="hidden grid-cols-3 gap-2 roomy:grid">
             {INDEXES.map(({ symbol, label }) => {
               const q = results[symbol]?.quote;
               return (
@@ -190,13 +204,16 @@ export default function StocksCard({ home }: { home: HomeData }) {
                     onRowMenu(e, [{ label: "Open on Yahoo Finance", icon: <SquareArrowOutUpRight size={13} />, onSelect: () => void openUrl(quoteUrl(symbol)) }])
                   }
                   title={q ? `${q.name}, ${asOf(q.marketTime, home.now)}` : label}
-                  className="flex min-w-0 flex-col gap-0.5 rounded-[12px] border border-line bg-panel2 px-2.5 py-2 text-left transition-colors hover:border-faint"
+                  className="flex min-w-0 flex-col gap-0.5 rounded-[12px] border border-line bg-panel2 px-1.5 py-2 text-left transition-colors hover:border-faint @[19rem]:px-2.5"
                 >
-                  <span className="truncate font-mono text-11 text-muted">{label}</span>
+                  <span className="truncate font-mono text-11 text-muted">
+                    <span className="@[19rem]:hidden">{label.replace(" 500", "")}</span>
+                    <span className="hidden @[19rem]:inline">{label}</span>
+                  </span>
                   {q ? (
                     <>
                       {/* Whole points when narrow: the Dow's 45,000.00 doesn't fit a third of a small card. */}
-                      <span className="truncate font-mono text-14 font-medium tabular-nums">
+                      <span className="truncate font-mono text-12 font-medium tabular-nums @[19rem]:text-14">
                         <span className="@md:hidden">{formatPrice(q.price, q.currency, 0)}</span>
                         <span className="hidden @md:inline">{formatPrice(q.price, q.currency)}</span>
                       </span>
@@ -212,7 +229,7 @@ export default function StocksCard({ home }: { home: HomeData }) {
             })}
           </div>
 
-          <div className="-mx-2 flex min-h-0 flex-1 flex-col overflow-y-auto px-2">
+          <div className="-mx-2 hidden min-h-0 flex-1 flex-col overflow-y-auto px-2 roomy:flex">
             {symbols.length === 0 ? (
               <Empty>No symbols yet. Add one with +.</Empty>
             ) : loading ? (
@@ -236,7 +253,7 @@ export default function StocksCard({ home }: { home: HomeData }) {
                       <span className="truncate text-14 font-semibold @lg:w-[76px] @lg:shrink-0">{symbol}</span>
                       <span className="truncate text-12 text-muted @lg:text-13">{note}</span>
                     </span>
-                    <Sparkline quote={q} className="h-6 w-12 shrink-0 @md:w-20 @lg:h-7 @lg:w-28" />
+                    <Sparkline quote={q} className="hidden h-6 w-12 shrink-0 @[19rem]:block @md:w-20 @lg:h-7 @lg:w-28" />
                     <span className="flex shrink-0 flex-col items-end gap-1 @lg:flex-row @lg:items-center @lg:gap-3">
                       <span className="font-mono text-13 tabular-nums @lg:min-w-[84px] @lg:text-right @lg:text-14">
                         {q ? formatPrice(q.price, q.currency) : "—"}
@@ -267,7 +284,7 @@ function PhaseChip({ phase }: { phase: Phase }) {
   const color = phase === "open" ? "var(--gain)" : phase === "closed" ? "var(--muted)" : "var(--accent)";
   const background = phase === "open" ? "color-mix(in srgb, var(--gain) 14%, transparent)" : phase === "closed" ? "var(--panel2)" : "var(--accent-soft)";
   return (
-    <span title="The US stock market" className="flex shrink-0 items-center gap-1.5 rounded-[8px] px-2 py-[3px] font-mono text-11 whitespace-nowrap" style={{ color, background }}>
+    <span title="The US stock market" className="hidden shrink-0 items-center gap-1.5 rounded-[8px] px-2 py-[3px] font-mono text-11 whitespace-nowrap @[15rem]:flex" style={{ color, background }}>
       {phase !== "closed" && <span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />}
       {phaseLabel[phase]}
     </span>

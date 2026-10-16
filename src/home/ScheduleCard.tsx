@@ -6,7 +6,7 @@ import { useNotes } from "../notes/NotesContext";
 import { openEventEditor } from "../schedule/EventEditorHost";
 import type { Screen } from "../shell/nav";
 import { eventMenu } from "./menus";
-import { Card, CardHeader, CardLink, clock, Empty, useRowMenu } from "./parts";
+import { Card, CardHeader, CardLink, clock, Empty, Tiny, useRowMenu } from "./parts";
 import type { HomeData } from "./useHome";
 
 // Today's timeline, with a "now" line between what's done and what's next.
@@ -38,7 +38,10 @@ export default function ScheduleCard({ home, onNavigate }: { home: HomeData; onN
       <CardHeader title="Schedule">
         <CardLink onClick={() => onNavigate("schedule")}>View week</CardLink>
       </CardHeader>
-      <div className="flex min-h-0 flex-col gap-1 overflow-y-auto">
+      <Tiny size="md" value={nextIndex >= 0 ? clock(events[nextIndex].start) : undefined} color="var(--accent)">
+        {nextIndex >= 0 ? events[nextIndex].title : "Nothing left today"}
+      </Tiny>
+      <div className="hidden min-h-0 flex-col gap-1 overflow-y-auto roomy:flex">
         {events.map((e, i) => {
           const past = e.end <= now;
           const next = i === nextIndex;

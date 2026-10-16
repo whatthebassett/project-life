@@ -1,6 +1,6 @@
 import { EyeOff, LayoutGrid } from "lucide-react";
 import clsx from "clsx";
-import type { CSSProperties, MouseEvent, ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode, type Ref, type RefObject } from "react";
 import { menuPoint, type MenuItem } from "../components/ContextMenu";
 import { clockText } from "../lib/format";
 import { currentSettings } from "../lib/settings";
@@ -17,6 +17,8 @@ interface CardProps {
   // own items (menu), then Hide this card.
   id?: string;
   menu?: MenuItem[];
+  // For a card that measures itself (useCardSize).
+  ref?: Ref<HTMLElement>;
   children: ReactNode;
 }
 
@@ -54,8 +56,10 @@ export function useRowMenu(id: string, label: string) {
   };
 }
 
-// A Home card: panel, 1px line border, radius 24 (DESIGN.md §4).
-export function Card({ className, style, label, id, menu, children }: CardProps) {
+// A Home card: panel, 1px line border, radius 24 (DESIGN.md §4). The grid
+// cell around it is a container (HomeGrid), so the card and what's inside
+// can change with its width (@[19rem]:…).
+export function Card({ className, style, label, id, menu, ref, children }: CardProps) {
   const { openMenu } = useNotes();
   const cardItems = useCardItems(id, label);
 
@@ -70,9 +74,54 @@ export function Card({ className, style, label, id, menu, children }: CardProps)
   };
 
   return (
-    <section aria-label={label} onContextMenu={onContextMenu} className={clsx("flex min-h-0 flex-col rounded-[24px] border border-line bg-panel", className)} style={style}>
+    <section
+      ref={ref}
+      aria-label={label}
+      onContextMenu={onContextMenu}
+      className={clsx("flex min-h-0 flex-col rounded-[24px] border border-line bg-panel tiny:gap-2! tiny:rounded-[20px] tiny:p-4! micro:gap-1.5! micro:rounded-[16px] micro:p-3!", className)}
+      style={style}
+    >
       {children}
     </section>
+  );
+}
+
+// A card's own size, for the ones whose content is laid out by measuring
+// (Up next, Today). Zero until it's first drawn.
+export function useCardSize(): [RefObject<HTMLElement | null>, { width: number; height: number }] {
+  const ref = useRef<HTMLElement>(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => setSize((s) => (s.width === el.offsetWidth && s.height === el.offsetHeight ? s : { width: el.offsetWidth, height: el.offsetHeight }));
+    measure();
+    const watch = new ResizeObserver(measure);
+    watch.observe(el);
+    return () => watch.disconnect();
+  }, []);
+  return [ref, size];
+}
+
+// The same sizes the tiny and micro variants go by (index.css), for those cards.
+export const isTiny = (s: { width: number; height: number }) => s.width < 208 || s.height < 160;
+export const isMicro = (s: { width: number; height: number }) => s.width < 144 || s.height < 144;
+
+// What a card shows when it's small (tiny: too narrow or too short for its
+// usual content): one headline and a line or two under it, down to a title
+// and a number at 100 × 100. It starts at the top, under the card's title,
+// however tall the card is. Hidden on bigger cards; the usual content is
+// `hidden roomy:flex` in its place.
+export function Tiny({ value, size = "lg", color, children }: { value?: ReactNode; size?: "lg" | "md"; color?: string; children?: ReactNode }) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-hidden roomy:hidden">
+      {value != null && (
+        <div className={clsx("truncate font-head leading-none font-bold tracking-[-0.02em]", size === "lg" ? "text-28 micro:text-22" : "text-18")} style={color ? { color } : undefined}>
+          {value}
+        </div>
+      )}
+      {children != null && <div className={clsx("text-12 leading-[1.35] text-muted", value != null ? "line-clamp-2 micro:line-clamp-1" : "line-clamp-3 micro:line-clamp-2")}>{children}</div>}
+    </div>
   );
 }
 
@@ -80,8 +129,9 @@ export function Card({ className, style, label, id, menu, children }: CardProps)
 export function CardHeader({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <h2 className="m-0 text-16 font-semibold">{title}</h2>
-      {children}
+      <h2 className="m-0 truncate text-16 font-semibold tiny:text-14">{title}</h2>
+      {/* The smallest squares keep the title; the link or count is in the card's menu or below. */}
+      {children && <span className="hidden shrink-0 items-center whitespace-nowrap roomy:flex">{children}</span>}
     </div>
   );
 }

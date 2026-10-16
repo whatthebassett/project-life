@@ -1,5 +1,5 @@
 // A web page's title, description and picture, from fetch_link_preview
-// (src-tauri/src/notes.rs). Used by a link's hover card and by LinkTitles.
+// (src-tauri/src/notes.rs). Used by a link's bar, smart links and LinkTitles.
 export interface LinkPreview {
   url: string;
   title: string;

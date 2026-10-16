@@ -12,7 +12,7 @@ Project Life is a Windows desktop app for notes, schedule, tasks, habits and goa
 - **Schedule:** week and month views, repeating events, time zones, reminders as Windows notifications, and Join buttons for Teams, Meet and Zoom.
 - **Habits and goals:** streaks with a streak saver, count and timed habits, goals with milestones and weekly check-ins.
 - **Connected accounts:** Outlook and Google calendars synced both ways, with Teams and Meet links made for new events. This needs its own app registrations; see [docs/ACCOUNTS.md](docs/ACCOUNTS.md).
-- **Settings:** four themes, text sizes S to XL, changeable keyboard shortcuts, accessibility options, backups, and updates from this repo's Releases.
+- **Settings:** eight themes, text sizes S to XL, changeable keyboard shortcuts, accessibility options, backups, and updates from this repo's Releases.
 
 ## Download
 

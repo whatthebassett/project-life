@@ -680,32 +680,119 @@ fn meta_content(html: &str, names: &[&str]) -> Option<String> {
     None
 }
 
-// The title, description and picture a page offers, for a link's hover card
-// and pasted link titles. Cached on disk in Data\LinkPreviews, so each link
-// is fetched once.
+// The title, description and picture a page offers, for a link's bar and
+// pasted link titles. A work page that only shows itself to someone signed in
+// is named from its address instead (named_by_address).
 #[tauri::command(async)]
 pub fn fetch_link_preview(url: String) -> Result<Option<LinkPreview>, String> {
-    let cache = preview_cache_path(&url);
+    Ok(named_by_address(&url, page_preview(&url)))
+}
+
+// A page's name from its address alone, for work sites that show the page
+// only to someone signed in. Project Life isn't, so it's sent to a sign-in
+// page or handed an empty shell titled "Jira"; the address still says which
+// page:
+// - Jira (and other trackers): the issue key, from /browse/KEY-123,
+//   /issues/KEY-123, a service desk request, or ?selectedIssue=KEY-123;
+// - Confluence: the page's title, from /spaces/KEY/pages/123/Page+Title,
+//   /display/KEY/Page+Title or ?title=Page+Title, and plain "Confluence"
+//   where the address has no title (a space's front page, a short link);
+// - SharePoint and OneDrive: the file's name, or a site page's.
+fn name_from_url(u: &url::Url) -> Option<String> {
+    let decode = |s: &str| percent_encoding::percent_decode_str(&s.replace('+', " ")).decode_utf8_lossy().trim().to_string();
+    let segments: Vec<&str> = u.path_segments().map(|s| s.filter(|p| !p.is_empty()).collect()).unwrap_or_default();
+    let has = |name: &str| segments.iter().any(|s| s.eq_ignore_ascii_case(name));
+    let after = |name: &str| segments.iter().position(|s| s.eq_ignore_ascii_case(name)).and_then(|i| segments.get(i + 1)).map(|s| s.to_string());
+    let query = |name: &str| u.query_pairs().find(|(k, _)| k.eq_ignore_ascii_case(name)).map(|(_, v)| v.trim().to_string());
+    let last = segments.last().copied().unwrap_or_default();
+
+    // Keys are capitals, which keeps /issue/spring-2024 on some other site out.
+    let issue_key = regex::Regex::new(r"^[A-Z][A-Z0-9_]*-\d+$").ok()?;
+    let issue = query("selectedIssue")
+        .or_else(|| after("browse"))
+        .or_else(|| after("issues"))
+        .or_else(|| after("issue"))
+        .or_else(|| has("servicedesk").then(|| last.to_string()))
+        .filter(|k| issue_key.is_match(k));
+    if issue.is_some() {
+        return issue;
+    }
+
+    // Confluence in the cloud is <site>.atlassian.net/wiki/…; a company's own
+    // is usually confluence.<company>… or <company>…/confluence/….
+    let host = u.host_str().unwrap_or_default().to_lowercase();
+    let first = segments.first().copied().unwrap_or_default();
+    let confluence = (host.ends_with(".atlassian.net") && first.eq_ignore_ascii_case("wiki")) || host.contains("confluence") || first.eq_ignore_ascii_case("confluence");
+
+    let name = if has("spaces") && segments.len() >= 2 && segments[segments.len() - 2].bytes().all(|b| b.is_ascii_digit()) {
+        // Pages and blog posts both end …/<page id>/<title>.
+        Some(decode(last))
+    } else if has("display") {
+        segments.iter().position(|s| s.eq_ignore_ascii_case("display")).and_then(|i| segments.get(i + 2)).map(|s| decode(s))
+    } else if last.to_lowercase().ends_with(".action") {
+        query("title")
+    } else if host.ends_with(".sharepoint.com") {
+        let file = decode(last);
+        let lower = file.to_lowercase();
+        match lower.strip_suffix(".aspx") {
+            // SitePages/Team-News.aspx is a page; Doc.aspx?file=Report.docx and
+            // AllItems.aspx?id=/sites/Team/Shared Documents/Report.pdf show a file.
+            Some(stem) if has("SitePages") => Some(file.get(..stem.len()).unwrap_or(&file).replace('-', " ")),
+            Some(_) => query("file").or_else(|| query("id").and_then(|id| id.rsplit('/').next().map(str::to_string))),
+            None => lower.rsplit_once('.').is_some_and(|(stem, ext)| !stem.is_empty() && (1..=5).contains(&ext.len())).then_some(file),
+        }
+    } else {
+        None
+    };
+    name.map(|n| n.trim().to_string()).filter(|n| !n.is_empty()).or_else(|| confluence.then(|| "Confluence".to_string()))
+}
+
+// The preview, named after the page. Where the address names the page
+// (name_from_url) and nothing better came back, the name from the address is
+// the title: no preview at all (a sign-in page, or a site only the office
+// network reaches), or just the product's name, as with Jira's bare "Jira".
+// A page that describes itself keeps its own title.
+fn named_by_address(url: &str, preview: Option<LinkPreview>) -> Option<LinkPreview> {
+    let Some((page, name)) = url::Url::parse(url).ok().and_then(|u| name_from_url(&u).map(|n| (u, n))) else {
+        return preview;
+    };
+    match preview {
+        Some(p) if p.title.split_whitespace().count() > 1 || !p.description.is_empty() || !p.image.is_empty() => Some(p),
+        Some(p) => Some(LinkPreview { title: name, ..p }),
+        None => Some(LinkPreview {
+            url: url.to_string(),
+            title: name,
+            description: String::new(),
+            site: page.host_str().unwrap_or_default().to_string(),
+            image: String::new(),
+            icon: String::new(),
+        }),
+    }
+}
+
+// What a page says about itself: its title, description, picture and icon.
+// Cached on disk in Data\LinkPreviews, so each page is asked for only once.
+fn page_preview(url: &str) -> Option<LinkPreview> {
+    let cache = preview_cache_path(url);
     if let Ok(text) = fs::read_to_string(&cache) {
         if let Ok(preview) = serde_json::from_str::<LinkPreview>(&text) {
-            return Ok(Some(preview));
+            return Some(preview);
         }
     }
-    let Ok((current, kind, bytes)) = web::fetch_public_head(&url, 3 * 1024 * 1024, 8) else {
-        return Ok(None);
-    };
+    let (current, kind, bytes) = web::fetch_public_head(url, 3 * 1024 * 1024, 8).ok()?;
     // A private page (Confluence, SharePoint, Google Docs) sends Project Life,
     // which isn't signed in, to a sign-in page. Its title would be "Log in to
-    // continue", so there's no preview; the link keeps its address.
+    // continue", so there's no preview; the link is named by its address if
+    // that names the page (named_by_address), and keeps its address if not.
     if is_sign_in(&current) {
-        return Ok(None);
+        return None;
     }
     if !kind.contains("html") {
-        return Ok(None);
+        return None;
     }
     let html = String::from_utf8_lossy(&bytes).into_owned();
     if html.is_empty() {
-        return Ok(None);
+        return None;
     }
     let title_tag = regex::Regex::new(r"(?is)<title[^>]*>(.*?)</title>").ok().and_then(|re| re.captures(&html)).map(|c| decode_entities(c[1].trim()));
     let image = meta_content(&html, &["og:image", "og:image:url", "twitter:image"])
@@ -714,7 +801,7 @@ pub fn fetch_link_preview(url: String) -> Result<Option<LinkPreview>, String> {
         .map(|u| u.to_string())
         .unwrap_or_default();
     let preview = LinkPreview {
-        url: url.clone(),
+        url: url.to_string(),
         title: meta_content(&html, &["og:title", "twitter:title"]).or(title_tag).unwrap_or_default(),
         description: meta_content(&html, &["og:description", "twitter:description", "description"]).unwrap_or_default(),
         site: meta_content(&html, &["og:site_name"]).unwrap_or_else(|| current.host_str().unwrap_or_default().to_string()),
@@ -725,12 +812,12 @@ pub fn fetch_link_preview(url: String) -> Result<Option<LinkPreview>, String> {
         let _ = fs::create_dir_all(dir);
     }
     let _ = fs::write(&cache, serde_json::to_string(&preview).unwrap_or_default());
-    Ok(Some(preview))
+    Some(preview)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{is_sign_in, note_arg, recycled_title};
+    use super::{is_sign_in, name_from_url, named_by_address, note_arg, recycled_title, LinkPreview};
 
     #[test]
     fn finds_the_note_windows_opened() {
@@ -744,6 +831,47 @@ mod tests {
         assert_eq!(note_arg(&[exe.clone(), "--autostart".into(), "Plans.md".into()], &dir), Some(full));
         assert_eq!(note_arg(&[exe.clone(), "missing.md".into()], &dir), None);
         assert_eq!(note_arg(&[exe], &dir), None);
+    }
+
+    #[test]
+    fn names_work_links_from_their_address() {
+        let name = |s: &str| name_from_url(&url::Url::parse(s).unwrap());
+        let some = |s: &str| Some(s.to_string());
+        // Jira: the issue key.
+        assert_eq!(name("https://acme.atlassian.net/browse/SUFSIT-170391"), some("SUFSIT-170391"));
+        assert_eq!(name("https://acme.atlassian.net/jira/software/projects/OPS/boards/7?selectedIssue=OPS-42"), some("OPS-42"));
+        assert_eq!(name("https://acme.atlassian.net/servicedesk/customer/portal/3/HELP-9"), some("HELP-9"));
+        // Confluence: the page's title, or just the product.
+        assert_eq!(name("https://acme.atlassian.net/wiki/spaces/OPS/pages/123456/Release+Notes+%26+Plans"), some("Release Notes & Plans"));
+        assert_eq!(name("https://confluence.acme.com/display/OPS/Escalation+Paths"), some("Escalation Paths"));
+        assert_eq!(name("https://acme.atlassian.net/wiki/spaces/OPS/overview"), some("Confluence"));
+        // SharePoint: the file, or the site page.
+        assert_eq!(name("https://acme.sharepoint.com/sites/Team/Shared%20Documents/Q4%20Budget.xlsx"), some("Q4 Budget.xlsx"));
+        assert_eq!(name("https://acme.sharepoint.com/sites/Team/SitePages/Team-News.aspx"), some("Team News"));
+        // Anything else says nothing.
+        assert_eq!(name("https://www.youtube.com/watch?v=ejjBbaq9RmY"), None);
+        assert_eq!(name("https://example.com/issue/spring-2024"), None);
+    }
+
+    #[test]
+    fn keeps_a_pages_own_title_over_its_address() {
+        let page = |title: &str, description: &str| LinkPreview {
+            url: String::new(),
+            title: title.into(),
+            description: description.into(),
+            site: String::new(),
+            image: String::new(),
+            icon: String::new(),
+        };
+        let jira = "https://acme.atlassian.net/browse/OPS-42";
+        // Nothing came back, or just the product's name: the address names it.
+        assert_eq!(named_by_address(jira, None).unwrap().title, "OPS-42");
+        assert_eq!(named_by_address(jira, Some(page("Jira", ""))).unwrap().title, "OPS-42");
+        // A page that describes itself keeps its title.
+        assert_eq!(named_by_address(jira, Some(page("Fix the login page", ""))).unwrap().title, "Fix the login page");
+        assert_eq!(named_by_address(jira, Some(page("Jira", "An issue about sign-in"))).unwrap().title, "Jira");
+        // An address that names nothing changes nothing.
+        assert!(named_by_address("https://example.com/", None).is_none());
     }
 
     #[test]

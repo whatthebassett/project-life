@@ -213,7 +213,7 @@ export function Storage() {
       setReport({ text: parts.join("\n\n"), reload: n.copied > 0 });
     });
 
-  const lastBackup = settings.LastBackup ? `Last one ${dateText(fromYmd(settings.LastBackup), new Date()).toLowerCase()}` : "None yet";
+  const lastBackup = settings.LastBackup ? `Last one ${dateText(fromYmd(settings.LastBackup), new Date())}` : "None yet";
   return (
     <>
       <ListGroup>
@@ -403,7 +403,7 @@ export function About() {
                     : updates.kind === "current"
                       ? "You have the newest version"
                       : settings.LastUpdateCheck
-                        ? `Last checked ${dateText(new Date(settings.LastUpdateCheck), new Date()).toLowerCase()}`
+                        ? `Last checked ${dateText(new Date(settings.LastUpdateCheck), new Date())}`
                         : "Not checked yet"
             }
             action="Check now"

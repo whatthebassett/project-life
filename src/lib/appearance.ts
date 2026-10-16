@@ -15,15 +15,17 @@ let windowsScheme: "light" | "dark" = "dark";
 let windows11 = false;
 
 // The theme showing now. With Match on, the chosen theme when it's the same
-// light or dark as Windows; otherwise Daylight for light and Midnight for dark.
+// light or dark as Windows. Otherwise its other half: Dark and Light swap for
+// each other, and the rest get Daylight for light and Midnight for dark.
 export function effectiveTheme(settings: Settings): Theme {
   const chosen = themeFor(settings.Theme);
   if (!settings.MatchWindows || chosen.scheme === windowsScheme) return chosen;
+  if (chosen.id === "dark" || chosen.id === "light") return themeFor(windowsScheme);
   return themeFor(windowsScheme === "light" ? "daylight" : "midnight");
 }
 
 // Settings → Appearance → Accent color: dark themes get the bright version,
-// light ones (Daylight, Peach) the deep one.
+// light ones (Light, Daylight, Peach) the deep one.
 export const accentChoices: { id: NonNullable<Settings["Accent"]>; name: string; dark: string; light: string }[] = [
   { id: "violet", name: "Violet", dark: "#A092FF", light: "#5A48E0" },
   { id: "mint", name: "Mint", dark: "#4FE0B0", light: "#0B8A6D" },

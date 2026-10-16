@@ -15,6 +15,59 @@ export interface Release {
 
 export const releases: Release[] = [
   {
+    name: "Lon Lon Ranch",
+    version: "0.5.0 beta",
+    date: "2026-10-15",
+    summary: "Twitch emotes and links between notes; Home cards you can size to anything down to a small square, that show more as they grow; a roomier event editor; three new themes and a full date format.",
+    features: [
+      {
+        area: "Notes",
+        items: [
+          "BetterTTV and 7TV emotes: type : and an emote's name (like :KEKW) and pick it, or find them in the emoji picker's new emote tabs. They're saved in the note as :Name:",
+          "Add your Twitch channel in Settings → Notes and its BetterTTV and 7TV emotes join the global ones. Twitch emotes can be turned off there too",
+          "Link to another note: type \\ and a few letters of its name, then Enter. Click the link to open the note, or Ctrl+click for a new tab. A link to a note that's gone is marked as missing",
+          "Every link has a bar: click a link, or point at it for a moment, to show it as its address, a chip, a card or (for YouTube) a video, open it in the browser, or copy it. Ctrl+click still opens it straight away",
+          "Jira, Confluence and SharePoint links are named from their address (the issue key, the page's title, the file's name), since those pages need a sign-in to read",
+          "Typing right after a link no longer makes the text part of the link. Settings → Notes → Extend links as you type brings that back",
+          "A table of contents has an Edit button: lay it out as a list, two columns or one row, with bullets or numbers, and watch the headings glide into place",
+          "Each block in the / menu says what it's for",
+        ],
+      },
+      {
+        area: "Home",
+        items: [
+          "Resize cards to any size, down to 100 × 100 pixels, and see the size as you drag. Settings → Home screen → Smallest card size keeps them from going smaller than you want",
+          "Size → Smallest, Small square and Square make compact cards; every card has a small form that keeps the one thing that matters",
+          "Cards show more as they grow and less as they shrink: Weather adds the day's numbers, then more days, then morning, afternoon and evening, up to ten days, as you make it bigger",
+          "Drag a card where you want it: the cards in the way move aside, and its edges snap to the cards around it",
+          "Content sits at the top of a card instead of floating in the middle when the window is small",
+          "The Sports card lists MLB, then the NFL, NBA and NHL",
+        ],
+      },
+      {
+        area: "Schedule",
+        items: [
+          "The event editor is rebuilt with room to breathe: details grouped into cards, a date button with Today and Tomorrow, menus for the calendar, call and reminder, and the day's timeline beside it, scrolled to the event",
+          "Holidays open read-only, saying where they come from",
+        ],
+      },
+      {
+        area: "Appearance",
+        items: [
+          "Three new themes: Lifestream, in blues and greens, and plain Dark and Light. Match Windows light and dark swaps Dark and Light for each other",
+          "A full date format, like Wednesday, October 7th, 2026 (Settings → General → Date format)",
+        ],
+      },
+    ],
+    fixes: [
+      { area: "Home", text: "Cards no longer cut off their content when they're folded small; they rearrange what they show instead." },
+      { area: "Home", text: "A card dragged into a space just big enough for it now stays there instead of snapping back to where it was." },
+    ],
+    known: [
+      { area: "Notes", text: "Twitch's own emotes (subscriber and follower emotes, Kappa) aren't included yet; they need a Twitch sign-in. BetterTTV and 7TV emotes need none." },
+    ],
+  },
+  {
     name: "Lake Hylia",
     version: "0.4.0 beta",
     date: "2026-10-02",

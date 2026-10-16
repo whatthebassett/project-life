@@ -4,7 +4,7 @@ import { isPinned } from "../lib/notebook";
 import NoteIcon from "../notes/NoteIcon";
 import { useNotes } from "../notes/NotesContext";
 import type { Screen } from "../shell/nav";
-import { Card, CardHeader, CardLink, Empty, useRowMenu } from "./parts";
+import { Card, CardHeader, CardLink, Empty, Tiny, useRowMenu } from "./parts";
 import { ago } from "./time";
 import type { HomeData } from "./useHome";
 
@@ -35,32 +35,43 @@ export default function NotesCard({ home, onNavigate }: { home: HomeData; onNavi
       <CardHeader title="Recent notes">
         <CardLink onClick={() => onNavigate("notes")}>All notes</CardLink>
       </CardHeader>
-      {notes.map((n) => (
-        <button
-          key={n.id}
-          type="button"
-          onClick={() => (home.sample ? onNavigate("notes") : void activate(n.id))}
-          onContextMenu={(e) => {
-            // Sample notes aren't real files: they get the card's menu.
-            if (home.sample) return;
-            e.preventDefault();
-            e.stopPropagation();
-            const { x, y } = menuPoint(e);
-            openMenu(x, y, noteMenu(n.id));
-          }}
-          className="-mx-3 flex w-[calc(100%+24px)] flex-col gap-1 rounded-[12px] px-3 py-[10px] text-left transition-colors hover:bg-panel2"
-        >
-          <span className="flex w-full justify-between gap-2">
-            <span className="flex min-w-0 items-center gap-1.5 text-14 font-medium">
-              {n.icon && <NoteIcon icon={n.icon} />}
-              <span className="truncate">{n.title}</span>
+      <Tiny>
+        {notes[0] ? (
+          <>
+            <span className="font-medium text-text">{notes[0].title}</span> · {ago(notes[0].edited, home.now.getTime())}
+          </>
+        ) : (
+          "No notes yet"
+        )}
+      </Tiny>
+      <div className="-mx-3 hidden min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 roomy:flex">
+        {notes.map((n) => (
+          <button
+            key={n.id}
+            type="button"
+            onClick={() => (home.sample ? onNavigate("notes") : void activate(n.id))}
+            onContextMenu={(e) => {
+              // Sample notes aren't real files: they get the card's menu.
+              if (home.sample) return;
+              e.preventDefault();
+              e.stopPropagation();
+              const { x, y } = menuPoint(e);
+              openMenu(x, y, noteMenu(n.id));
+            }}
+            className="-mx-3 flex w-[calc(100%+24px)] shrink-0 flex-col gap-1 rounded-[12px] px-3 py-[10px] text-left transition-colors hover:bg-panel2"
+          >
+            <span className="flex w-full justify-between gap-2">
+              <span className="flex min-w-0 items-center gap-1.5 text-14 font-medium">
+                {n.icon && <NoteIcon icon={n.icon} />}
+                <span className="truncate">{n.title}</span>
+              </span>
+              <span className="font-mono text-11 whitespace-nowrap text-muted">{ago(n.edited, home.now.getTime())}</span>
             </span>
-            <span className="font-mono text-11 whitespace-nowrap text-muted">{ago(n.edited, home.now.getTime())}</span>
-          </span>
-          <span className="w-full truncate text-13 text-muted">{n.snippet}</span>
-        </button>
-      ))}
-      {notes.length === 0 && <Empty>The notes you edit most recently will show up here.</Empty>}
+            <span className="w-full truncate text-13 text-muted">{n.snippet}</span>
+          </button>
+        ))}
+        {notes.length === 0 && <Empty>The notes you edit most recently will show up here.</Empty>}
+      </div>
     </Card>
   );
 }

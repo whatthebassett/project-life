@@ -226,11 +226,18 @@ export function linkSpanAt(view: EditorView, el: Element): LinkSpan | null {
   } catch {
     return null;
   }
-  const href = el.getAttribute("href") ?? "";
-  const range = getMarkRange(view.state.doc.resolve(pos), linkType, { href });
+  return linkSpanAtPos(view, pos, el.getAttribute("href") ?? "");
+}
+
+// The link to `href` at a place in the note: anywhere in its text, or its start.
+export function linkSpanAtPos(view: EditorView, pos: number, href: string): LinkSpan | null {
+  const linkType = view.state.schema.marks.link;
+  const { doc } = view.state;
+  if (!linkType || pos < 0 || pos > doc.content.size) return null;
+  const range = getMarkRange(doc.resolve(pos), linkType, { href });
   if (!range) return null;
-  const bare = view.state.doc.textBetween(range.from, range.to) === href;
-  const link = view.state.doc.nodeAt(range.from)?.marks.find((m) => m.type === linkType);
+  const bare = doc.textBetween(range.from, range.to) === href;
+  const link = doc.nodeAt(range.from)?.marks.find((m) => m.type === linkType);
   return { ...range, href, bare, view: (link && viewOf(link)) ?? (bare ? "url" : null) };
 }
 

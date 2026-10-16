@@ -1,11 +1,14 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Apple, Car, Clock, Flag, Heart, Lightbulb, PawPrint, Search, Smile, Trophy, type LucideIcon } from "lucide-react";
+import { Apple, Car, Clock, Flag, Globe, Heart, Lightbulb, PawPrint, Radio, Search, Smile, Trophy, type LucideIcon } from "lucide-react";
 import clsx from "clsx";
 import { loadEmoji, nativeOf, recentEmoji, searchEmoji, type Emoji, type EmojiData } from "../lib/emoji";
+import { allEmotes, onEmotesChange, searchEmotes, type Emote } from "../lib/emotes";
+import { emotesOn } from "../editor/emotes";
 
 // Every emoji, to pick from at the cursor (Ctrl+; or the / menu's Emoji), or
-// for a note's icon.
+// for a note's icon. At the cursor, the BetterTTV and 7TV emotes too: the
+// channel's, then the global ones, after the emoji (and in a search).
 // Checkpoint's emoji window, as a pop-over: search, jump by category, arrow
 // keys and Enter, recently used first, and the skin tone.
 const icons: Record<string, LucideIcon> = {
@@ -18,6 +21,8 @@ const icons: Record<string, LucideIcon> = {
   objects: Lightbulb,
   symbols: Heart,
   flags: Flag,
+  channel: Radio,
+  emotes: Globe,
 };
 
 const tones = [
@@ -36,6 +41,8 @@ const HEIGHT = 440;
 interface Cell {
   native: string;
   emoji: Emoji | undefined;
+  // A BetterTTV or 7TV emote instead of an emoji.
+  emote?: Emote;
 }
 
 interface Section {
@@ -52,10 +59,15 @@ interface Props {
   // The line at the bottom before one is pointed at.
   hint?: string;
   onPick: (native: string) => void;
+  // Emotes are offered only where they can go (not for a note's icon).
+  onPickEmote?: (name: string) => void;
   onClose: () => void;
 }
 
-export default function EmojiPicker({ x, y, tone, onTone, hint = "Pick as many as you like.", onPick, onClose }: Props) {
+export default function EmojiPicker({ x, y, tone, onTone, hint = "Pick as many as you like.", onPick, onPickEmote, onClose }: Props) {
+  // The emote lists, kept up to date as they load.
+  const [emotes, setEmotes] = useState<Emote[]>(() => (onPickEmote && emotesOn() ? allEmotes() : []));
+  useEffect(() => (onPickEmote && emotesOn() ? onEmotesChange(() => setEmotes(allEmotes())) : undefined), [onPickEmote]);
   const [data, setData] = useState<EmojiData | null>(null);
   const [recents, setRecents] = useState<string[]>(() => recentEmoji());
   const [query, setQuery] = useState("");
@@ -88,10 +100,21 @@ export default function EmojiPicker({ x, y, tone, onTone, hint = "Pick as many a
   const sections = useMemo<Section[]>(() => {
     if (!data) return [];
     const cell = (e: Emoji): Cell => ({ native: nativeOf(e, tone), emoji: e });
-    if (query.trim()) return [{ id: "results", name: "Results", cells: searchEmoji(data, query, 240).map(cell) }];
+    const emoteCell = (e: Emote): Cell => ({ native: `:${e.name}:`, emoji: undefined, emote: e });
+    if (query.trim()) {
+      const found = emotes.length ? searchEmotes(query, 120).map(emoteCell) : [];
+      return [{ id: "results", name: "Results", cells: [...searchEmoji(data, query, 240).map(cell), ...found] }];
+    }
     const recent: Section[] = recents.length ? [{ id: "recent", name: "Recently used", cells: recents.map((native) => ({ native, emoji: data.byNative.get(native) })) }] : [];
-    return [...recent, ...data.categories.map((c) => ({ id: c.id, name: c.name, cells: c.emojis.map(cell) }))];
-  }, [data, query, recents, tone]);
+    const channel = emotes.filter((e) => e.channel);
+    const global = emotes.filter((e) => !e.channel);
+    return [
+      ...recent,
+      ...data.categories.map((c) => ({ id: c.id, name: c.name, cells: c.emojis.map(cell) })),
+      ...(channel.length ? [{ id: "channel", name: "Channel emotes", cells: channel.map(emoteCell) }] : []),
+      ...(global.length ? [{ id: "emotes", name: "BetterTTV and 7TV", cells: global.map(emoteCell) }] : []),
+    ];
+  }, [data, query, recents, tone, emotes]);
 
   const flat = useMemo(() => sections.flatMap((s) => s.cells), [sections]);
 
@@ -104,6 +127,7 @@ export default function EmojiPicker({ x, y, tone, onTone, hint = "Pick as many a
   }, [focus, flat]);
 
   const pick = (cell: Cell) => {
+    if (cell.emote) return onPickEmote?.(cell.emote.name);
     onPick(cell.native);
     setRecents((r) => [cell.native, ...r.filter((n) => n !== cell.native)].slice(0, 32));
   };
@@ -175,10 +199,11 @@ export default function EmojiPicker({ x, y, tone, onTone, hint = "Pick as many a
           />
         </label>
         <div className="flex justify-between">
-          {["recent", ...(data?.categories.map((c) => c.id) ?? [])].map((id) => {
+          {["recent", ...(data?.categories.map((c) => c.id) ?? []), ...(emotes.some((e) => e.channel) ? ["channel"] : []), ...(emotes.some((e) => !e.channel) ? ["emotes"] : [])].map((id) => {
             const Icon = icons[id] ?? Smile;
             const disabled = id === "recent" && recents.length === 0;
-            const name = id === "recent" ? "Recently used" : (data?.categories.find((c) => c.id === id)?.name ?? id);
+            const name =
+              id === "recent" ? "Recently used" : id === "channel" ? "Channel emotes" : id === "emotes" ? "BetterTTV and 7TV" : (data?.categories.find((c) => c.id === id)?.name ?? id);
             return (
               <button
                 key={id}
@@ -213,7 +238,7 @@ export default function EmojiPicker({ x, y, tone, onTone, hint = "Pick as many a
                     data-index={i}
                     className={clsx("flex aspect-square items-center justify-center rounded-[9px] leading-none hover:bg-panel2", focus === i && "bg-accent-soft ring-1 ring-accent")}
                     style={{ fontFamily: '"Segoe UI Emoji", "Segoe UI Symbol", sans-serif', fontSize: 26 }}
-                    title={cell.emoji ? `${cell.emoji.name}  :${cell.emoji.id}:` : cell.native}
+                    title={cell.emote ? `:${cell.emote.name}:  ${cell.emote.source}` : cell.emoji ? `${cell.emoji.name}  :${cell.emoji.id}:` : cell.native}
                     onMouseEnter={() => setHover(cell)}
                     onClick={() => {
                       setFocus(i);
@@ -221,7 +246,7 @@ export default function EmojiPicker({ x, y, tone, onTone, hint = "Pick as many a
                       search.current?.focus();
                     }}
                   >
-                    {cell.native}
+                    {cell.emote ? <img src={cell.emote.url} alt={cell.native} loading="lazy" className="max-h-[30px] max-w-[38px] object-contain" /> : cell.native}
                   </button>
                 );
               })}
@@ -234,12 +259,17 @@ export default function EmojiPicker({ x, y, tone, onTone, hint = "Pick as many a
       <div className="flex h-14 shrink-0 items-center gap-2.5 px-3">
         {hover ? (
           <>
-            <span className="text-[30px] leading-none" style={{ fontFamily: '"Segoe UI Emoji", sans-serif' }}>
-              {hover.native}
-            </span>
+            {hover.emote ? (
+              <img src={hover.emote.url} alt="" className="max-h-[32px] max-w-[48px] object-contain" />
+            ) : (
+              <span className="text-[30px] leading-none" style={{ fontFamily: '"Segoe UI Emoji", sans-serif' }}>
+                {hover.native}
+              </span>
+            )}
             <span className="min-w-0 flex-1">
-              <span className="block truncate">{hover.emoji?.name ?? ""}</span>
+              <span className="block truncate">{hover.emote ? `${hover.emote.source}${hover.emote.channel ? " · channel" : ""}` : (hover.emoji?.name ?? "")}</span>
               {hover.emoji && <span className="block truncate font-mono text-11 text-muted">:{hover.emoji.id}:</span>}
+              {hover.emote && <span className="block truncate font-mono text-11 text-muted">:{hover.emote.name}:</span>}
             </span>
           </>
         ) : (

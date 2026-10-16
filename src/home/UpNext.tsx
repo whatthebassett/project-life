@@ -12,7 +12,7 @@ import { setCompleted, type Task } from "../tasks/model";
 import { requestTasks } from "../tasks/nav";
 import { Icon } from "../ui/icons";
 import { eventMenu } from "./menus";
-import { Card, clock, clockRange } from "./parts";
+import { Card, clock, clockRange, isMicro, isTiny, useCardSize } from "./parts";
 import { callNames, type HomeEvent } from "./sources";
 import type { HomeData } from "./useHome";
 
@@ -58,20 +58,51 @@ export default function UpNext({ home, onNavigate }: { home: HomeData; onNavigat
   const next = pickNext(home, snoozed);
   const snooze = (id: string) => setSnoozed((s) => ({ ...s, [id]: home.now.getTime() + SNOOZE }));
 
+  // The card measures itself and fits what it can. Wide enough, the big
+  // countdown stands beside the rest; otherwise it's a line under the label.
+  // The title gets the lines there's room for, and the button and the
+  // details come in only when they fit under it.
+  const [ref, size] = useCardSize();
+  // Until it's measured: the size it first comes at.
+  const box = size.width ? size : { width: 705, height: 252 };
+  const tiny = isTiny(box);
+  const wide = box.width >= 480;
+  const padX = isMicro(box) ? 12 : tiny ? 16 : wide ? 30 : 18;
+  const padY = isMicro(box) ? 12 : tiny ? 16 : wide ? 26 : 18;
+  const W = box.width - 2 - padX * 2;
+  const H = box.height - 2 - padY * 2;
+  const big = wide && H >= 76;
+  // Beside the big countdown: one line of title, then the button, then the details.
+  const bigActions = H >= 16 + 14 + 35 + 14 + 44;
+  const bigMeta = H >= 16 + 14 + 35 + 6 + 22 + 14 + 44;
+  // Without it: the label (and the countdown, on its own line unless the
+  // card is wide), then as many lines of title as fit, up to three.
+  const head = W >= 330 ? 16 : 36;
+  const gap = big ? (bigActions ? 14 : 10) : tiny ? 8 : 14;
+  const lineHeight = tiny ? 18.4 : 24.2;
+  const smallActions = !tiny && W >= 150 && H >= head + gap + lineHeight + 14 + 44;
+  const lines = big ? 1 : Math.min(3, Math.max(1, Math.floor((H - head - gap - (smallActions ? 58 : 0)) / lineHeight)));
+  const titleClass = clsx("font-head font-bold tracking-[-0.01em]", big ? "text-32 leading-[1.1]" : tiny ? "text-16 leading-[1.15]" : "text-22 leading-[1.1]");
+  const clamp = { display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: lines, overflow: "hidden" } as const;
+  const cardClass = "col-span-2 flex-row! gap-7 p-[18px] @[30rem]:px-[30px] @[30rem]:py-[26px]";
+
   const style = { background: "radial-gradient(520px 240px at 100% 0%, var(--glow), transparent 70%), var(--panel)" };
   const openSchedule: MenuItem = { label: "Open Schedule", icon: <CalendarDays size={13} />, onSelect: () => onNavigate("schedule") };
 
   if (!next) {
     return (
-      <Card id="up" menu={[openSchedule]} label="Up next" className="col-span-2 flex-row! gap-7 px-[30px] py-[26px]" style={style}>
-        <div className="flex min-w-0 flex-1 flex-col gap-[14px]">
+      <Card ref={ref} id="up" menu={[openSchedule]} label="Up next" className={cardClass} style={style}>
+        <div className="flex min-w-0 flex-1 flex-col" style={{ gap }}>
           <div className="flex items-center gap-[10px]">
-            <span className="h-2 w-2 rounded-full bg-faint" />
+            {W >= 110 && <span className="h-2 w-2 shrink-0 rounded-full bg-faint" />}
             <span className="font-mono text-12 tracking-[0.14em] text-muted">UP NEXT</span>
           </div>
           <div className="flex flex-col gap-1.5">
-            <div className="font-head text-32 leading-[1.1] font-bold tracking-[-0.01em]">Nothing else scheduled today</div>
-            <div className="text-15 text-muted">Add a time to a task, like “Call Sam 5pm”, and it shows up here.</div>
+            {/* No countdown line here, so the words get its room. */}
+            <div className={titleClass} style={{ ...clamp, WebkitLineClamp: big ? 1 : Math.min(3, Math.max(1, Math.floor((H - 16 - gap) / lineHeight))) }}>
+              {W < 180 ? "Nothing else today" : "Nothing else scheduled today"}
+            </div>
+            {big && H >= 120 && <div className="truncate text-15 text-muted">Add a time to a task, like “Call Sam 5pm”, and it shows up here.</div>}
           </div>
         </div>
       </Card>
@@ -147,24 +178,39 @@ export default function UpNext({ home, onNavigate }: { home: HomeData; onNavigat
   }
 
   return (
-    <Card id="up" menu={menu} label="Up next" className="col-span-2 flex-row! gap-7 px-[30px] py-[26px]" style={style}>
-      <div className="flex min-w-0 flex-1 flex-col gap-[14px]">
-        <div className="flex items-center gap-[10px]">
-          <span className="pl-pulse h-2 w-2 rounded-full bg-accent2" />
+    <Card ref={ref} id="up" menu={menu} label="Up next" className={cardClass} style={style}>
+      <div className="flex min-w-0 flex-1 flex-col" style={{ gap }}>
+        <div className="flex flex-wrap items-center gap-x-[10px] gap-y-1">
+          {W >= 110 && <span className="pl-pulse h-2 w-2 shrink-0 rounded-full bg-accent2" />}
           <span className="font-mono text-12 tracking-[0.14em] text-accent2">UP NEXT</span>
-          <span className="font-mono text-12 text-muted">{when}</span>
+          {W >= 190 && <span className="font-mono text-12 text-muted">{when}</span>}
+          {/* No room for the big countdown: it's said here. */}
+          {!big && (
+            <span className={clsx("truncate font-mono text-12 text-text", W < 330 && "basis-full")}>
+              {count.value} {count.label.toLowerCase()}
+            </span>
+          )}
         </div>
         <div className="flex min-w-0 flex-col gap-1.5">
-          <div className="truncate font-head text-32 leading-[1.1] font-bold tracking-[-0.01em]">{title}</div>
-          <div className="truncate text-15 text-muted">{meta}</div>
+          <div className={titleClass} style={clamp}>
+            {title}
+          </div>
+          {big && bigMeta && <div className="truncate text-15 text-muted">{meta}</div>}
         </div>
-        <div className="flex-1" />
-        <div className="flex gap-[10px]">{actions}</div>
+        {(big ? bigActions : smallActions) && (
+          <>
+            <div className="flex-1" />
+            {/* A small card keeps its main button; the rest are in its right-click menu. */}
+            <div className={clsx("flex gap-[10px]", !big && "[&>*:not(:first-child)]:hidden")}>{actions}</div>
+          </>
+        )}
       </div>
-      <div className="flex min-w-[150px] shrink-0 flex-col items-end justify-center gap-0.5">
-        <div className="font-head text-96 leading-[0.9] font-normal tracking-[-0.04em]">{count.value}</div>
-        <div className="font-mono text-12 tracking-[0.14em] text-muted">{count.label}</div>
-      </div>
+      {big && (
+        <div className="flex min-w-[150px] shrink-0 flex-col items-end justify-center gap-0.5">
+          <div className={clsx("font-head leading-[0.9] font-normal tracking-[-0.04em]", H >= 104 ? "text-96" : "text-[64px]")}>{count.value}</div>
+          <div className="font-mono text-12 tracking-[0.14em] text-muted">{count.label}</div>
+        </div>
+      )}
     </Card>
   );
 }

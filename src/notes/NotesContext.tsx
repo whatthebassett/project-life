@@ -57,6 +57,7 @@ import type { MenuItem, MenuState } from "../components/ContextMenu";
 import ContextMenu from "../components/ContextMenu";
 import ConfirmDialog, { type ConfirmOptions } from "../components/ConfirmDialog";
 import TagDialog from "../components/TagDialog";
+import { loadEmotes } from "../lib/emotes";
 import TagManager from "../components/TagManager";
 import RecycleBin from "../components/RecycleBin";
 import MovePicker from "../components/MovePicker";
@@ -1009,6 +1010,21 @@ export function NotesProvider({ visible, onShow, children }: Props) {
     rememberEmoji(native);
   }, []);
 
+  // A BetterTTV or 7TV emote at the cursor: drawn in Visual mode, :Name: in Markdown.
+  const insertEmote = useCallback((name: string) => {
+    if (settingsRef.current.EditorMode === "Markdown") {
+      const v = sourceRef.current;
+      if (v) v.dispatch({ ...v.state.replaceSelection(`:${name}:`), scrollIntoView: true });
+    } else visualRef.current?.chain().focus().insertEmote(name).scrollIntoView().run();
+  }, []);
+
+  // The emote lists: loaded (or refreshed) when Notes starts, and again when
+  // Settings → Notes changes the channel.
+  useEffect(() => {
+    if (settings.Emotes === false) return;
+    void loadEmotes(settings.TwitchChannel);
+  }, [settings.Emotes, settings.TwitchChannel]);
+
   // ----- menus and shortcuts -----
 
   const openMenu = useCallback((x: number, y: number, items: MenuItem[]) => setMenu({ x, y, items }), []);
@@ -1351,6 +1367,7 @@ export function NotesProvider({ visible, onShow, children }: Props) {
             update({ EmojiSkinTone: t });
           }}
           hint={dialog.icon ? "Pick an icon for the note." : undefined}
+          onPickEmote={dialog.icon ? undefined : insertEmote}
           onPick={(native) => {
             if (!dialog.icon) return insertEmoji(native);
             setIcon(native);

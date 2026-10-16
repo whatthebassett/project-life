@@ -9,7 +9,7 @@ import { byDue, isOverdue, openCount, setCompleted, todaysTasks, type Task } fro
 import { priorityMenu } from "../tasks/menus";
 import { requestTasks } from "../tasks/nav";
 import { Checkbox } from "../ui/Checkbox";
-import { Card, CardHeader, Empty, useRowMenu } from "./parts";
+import { Card, CardHeader, Empty, Tiny, useRowMenu } from "./parts";
 import type { HomeData } from "./useHome";
 
 // Today's tasks (due today or overdue, and what was checked off today), then
@@ -56,7 +56,8 @@ export default function TasksCard({ home }: { home: HomeData }) {
       <CardHeader title="Tasks">
         <span className="font-mono text-12 text-muted">{left} left</span>
       </CardHeader>
-      <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
+      <Tiny value={left}>{shown.find((t) => !t.Completed)?.Title ?? "left today"}</Tiny>
+      <div className="hidden min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto roomy:flex">
         {shown.map((t) => {
           const done = Boolean(t.Completed);
           const dueToday = t.Due ? daysBetween(ymd(today), t.Due) === 0 : false;

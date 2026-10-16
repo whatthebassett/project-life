@@ -12,10 +12,8 @@ import { showGoal } from "../shell/go";
 import type { Screen } from "../shell/nav";
 import { fromYmd } from "../tasks/dates";
 import { toast } from "../ui/Toast";
-import { Card, CardHeader, CardLink, Empty, useRowMenu } from "./parts";
+import { Card, CardHeader, CardLink, Empty, Tiny, useRowMenu } from "./parts";
 import type { HomeData } from "./useHome";
-
-const SHOWN = 3;
 
 // Open, and Log a step (number goals) or Mark done ("done or not" goals), as
 // in the goal's details.
@@ -80,46 +78,50 @@ export default function GoalsCard({ home, onNavigate }: { home: HomeData; onNavi
           <CardLink onClick={() => onNavigate("goals")}>All goals</CardLink>
         </span>
       </CardHeader>
-      {rows.slice(0, SHOWN).map(({ g, pct, pace, status }) => {
-        const area = areas.find((a) => a.Id === g.Area) ?? areas[0];
-        const color = hueColor(area?.Hue ?? 0);
-        return (
-          <button
-            key={g.Id}
-            type="button"
-            title={`${area?.Name} · due ${fromYmd(g.Due).toLocaleDateString(locale(), { month: "short", day: "numeric" })}`}
-            onClick={() => showGoal(g.Id)}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              const { x, y } = menuPoint(e);
-              openMenu(x, y, goalMenu(g));
-            }}
-            className="-mx-3 flex w-[calc(100%+24px)] flex-col gap-1.5 rounded-[12px] px-3 py-1.5 text-left transition-colors hover:bg-panel2"
-          >
-            <span className="flex w-full items-center gap-2">
-              <span className="h-[7px] w-[7px] shrink-0 rounded-[2px]" style={{ background: color }} />
-              <span className="min-w-0 flex-1 truncate text-14 font-medium">{g.Title}</span>
-              <span className="flex h-5 shrink-0 items-center rounded-[6px] px-1.5 text-11 font-semibold" style={{ background: statusStyle[status].bg, color: statusStyle[status].fg }}>
-                {statusLabel[status]}
+      {/* Every goal, scrolling when the card is too short for them. */}
+      <Tiny value={rows[0] ? `${rows[0].pct}%` : undefined}>{rows[0]?.g.Title ?? "No goals yet"}</Tiny>
+      <div className="-mx-3 hidden min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 roomy:flex">
+        {rows.map(({ g, pct, pace, status }) => {
+          const area = areas.find((a) => a.Id === g.Area) ?? areas[0];
+          const color = hueColor(area?.Hue ?? 0);
+          return (
+            <button
+              key={g.Id}
+              type="button"
+              title={`${area?.Name} · due ${fromYmd(g.Due).toLocaleDateString(locale(), { month: "short", day: "numeric" })}`}
+              onClick={() => showGoal(g.Id)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const { x, y } = menuPoint(e);
+                openMenu(x, y, goalMenu(g));
+              }}
+              className="-mx-3 flex w-[calc(100%+24px)] shrink-0 flex-col gap-1.5 rounded-[12px] px-3 py-1.5 text-left transition-colors hover:bg-panel2"
+            >
+              <span className="flex w-full items-center gap-2">
+                <span className="h-[7px] w-[7px] shrink-0 rounded-[2px]" style={{ background: color }} />
+                <span className="min-w-0 flex-1 truncate text-14 font-medium">{g.Title}</span>
+                <span className="flex h-5 shrink-0 items-center rounded-[6px] px-1.5 text-11 font-semibold" style={{ background: statusStyle[status].bg, color: statusStyle[status].fg }}>
+                  {statusLabel[status]}
+                </span>
               </span>
-            </span>
-            <span className="flex w-full items-center gap-3">
-              <span className="relative block h-1.5 flex-1 rounded-full bg-panel2">
-                <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${pct}%`, background: color }} />
-                <span title="Where you'd be at an even pace" className="absolute -top-[3px] -bottom-[3px] w-0.5 rounded-[2px] bg-text opacity-55" style={{ left: `${pace}%` }} />
+              <span className="flex w-full items-center gap-3">
+                <span className="relative block h-1.5 flex-1 rounded-full bg-panel2">
+                  <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${pct}%`, background: color }} />
+                  <span title="Where you'd be at an even pace" className="absolute -top-[3px] -bottom-[3px] w-0.5 rounded-[2px] bg-text opacity-55" style={{ left: `${pace}%` }} />
+                </span>
+                <span className="w-9 shrink-0 text-right font-mono text-11 text-muted">{pct}%</span>
               </span>
-              <span className="w-9 shrink-0 text-right font-mono text-11 text-muted">{pct}%</span>
-            </span>
-          </button>
-        );
-      })}
-      {rows.length === 0 && (
-        <Empty>
-          {goals.length ? "Every goal is done. Time to set a new one in " : "No goals yet. Set one in "}
-          <CardLink onClick={() => onNavigate("goals")}>Goals</CardLink>.
-        </Empty>
-      )}
+            </button>
+          );
+        })}
+        {rows.length === 0 && (
+          <Empty>
+            {goals.length ? "Every goal is done. Time to set a new one in " : "No goals yet. Set one in "}
+            <CardLink onClick={() => onNavigate("goals")}>Goals</CardLink>.
+          </Empty>
+        )}
+      </div>
     </Card>
   );
 }

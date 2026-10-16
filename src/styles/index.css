@@ -6,6 +6,26 @@
    only from them: the default palette is switched off so a stray bg-gray-800
    can't sneak in. Class names follow DESIGN.md's token names (bg-panel,
    text-muted, border-line, bg-accent-soft …). */
+/* Home's cards by their size, width and height together (Tailwind's own
+   @… variants only know width). tiny: too narrow or too short for a card's
+   usual content, so it shows its headline (home/parts.tsx: Tiny). roomy: the
+   opposite. micro: near the smallest a card goes, 100 × 100. */
+@custom-variant tiny {
+  @container (width < 13rem) or (height < 10rem) {
+    @slot;
+  }
+}
+@custom-variant roomy {
+  @container (width >= 13rem) and (height >= 10rem) {
+    @slot;
+  }
+}
+@custom-variant micro {
+  @container (width < 9rem) or (height < 9rem) {
+    @slot;
+  }
+}
+
 @theme inline {
   --color-*: initial;
   --color-transparent: transparent;
@@ -532,14 +552,43 @@ fieldset:disabled :is(button, input, select, textarea) {
 .home-grid .react-grid-item {
   transition-property: transform, width, height;
 }
+/* The grid has no gaps of its own (its steps are too small for that): each
+   cell keeps half the gap around its card instead, and the grid reaches half
+   a gap past its edges so the outer cards still line up with the page. The
+   cell is a size container, so a card can fit itself to its width and height
+   (the tiny, roomy and micro variants below). */
+.home-grid {
+  margin: -10px;
+}
 .home-cell {
   display: flex;
+  padding: 10px;
+  container-type: size;
 }
 .home-cell > * {
   flex: 1;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+}
+/* A card's size while it's being resized, in the middle of it. */
+.home-cell > .home-size {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 4;
+  flex: none;
+  transform: translate(-50%, -50%);
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 /* Unlocked: an empty spot on a card picks it up. */
 .home-grid:not(.is-locked) .home-cell > section {
@@ -552,16 +601,19 @@ fieldset:disabled :is(button, input, select, textarea) {
 }
 /* Where the card will land. */
 .home-grid .react-grid-item.react-grid-placeholder {
-  background: var(--accent-soft);
-  border: 1.5px dashed var(--accent);
-  border-radius: 24px;
+  /* Drawn where the card will be, inside the cell's gap. */
+  border: 10px solid transparent;
+  border-radius: 34px;
+  background: var(--accent-soft) padding-box;
+  box-shadow: inset 0 0 0 1.5px var(--accent);
   opacity: 1;
 }
 
 /* Resize handles: each whole side of a card, and its corners. Invisible
    until pointed at, when an accent line shows the edge that moves. The
    per-side rules repeat the resets because the grid's own stylesheet loads
-   after this one with rules just as specific. */
+   after this one with rules just as specific. They sit on the card's edges,
+   10px inside the cell's. */
 .home-grid .react-grid-item > .react-resizable-handle {
   z-index: 3;
   margin: 0;
@@ -578,8 +630,8 @@ fieldset:disabled :is(button, input, select, textarea) {
 }
 .home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-n,
 .home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-s {
-  left: 24px;
-  right: 24px;
+  left: 34px;
+  right: 34px;
   width: auto;
   height: 12px;
   margin: 0;
@@ -587,16 +639,16 @@ fieldset:disabled :is(button, input, select, textarea) {
   cursor: ns-resize;
 }
 .home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-n {
-  top: -6px;
+  top: 4px;
 }
 .home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-s {
   top: auto;
-  bottom: -6px;
+  bottom: 4px;
 }
 .home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-e,
 .home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-w {
-  top: 24px;
-  bottom: 24px;
+  top: 34px;
+  bottom: 34px;
   width: 12px;
   height: auto;
   margin: 0;
@@ -605,10 +657,10 @@ fieldset:disabled :is(button, input, select, textarea) {
 }
 .home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-e {
   left: auto;
-  right: -6px;
+  right: 4px;
 }
 .home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-w {
-  left: -6px;
+  left: 4px;
 }
 .home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-ne,
 .home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-nw,
@@ -620,27 +672,27 @@ fieldset:disabled :is(button, input, select, textarea) {
   transform: none;
 }
 .home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-ne {
-  top: -6px;
-  right: -6px;
+  top: 4px;
+  right: 4px;
   left: auto;
   bottom: auto;
   cursor: nesw-resize;
 }
 .home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-nw {
-  top: -6px;
-  left: -6px;
+  top: 4px;
+  left: 4px;
   cursor: nwse-resize;
 }
 .home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-se {
-  right: -6px;
-  bottom: -6px;
+  right: 4px;
+  bottom: 4px;
   left: auto;
   top: auto;
   cursor: nwse-resize;
 }
 .home-grid .react-grid-item > .react-resizable-handle.react-resizable-handle-sw {
-  left: -6px;
-  bottom: -6px;
+  left: 4px;
+  bottom: 4px;
   top: auto;
   cursor: nesw-resize;
 }

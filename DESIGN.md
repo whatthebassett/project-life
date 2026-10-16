@@ -37,7 +37,7 @@ The reference window size is **1440 x 1000** (Home is 1440 x 1320 because it scr
 
 ## 2. Themes
 
-There are five themes. **Midnight is the base.** The fifth, **Peach**, comes from Checkpoint and was added later (its tokens are in `src/styles/tokens.css`; it is not in the mockups or the table below). Every theme uses the same layout and only swaps these tokens. Build them as CSS variables (for example `--bg`, `--panel`) on the root and switch the whole set when the theme changes.
+There are eight themes. **Midnight is the base.** Four were added later and are not in the mockups or the table below (their tokens are in `src/styles/tokens.css`): **Peach**, which comes from Checkpoint; **Lifestream**, a deep blue-green with a mako glow; and **Dark** and **Light**, a plain neutral pair with an ordinary blue accent. Every theme uses the same layout and only swaps these tokens. Build them as CSS variables (for example `--bg`, `--panel`) on the root and switch the whole set when the theme changes.
 
 ### Core tokens
 
