@@ -1,6 +1,6 @@
 import { locale } from "../lib/format";
 // Reminders for tasks, events, habits and goal check-ins: a Windows notification when one comes due,
-// while Project Life is running (in the tray too, with the window closed).
+// while Cura is running (in the tray too, with the window closed).
 // A call's notification has a Join button. Only the main window checks, so
 // each reminder goes off once.
 import { invoke } from "@tauri-apps/api/core";
@@ -91,7 +91,7 @@ async function releaseHeld() {
 
 // A test from Settings → Notifications → Sound.
 export function testNotification() {
-  void show({ title: "Project Life", body: "This is how reminders look and sound." });
+  void show({ title: "Cura", body: "This is how reminders look and sound." });
 }
 
 function checkTasks(now: number) {

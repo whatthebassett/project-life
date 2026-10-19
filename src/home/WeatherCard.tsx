@@ -306,7 +306,7 @@ function Stat({ label, value, tight }: { label: string; value: string; tight?: b
   );
 }
 
-// Search Open-Meteo's places by name. Project Life never looks up where the
+// Search Open-Meteo's places by name. Cura never looks up where the
 // computer is; the place is only ever one picked here.
 export function PlaceSearch({ onPick, onCancel }: { onPick: (p: Place) => void; onCancel?: () => void }) {
   const [query, setQuery] = useState("");

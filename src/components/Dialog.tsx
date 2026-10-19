@@ -13,7 +13,7 @@ interface Props {
 }
 
 // Checkpoint's small dialogs (links, tags, confirmations, the Recycle Bin),
-// drawn with Project Life's pop-up shell: the scrim, Esc and click-away to
+// drawn with Cura's pop-up shell: the scrim, Esc and click-away to
 // close, focus kept inside. Same props as Checkpoint's, so its dialogs carry
 // over unchanged.
 export default function Dialog({ title, onClose, children, footer, width = 420, className }: Props) {

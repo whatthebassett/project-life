@@ -1,4 +1,4 @@
-// The file layer. Project Life keeps everything local, in a Data folder beside
+// The file layer. Cura keeps everything local, in a Data folder beside
 // the executable: settings, and tasks, events, habits and goals as JSON files.
 // The frontend owns the JSON; this side only reads and writes it whole, so
 // keys it doesn't know about are never lost. Notes are Markdown files in
@@ -8,6 +8,7 @@ mod attachments;
 mod merge;
 mod notes;
 mod oauth_ids;
+mod spell;
 mod system;
 mod tray;
 mod update;
@@ -71,7 +72,7 @@ const DATA_FILES: [&str; 6] = ["tasks.json", "events.json", "habits.json", "goal
 
 fn data_file(name: &str) -> Result<PathBuf, String> {
     if !DATA_FILES.contains(&name) {
-        return Err(format!("{name} isn't one of Project Life's data files."));
+        return Err(format!("{name} isn't one of Cura's data files."));
     }
     Ok(data_dir().join(name))
 }
@@ -128,7 +129,7 @@ fn fit_to_monitor(win: &WebviewWindow) {
     ));
 }
 
-// Project Life runs from any folder on any Windows PC, but it can't carry
+// Cura runs from any folder on any Windows PC, but it can't carry
 // WebView2 with it. Windows 11 and updated Windows 10 already have it; when
 // it's missing, say so plainly instead of failing silently.
 #[cfg(not(debug_assertions))]
@@ -138,8 +139,8 @@ fn prepare_portable() -> bool {
         Win32::UI::WindowsAndMessaging::{MessageBoxW, IDYES, MB_ICONWARNING, MB_YESNO},
     };
     if tauri::webview_version().is_err() {
-        let text = "Project Life needs Microsoft Edge WebView2, which isn't installed on this PC.\n\nWindows 11 includes it, and Windows 10 gets it with updates. Open the download page now?";
-        let answer = unsafe { MessageBoxW(None, &HSTRING::from(text), &HSTRING::from("Project Life"), MB_YESNO | MB_ICONWARNING) };
+        let text = "Cura needs Microsoft Edge WebView2, which isn't installed on this PC.\n\nWindows 11 includes it, and Windows 10 gets it with updates. Open the download page now?";
+        let answer = unsafe { MessageBoxW(None, &HSTRING::from(text), &HSTRING::from("Cura"), MB_YESNO | MB_ICONWARNING) };
         if answer == IDYES {
             let _ = std::process::Command::new("explorer").arg("https://go.microsoft.com/fwlink/p/?LinkId=2124703").spawn();
         }
@@ -240,6 +241,10 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             read_settings,
+            spell::spell_check,
+            spell::spell_suggest,
+            spell::spell_add,
+            spell::spell_ignore,
             write_settings,
             read_data,
             write_data,

@@ -20,9 +20,7 @@ export default function IconRail({ screen, onNavigate, onSettings }: Props) {
   const n = useNotes();
   return (
     <nav aria-label="App" className="flex w-[72px] shrink-0 flex-col items-center gap-1.5 border-r border-line bg-side pt-5 pb-[18px]">
-      <div className="mb-[14px] flex h-9 w-9 items-center justify-center rounded-[11px] bg-accent text-accent-ink">
-        <Icon name="logo" size={20} stroke={2} />
-      </div>
+      <img src="/cura.png" alt="Cura" draggable={false} className="mb-[14px] h-9 w-9 select-none" />
       {navItems.map((item) => {
         const on = item.id === screen;
         return (

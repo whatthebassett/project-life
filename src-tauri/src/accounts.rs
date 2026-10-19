@@ -26,7 +26,7 @@ use tauri_plugin_opener::OpenerExt;
 
 const MS_AUTH: &str = "https://login.microsoftonline.com/common/oauth2/v2.0";
 const MS_SCOPES: &str = "openid profile email offline_access User.Read Calendars.ReadWrite";
-// Teams meetings on their own (for events on Project Life's own calendars).
+// Teams meetings on their own (for events on Cura's own calendars).
 // Work and school accounts only, asked for the first time one is made.
 const MS_MEETINGS: &str = "OnlineMeetings.ReadWrite";
 // Personal Microsoft accounts (Outlook.com, Hotmail) all sign in from this tenant.
@@ -62,7 +62,7 @@ fn parse_provider(name: &str) -> Result<Provider, String> {
     match name {
         "microsoft" => Ok(Provider::Microsoft),
         "google" => Ok(Provider::Google),
-        _ => Err("Project Life connects to Microsoft and Google.".into()),
+        _ => Err("Cura connects to Microsoft and Google.".into()),
     }
 }
 
@@ -91,7 +91,7 @@ fn challenge_of(verifier: &str) -> String {
     base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(Sha256::digest(verifier.as_bytes()))
 }
 
-const PAGE: &str = r#"<!doctype html><meta charset="utf-8"><title>Project Life</title>
+const PAGE: &str = r#"<!doctype html><meta charset="utf-8"><title>Cura</title>
 <body style="margin:0;height:100vh;display:grid;place-items:center;background:#0e1016;color:#e8e9f0;font:16px/1.5 system-ui,sans-serif">
 <div style="text-align:center;max-width:420px;padding:24px"><div style="font-size:22px;font-weight:700;margin-bottom:8px">{title}</div>
 <div style="color:#9a9db0">{body}</div></div>"#;
@@ -125,14 +125,14 @@ fn read_answer(stream: &mut TcpStream, state: &str) -> Option<Result<String, Str
         return Some(Err(if e == "access_denied" { "Sign-in was cancelled.".into() } else { format!("Sign-in didn't finish: {why}") }));
     }
     let Some(code) = q.get("code") else {
-        answer(stream, "404 Not Found", "Project Life", "Nothing here.");
+        answer(stream, "404 Not Found", "Cura", "Nothing here.");
         return None;
     };
     if q.get("state").map(String::as_str) != Some(state) {
-        answer(stream, "400 Bad Request", "Not connected", "That sign-in didn't come from Project Life. Try Connect again.");
-        return Some(Err("That sign-in didn't come from Project Life. Try Connect again.".into()));
+        answer(stream, "400 Bad Request", "Not connected", "That sign-in didn't come from Cura. Try Connect again.");
+        return Some(Err("That sign-in didn't come from Cura. Try Connect again.".into()));
     }
-    answer(stream, "200 OK", "You're connected", "You can close this tab and go back to Project Life.");
+    answer(stream, "200 OK", "You're connected", "You can close this tab and go back to Cura.");
     Some(Ok(code.clone()))
 }
 
@@ -166,7 +166,7 @@ struct Tokens {
 
 fn post_form(url: &str, pairs: &[(&str, &str)]) -> Result<Value, String> {
     let body = url::form_urlencoded::Serializer::new(String::new()).extend_pairs(pairs).finish();
-    let agent = web::web_agent(30, "ProjectLife/0.1");
+    let agent = web::web_agent(30, "Cura/0.1");
     let mut res = agent
         .post(url)
         .header("Content-Type", "application/x-www-form-urlencoded")
@@ -259,7 +259,7 @@ fn authorize(app: &AppHandle, p: Provider, scopes: &str, login_hint: Option<&str
     };
     app.opener().open_url(auth_url.as_str(), None::<&str>).map_err(err)?;
     let code = wait_for_code(&listeners, &state, Duration::from_secs(300));
-    // Back to Project Life, whatever happened in the browser.
+    // Back to Cura, whatever happened in the browser.
     if let Some(win) = app.get_webview_window("main") {
         let _ = win.unminimize();
         let _ = win.show();
@@ -357,7 +357,7 @@ pub fn account_connect(app: AppHandle, provider: String) -> Result<AccountInfo, 
     Ok(info)
 }
 
-// Teams meetings for events on Project Life's own calendars need one more
+// Teams meetings for events on Cura's own calendars need one more
 // permission, asked for the first time one is made.
 #[tauri::command(async)]
 pub fn account_allow_meetings(app: AppHandle, account: String, email: String) -> Result<(), String> {
@@ -438,7 +438,7 @@ enum Method {
 }
 
 fn call(account: &str, meetings: bool, method: Method, url: &str, body: Option<&Value>, prefer: Option<&str>) -> Result<Value, String> {
-    let agent = web::web_agent(40, "ProjectLife/0.1");
+    let agent = web::web_agent(40, "Cura/0.1");
     for attempt in 0..2 {
         let token = access_token(account, meetings)?;
         let auth = format!("Bearer {token}");
@@ -811,7 +811,7 @@ pub fn account_delete_event(account: String, calendar: String, id: String) -> Re
     call(&account, false, Method::Delete, &url, None, None).map(|_| ())
 }
 
-// A Teams or Meet link on its own, for an event on one of Project Life's own
+// A Teams or Meet link on its own, for an event on one of Cura's own
 // calendars.
 #[tauri::command(async)]
 pub fn account_meeting(account: String, title: String, start: String, end: String) -> Result<String, String> {

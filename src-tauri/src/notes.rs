@@ -373,7 +373,7 @@ pub struct ImportFailure {
 
 // ----- opened from File Explorer -----
 
-// A Markdown file Windows asked Project Life to open (double-click, or Open
+// A Markdown file Windows asked Cura to open (double-click, or Open
 // with), waiting until Notes has loaded and asks for it.
 static OPENED: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
 
@@ -689,7 +689,7 @@ pub fn fetch_link_preview(url: String) -> Result<Option<LinkPreview>, String> {
 }
 
 // A page's name from its address alone, for work sites that show the page
-// only to someone signed in. Project Life isn't, so it's sent to a sign-in
+// only to someone signed in. Cura isn't, so it's sent to a sign-in
 // page or handed an empty shell titled "Jira"; the address still says which
 // page:
 // - Jira (and other trackers): the issue key, from /browse/KEY-123,
@@ -780,7 +780,7 @@ fn page_preview(url: &str) -> Option<LinkPreview> {
         }
     }
     let (current, kind, bytes) = web::fetch_public_head(url, 3 * 1024 * 1024, 8).ok()?;
-    // A private page (Confluence, SharePoint, Google Docs) sends Project Life,
+    // A private page (Confluence, SharePoint, Google Docs) sends Cura,
     // which isn't signed in, to a sign-in page. Its title would be "Log in to
     // continue", so there's no preview; the link is named by its address if
     // that names the page (named_by_address), and keeps its address if not.
@@ -825,7 +825,7 @@ mod tests {
         let _ = std::fs::create_dir_all(&dir);
         let file = dir.join("Plans.md");
         std::fs::write(&file, "# Plans").unwrap();
-        let exe = "C:\\Apps\\Project Life.exe".to_string();
+        let exe = "C:\\Apps\\Cura.exe".to_string();
         let full = file.to_string_lossy().into_owned();
         assert_eq!(note_arg(&[exe.clone(), full.clone()], &dir), Some(full.clone()));
         assert_eq!(note_arg(&[exe.clone(), "--autostart".into(), "Plans.md".into()], &dir), Some(full));

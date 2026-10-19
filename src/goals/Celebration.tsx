@@ -7,7 +7,7 @@ import { progressOn } from "./model";
 import { useGoals } from "./useGoals";
 
 // Settings → Habits and goals → Celebrate finished goals: when a goal reaches
-// 100% while Project Life is open, a little confetti and a note. With Reduce
+// 100% while Cura is open, a little confetti and a note. With Reduce
 // motion on, just the note.
 export default function Celebration() {
   const { goals, loaded } = useGoals();

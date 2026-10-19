@@ -175,6 +175,14 @@ export function General() {
           ]}
         />
       </ListGroup>
+      <ListGroup title="TYPING">
+        <Toggle
+          label="Spell check"
+          desc="Underlines misspelled words in notes and everywhere you type, with Windows' dictionary. Right-click one for suggestions"
+          value={settings.SpellCheck !== false}
+          onChange={(v) => update({ SpellCheck: v })}
+        />
+      </ListGroup>
       <ListGroup title="DATES AND TIME">
         <Seg
           label="Week starts on"

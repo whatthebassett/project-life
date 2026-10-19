@@ -61,7 +61,7 @@ export function Notifications() {
   );
 }
 
-// OBS and Meld Studio: how Project Life tells you're live.
+// OBS and Meld Studio: how Cura tells you're live.
 function Streaming() {
   const { settings, update } = useSettings();
   const [status, setStatus] = useState<LiveStatus | null>(null);
@@ -109,7 +109,7 @@ function Streaming() {
           className="h-[38px] w-[96px] rounded-[11px] border border-line bg-panel2 px-3 font-mono text-13 text-text outline-none focus:border-faint"
         />
       </ListRow>
-      <ListRow label="OBS WebSocket password" description="Kept in Windows Credential Manager, not in Project Life’s files">
+      <ListRow label="OBS WebSocket password" description="Kept in Windows Credential Manager, not in Cura’s files">
         <span className="flex shrink-0 items-center gap-2">
           <input
             type="password"

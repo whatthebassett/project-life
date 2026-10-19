@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-// Tooltips in Project Life's look instead of Windows' plain grey ones, for
+// Tooltips in Cura's look instead of Windows' plain grey ones, for
 // everything that has a title. On first hover (or keyboard focus) an
 // element's title moves to data-tip, so the browser's own tooltip never
 // shows; its text stays with screen readers as the element's name (when it

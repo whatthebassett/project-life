@@ -106,7 +106,7 @@ export default function TasksWindow() {
     <div className="relative flex h-full flex-col bg-bg text-text">
       <header data-tauri-drag-region className="flex h-8 shrink-0 items-stretch border-b border-line bg-side">
         <span data-tauri-drag-region className="pointer-events-none flex items-center pl-3.5 text-12 text-muted">
-          Tasks · Project Life
+          Tasks · Cura
         </span>
         <div data-tauri-drag-region className="flex-1" />
         <WinButton

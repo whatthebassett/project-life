@@ -1,4 +1,4 @@
-// Work that runs in the background while Project Life is open: the daily
+// Work that runs in the background while Cura is open: the daily
 // backup (Settings → Storage and backup) and saving crash reports (Settings →
 // Privacy).
 import { enable, isEnabled } from "@tauri-apps/plugin-autostart";

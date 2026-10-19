@@ -25,7 +25,7 @@ async function open(): Promise<void> {
   const zoom = textScale[settings.TextSize] ?? 1;
   const created = new WebviewWindow(TASKS_WINDOW, {
     url: "index.html#tasks",
-    title: "Tasks · Project Life",
+    title: "Tasks · Cura",
     width: Math.round(420 * zoom),
     height: Math.round(680 * zoom),
     minWidth: 340,

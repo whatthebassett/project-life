@@ -148,7 +148,7 @@ export default function TaskPopup({ task, onClose, openMenu }: Props) {
   ];
 
   const attachFromPc = async () => {
-    if (!inTauri) return toast("Attachments work in the Project Life app.");
+    if (!inTauri) return toast("Attachments work in the Cura app.");
     const picked = await openFile({ multiple: true });
     const paths = Array.isArray(picked) ? picked : picked ? [picked] : [];
     const added: Attachment[] = [];

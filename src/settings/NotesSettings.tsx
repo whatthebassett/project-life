@@ -102,7 +102,6 @@ export default function NotesSettings() {
           ]}
         />
         <Toggle label="Format bar" desc="Formatting buttons above a note in Visual mode" value={settings.NotesFormatBar !== false} onChange={(v) => update({ NotesFormatBar: v })} />
-        <Toggle label="Spell check" value={settings.SpellCheck !== false} onChange={(v) => update({ SpellCheck: v })} />
         <Seg
           label="Cursor"
           value={settings.Cursor ?? "line"}
@@ -126,7 +125,7 @@ export default function NotesSettings() {
         {info?.unavailable && (
           <ListRow
             label="Your folder can't be reached"
-            description={`${info.chosen} isn't available right now, so Project Life is using the default folder. Reconnect the drive and restart Project Life, or choose another folder.`}
+            description={`${info.chosen} isn't available right now, so Cura is using the default folder. Reconnect the drive and restart Cura, or choose another folder.`}
             danger
           />
         )}
@@ -142,11 +141,11 @@ export default function NotesSettings() {
         </ListRow>
         <ListRow
           label="Copy my notes to the new folder"
-          description="Copies notes, pictures, tags, pins and the Recycle Bin, and leaves the originals where they are. If the folder already has notes, yours are added alongside them and nothing there is replaced. Off, Project Life just opens whatever notes are already there."
+          description="Copies notes, pictures, tags, pins and the Recycle Bin, and leaves the originals where they are. If the folder already has notes, yours are added alongside them and nothing there is replaced. Off, Cura just opens whatever notes are already there."
         >
           <Switch label="Copy my notes to the new folder" checked={copy} onChange={setCopy} />
         </ListRow>
-        <ListRow label="Open the notes folder" description={info?.chosen ? "Or go back to the default folder, next to Project Life" : "In File Explorer"}>
+        <ListRow label="Open the notes folder" description={info?.chosen ? "Or go back to the default folder, next to Cura" : "In File Explorer"}>
           <span className="flex shrink-0 gap-2">
             {info?.chosen && (
               <Button size="sm" disabled={busy} onClick={() => void change(null)}>
@@ -160,7 +159,7 @@ export default function NotesSettings() {
         </ListRow>
       </ListGroup>
       {(busy || error) && <p className={error ? "m-0 text-12 leading-[1.5] text-danger" : "m-0 text-12 text-muted"}>{error ?? (copy ? "Copying your notes…" : "Switching folders…")}</p>}
-      <p className="m-0 text-12 leading-[1.5] text-muted">Changing folders saves your settings and reloads Project Life from the new folder.</p>
+      <p className="m-0 text-12 leading-[1.5] text-muted">Changing folders saves your settings and reloads Cura from the new folder.</p>
 
       {report && (
         <Dialog

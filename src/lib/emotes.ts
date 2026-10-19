@@ -5,7 +5,7 @@ import { fetchData } from "./api";
 // :Name: and drawn as its picture (editor/emotes.ts).
 //
 // The lists come from the two services' public APIs (through fetch_data,
-// under Project Life's name). A channel is named by its login; its Twitch id,
+// under Cura's name). A channel is named by its login; its Twitch id,
 // which the services ask for, comes from api.ivr.fi. The last lists are kept
 // in the browser's storage, so emotes show at once next time, and refreshed
 // in the background.

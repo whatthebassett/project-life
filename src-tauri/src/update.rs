@@ -44,7 +44,7 @@ fn newer(a: &str, b: &str) -> bool {
 // The copy that's running, if it's the portable app (not a development build).
 fn installed_exe() -> Result<PathBuf, String> {
     let exe = std::env::current_exe().map_err(err)?;
-    let dir = exe.parent().ok_or("Can't tell where Project Life is.")?;
+    let dir = exe.parent().ok_or("Can't tell where Cura is.")?;
     if cfg!(debug_assertions) || dir.ends_with("target\\release") || dir.ends_with("target\\debug") {
         return Err("Updates install into the portable app, not a development build.".into());
     }
@@ -53,7 +53,7 @@ fn installed_exe() -> Result<PathBuf, String> {
 
 fn get(url: &str, accept: &str) -> Result<Vec<u8>, String> {
     // GitHub sends downloads on to its file servers, so follow a few redirects.
-    let agent = web::web_agent(120, "ProjectLife-Updater");
+    let agent = web::web_agent(120, "Cura-Updater");
     let mut url = url.to_string();
     for _ in 0..5 {
         let mut res = agent.get(&url).header("Accept", accept).call().map_err(|e| format!("Couldn't reach GitHub: {e}."))?;
@@ -103,7 +103,7 @@ pub fn update_check(app: AppHandle, beta: bool) -> Result<Option<Release>, Strin
 }
 
 fn staged_exe() -> PathBuf {
-    data_dir().join("Updates").join("Project Life.exe")
+    data_dir().join("Updates").join("Cura.exe")
 }
 
 // Downloads the release and takes the new exe out of its zip, ready for the
@@ -112,24 +112,27 @@ fn staged_exe() -> PathBuf {
 pub fn update_download(download: String) -> Result<(), String> {
     installed_exe()?;
     if !download.starts_with("https://github.com/") {
-        return Err("That download isn't from Project Life's releases.".into());
+        return Err("That download isn't from Cura's releases.".into());
     }
     let bytes = get(&download, "application/octet-stream")?;
     let mut zip = zip::ZipArchive::new(std::io::Cursor::new(bytes)).map_err(|_| "The download isn't a zip.".to_string())?;
     let mut exe = None;
     for i in 0..zip.len() {
         let mut f = zip.by_index(i).map_err(err)?;
-        if f.name().replace('\\', "/").ends_with("/Project Life.exe") || f.name() == "Project Life.exe" {
+        // Cura.exe, or Project Life.exe from before the app was renamed.
+        let name = f.name().replace('\\', "/");
+        let file = name.rsplit('/').next().unwrap_or("");
+        if file == "Cura.exe" || file == "Project Life.exe" {
             let mut buf = Vec::new();
             f.read_to_end(&mut buf).map_err(err)?;
             exe = Some(buf);
             break;
         }
     }
-    let exe = exe.ok_or("The download doesn't have Project Life.exe in it.")?;
+    let exe = exe.ok_or("The download doesn't have Cura.exe in it.")?;
     // A real Windows program starts with "MZ".
     if exe.len() < 1024 * 1024 || !exe.starts_with(b"MZ") {
-        return Err("The downloaded Project Life.exe doesn't look right.".into());
+        return Err("The downloaded Cura.exe doesn't look right.".into());
     }
     ensure(data_dir().join("Updates"))?;
     let tmp = staged_exe().with_extension("exe.part");
@@ -150,7 +153,7 @@ pub fn update_install(app: AppHandle) -> Result<(), String> {
     let _ = fs::remove_file(&old);
     fs::rename(&exe, &old).map_err(|e| format!("Couldn't make room for the update: {e}"))?;
     if let Err(e) = fs::copy(&staged, &exe) {
-        // Put the running copy back so Project Life still starts.
+        // Put the running copy back so Cura still starts.
         let _ = fs::rename(&old, &exe);
         return Err(format!("Couldn't put the update in place: {e}"));
     }

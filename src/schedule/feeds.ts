@@ -1,7 +1,7 @@
 // Calendars subscribed to by link (Data\calendars.json): Google's "secret
 // address in iCal format", Outlook's published calendars, iCloud, holidays,
 // sports fixtures. Read-only here: each refresh replaces their events with
-// what the link says now. They refresh when Project Life starts and every
+// what the link says now. They refresh when Cura starts and every
 // hour.
 import { useEffect, useSyncExternalStore } from "react";
 import { announceData, fetchCalendar, inTauri, onDataChanged, readData, writeData } from "../lib/api";

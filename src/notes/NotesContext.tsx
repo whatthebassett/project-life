@@ -541,7 +541,7 @@ export function NotesProvider({ visible, onShow, children }: Props) {
       if (folder?.unavailable)
         void notify(
           "Notes folder",
-          `Project Life couldn't reach your notes folder, ${folder.chosen}, so it's using ${folder.path} for now. Reconnect the drive and restart Project Life, or choose another folder in Settings → Notes.`,
+          `Cura couldn't reach your notes folder, ${folder.chosen}, so it's using ${folder.path} for now. Reconnect the drive and restart Cura, or choose another folder in Settings → Notes.`,
         );
     })();
     // Startup runs once.
@@ -862,7 +862,7 @@ export function NotesProvider({ visible, onShow, children }: Props) {
   const exportAll = useCallback(async () => {
     if (!inTauri) return;
     await flush();
-    const destination = await saveFile({ defaultPath: "Project Life notes.zip", filters: [{ name: "ZIP archive", extensions: ["zip"] }] });
+    const destination = await saveFile({ defaultPath: "Cura notes.zip", filters: [{ name: "ZIP archive", extensions: ["zip"] }] });
     if (!destination) return;
     const count = await api.exportAll(destination);
     await notify("Export all notes", `Exported ${count} file${count === 1 ? "" : "s"} to ${destination}.`);

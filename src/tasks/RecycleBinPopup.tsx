@@ -72,7 +72,7 @@ export default function RecycleBinPopup({ onClose }: { onClose: () => void }) {
           onResult={(ok) => {
             if (ok) {
               const ids = confirm === "empty" ? new Set(recycled.map((t) => t.Id)) : one(confirm);
-              // Project Life's copies of their attached files go too.
+              // Cura's copies of their attached files go too.
               for (const t of recycled) if (ids.has(t.Id)) for (const a of t.Attachments ?? []) if (a.Kind === "file") void removeAttachment(a.Path);
               store.change((f) => purge(f, ids));
             }

@@ -122,7 +122,7 @@ fn system_proxy() -> Option<ureq::Proxy> {
         .clone()
 }
 
-// Every download Project Life makes goes through one of these, so it reaches
+// Every download Cura makes goes through one of these, so it reaches
 // the internet the way the rest of this PC does:
 // - It trusts the certificates Windows trusts, like the browser. Antivirus
 //   HTTPS scanning and company networks swap in certificates of their own
@@ -153,8 +153,8 @@ pub(crate) fn fetch_public(url: &str, accept: &str, limit: u64, timeout_secs: u6
 
 // News sites and link previews expect a browser; data services get Project
 // Life's own name (see fetch_data).
-const BROWSER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ProjectLife/0.1";
-const APP_AGENT: &str = concat!("ProjectLife/", env!("CARGO_PKG_VERSION"), " (+https://github.com/whatthebassett/project-life)");
+const BROWSER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Cura/0.1";
+const APP_AGENT: &str = concat!("Cura/", env!("CARGO_PKG_VERSION"), " (+https://github.com/whatthebassett/project-life)");
 
 // The same, for a web page's <head> only: reading stops once it has come by,
 // or at `limit` bytes without it. Titles and previews are all in the head,
@@ -263,14 +263,14 @@ pub fn fetch_calendar(url: String) -> Result<String, String> {
 // Scores and stock prices for Home's Sports and Markets cards (ESPN's
 // scoreboards, Yahoo Finance's charts and search), and the emote lists for
 // notes (BetterTTV, 7TV, and api.ivr.fi for a Twitch channel's id). Only
-// those services, and under Project Life's own name. Up to 3 MB.
+// those services, and under Cura's own name. Up to 3 MB.
 #[tauri::command(async)]
 pub fn fetch_data(url: String) -> Result<String, String> {
     let parsed = url::Url::parse(&url).map_err(err)?;
     let host = parsed.host_str().unwrap_or_default();
     let allowed = ["site.web.api.espn.com", "query1.finance.yahoo.com", "query2.finance.yahoo.com", "api.betterttv.net", "7tv.io", "api.ivr.fi"];
     if parsed.scheme() != "https" || !allowed.contains(&host) {
-        return Err(format!("{host} isn't one of the services Project Life reads from."));
+        return Err(format!("{host} isn't one of the services Cura reads from."));
     }
     let (_, kind, bytes) = fetch_from(&url, "application/json", 3 * 1024 * 1024, 15, false, APP_AGENT)?;
     Ok(decode_text(&kind, &bytes))
@@ -304,7 +304,7 @@ pub(crate) fn decode_text(content_type: &str, bytes: &[u8]) -> String {
 // answers with desktop .ttf files rather than the web-only .woff2 it gives
 // browsers.
 fn plain_get(url: &str, limit: u64, timeout_secs: u64) -> Result<Vec<u8>, String> {
-    let agent = web_agent(timeout_secs, "ProjectLife/0.1");
+    let agent = web_agent(timeout_secs, "Cura/0.1");
     let mut response = agent.get(url).call().map_err(|e| format!("Couldn't download it: {e}."))?;
     if response.status().as_u16() != 200 {
         return Err(format!("The download answered {}.", response.status().as_u16()));

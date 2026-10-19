@@ -108,7 +108,7 @@ export function setSubscribedCalendars(calendars: TaskList[]) {
   subscribed = calendars;
 }
 
-// Calendars that come with Project Life (schedule/holidays.ts). Asked for
+// Calendars that come with Cura (schedule/holidays.ts). Asked for
 // each time, since their color is a setting.
 let builtin: () => TaskList[] = () => [];
 

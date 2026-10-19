@@ -35,7 +35,7 @@ export interface SlashOptions {
   onImage: () => void;
   // Open the calendar at the cursor to pick a date and time.
   onDate: () => void;
-  // Open the emoji picker at the cursor (Project Life: it's a pop-over here).
+  // Open the emoji picker at the cursor (Cura: it's a pop-over here).
   onEmoji: () => void;
 }
 

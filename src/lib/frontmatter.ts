@@ -56,7 +56,7 @@ export function coverOf(md: string): string | null {
 }
 
 // Where the cover picture sits in its frame, as a CSS object-position
-// ("50% 30%"), from dragging it in the note header. Project Life's own key;
+// ("50% 30%"), from dragging it in the note header. Cura's own key;
 // other apps (Checkpoint included) keep it without using it.
 export function coverPositionOf(md: string): string | null {
   const pos = readKey(splitFront(md).yaml, "cover-position");

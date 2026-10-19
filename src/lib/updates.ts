@@ -1,5 +1,5 @@
 // Updates from GitHub Releases (update.rs). With "Check for updates
-// automatically" on, Project Life looks once a day, downloads a newer release
+// automatically" on, Cura looks once a day, downloads a newer release
 // in the background, and offers to restart into it. About → Check now does
 // the same on demand.
 import { useEffect, useSyncExternalStore } from "react";
@@ -49,7 +49,7 @@ export async function checkForUpdate(update: (patch: Partial<Settings>) => void,
     setState({ kind: "downloading", release });
     await updatesApi.download(release.download);
     setState({ kind: "ready", release });
-    toast(`Project Life ${release.version} is ready`, () => void installUpdate(), "Restart");
+    toast(`Cura ${release.version} is ready`, () => void installUpdate(), "Restart");
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     setState({ kind: "error", message });
@@ -66,7 +66,7 @@ export async function installUpdate() {
 }
 
 // Once a day, two minutes after starting (and hourly after that, in case
-// Project Life stays open for days).
+// Cura stays open for days).
 export function useAutoUpdate() {
   const { update } = useSettings();
   useEffect(() => {

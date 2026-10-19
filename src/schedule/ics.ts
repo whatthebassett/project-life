@@ -1,7 +1,7 @@
 // Calendars in the iCalendar (.ics) format that Google, Outlook, iCloud and
 // every other calendar app can export or share by link. ical.js reads them,
 // time zones and repeat rules included; this turns what it finds into
-// Project Life's events.
+// Cura's events.
 import ICAL from "ical.js";
 import { addDays, ymd } from "../tasks/dates";
 import { findJoinLink, localStamp, type CalEvent, type EventRepeat } from "./events";
@@ -16,7 +16,7 @@ export interface IcsEvent {
   allDay: boolean;
   start: Date;
   end: Date;
-  // A repeat Project Life can keep as a repeat (see simpleRepeat); otherwise
+  // A repeat Cura can keep as a repeat (see simpleRepeat); otherwise
   // the file's own rule, spelled out as separate days.
   repeat: EventRepeat | null;
   // For a kept repeat: days taken out of it.
@@ -41,7 +41,7 @@ export function readIcs(text: string, now: Date, keepRepeats: boolean): IcsCalen
   try {
     root = new ICAL.Component(ICAL.parse(text));
   } catch {
-    throw "That isn't a calendar file Project Life can read.";
+    throw "That isn't a calendar file Cura can read.";
   }
   // The time zones the file defines, so times inside it come out right.
   for (const tz of root.getAllSubcomponents("vtimezone")) {
@@ -130,7 +130,7 @@ function timing(start: InstanceType<typeof ICAL.Time> | null, end: InstanceType<
   return { allDay, start: s, end: e };
 }
 
-// The repeats Project Life has: every day, weekday, week, month or year,
+// The repeats Cura has: every day, weekday, week, month or year,
 // with no end date, count or gaps. Anything else is spelled out.
 function simpleRepeat(comp: InstanceType<typeof ICAL.Component>): EventRepeat | null {
   const rules = comp.getAllProperties("rrule");
@@ -158,7 +158,7 @@ function simpleRepeat(comp: InstanceType<typeof ICAL.Component>): EventRepeat | 
   }
 }
 
-// The file's events as Project Life events on `calendar`.
+// The file's events as Cura events on `calendar`.
 export function toCalEvents(events: IcsEvent[], calendar: string, idOf: (e: IcsEvent) => string, fields: Partial<CalEvent> = {}): CalEvent[] {
   const now = new Date().toISOString();
   return events.map((e) => ({

@@ -1,6 +1,6 @@
 import { locale } from "../lib/format";
 // Weather from Open-Meteo (free, no key), fetched through Rust like the news.
-// The place is only ever one that was searched for and chosen; Project Life never
+// The place is only ever one that was searched for and chosen; Cura never
 // looks up where the computer is.
 import {
   Cloud,

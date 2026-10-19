@@ -1,6 +1,7 @@
 import type { Editor } from "@tiptap/core";
 import { codeLanguage } from "./code";
 import { moveBlockBy } from "./blocks";
+import { selectCellContents } from "./tables";
 
 export interface FormattingContext {
   onLink: () => void;
@@ -14,6 +15,8 @@ export const formatting: Record<string, (editor: Editor, ctx: FormattingContext)
   "markdown.Strikethrough": (e) => e.chain().focus().toggleStrike().run(),
   "markdown.Inline code": (e) => e.chain().focus().toggleCode().run(),
   "markdown.Spoiler": (e) => e.chain().focus().toggleSpoiler().run(),
+  // On in the last highlight color picked, or off again.
+  "format.highlight": (e) => e.chain().focus().toggleHighlight().run(),
   "markdown.Link": (_e, ctx) => ctx.onLink(),
   "markdown.Paragraph": (e) => e.chain().focus().setParagraph().run(),
   "markdown.Heading 1": (e) => e.chain().focus().toggleHeading({ level: 1 }).run(),
@@ -28,6 +31,9 @@ export const formatting: Record<string, (editor: Editor, ctx: FormattingContext)
   "markdown.Blockquote": (e) => e.chain().focus().toggleBlockquote().run(),
   "markdown.Code block": (e) => e.chain().focus().toggleCodeBlock({ language: codeLanguage() }).run(),
   "markdown.Table": (e) => e.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+  // Merges the selected cells, or splits the merged cell the cursor is in.
+  "table.merge": (e) => e.chain().focus().mergeOrSplit().run(),
+  "table.selectCell": (e) => void selectCellContents(e),
   "markdown.Divider": (e) => e.chain().focus().setHorizontalRule().run(),
   "markdown.Info": (e) => e.chain().focus().setCallout("info").run(),
   "markdown.Notification": (e) => e.chain().focus().setCallout("notification").run(),

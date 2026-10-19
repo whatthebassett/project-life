@@ -1,10 +1,12 @@
 import { useRef } from "react";
 import { useEditorState, type Editor } from "@tiptap/react";
 import {
+  Baseline,
   Bold,
   ChevronDown,
   Code,
   Eye,
+  Highlighter,
   Image as ImageIcon,
   Italic,
   Link as LinkIcon,
@@ -24,12 +26,14 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import BlocksHint from "./BlocksHint";
+import { colorMenuItems, highlightItems, textColorItems } from "./colorMenu";
+import { highlightOf, palette, textColorOf } from "../editor/colors";
 import type { MenuItem } from "./ContextMenu";
 import { notedCallouts } from "../editor/callout";
-import { alignCells, cellVAlign, valignCells } from "../editor/tables";
+import { alignCells, cellVAlign, columnAt, moveColumnBy, valignCells } from "../editor/tables";
 import { calloutIcon, commandIcon } from "../lib/menuIcons";
 import { calloutColor } from "../editor/callout";
-import { AlignCenter, AlignLeft, AlignRight, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd, AlignVerticalJustifyStart, BetweenHorizontalEnd, BetweenHorizontalStart, BetweenVerticalEnd, BetweenVerticalStart, Columns2, PanelTop, Rows2, Trash2 as TrashIcon, X as XIcon } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, ArrowLeft, ArrowRight, TableCellsMerge, TableCellsSplit, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd, AlignVerticalJustifyStart, BetweenHorizontalEnd, BetweenHorizontalStart, BetweenVerticalEnd, BetweenVerticalStart, Columns2, PanelTop, Rows2, Trash2 as TrashIcon, X as XIcon } from "lucide-react";
 import { codeLanguage } from "../editor/code";
 
 interface Props {
@@ -44,7 +48,9 @@ interface Props {
 const capitalize = (s: string) => s[0].toUpperCase() + s.slice(1);
 
 // The table menu, shared by the toolbar button and the right-click menu.
-export function tableMenuItems(editor: Editor): MenuItem[] {
+// Merge cells joins the selected cells (drag across them, or Shift+arrows);
+// Split cell takes a merged one apart again.
+export function tableMenuItems(editor: Editor, keyFor?: (id: string) => string): MenuItem[] {
   const c = () => editor.chain().focus();
   if (!editor.isActive("table")) {
     return [2, 3, 4].map((n) => ({
@@ -55,11 +61,17 @@ export function tableMenuItems(editor: Editor): MenuItem[] {
   }
   const align = (editor.getAttributes("tableCell").align ?? editor.getAttributes("tableHeader").align ?? null) as string | null;
   const valign = cellVAlign(editor);
+  const column = columnAt(editor);
+  // Text picked in the table gets its colors here too.
+  const colors: MenuItem[] = editor.state.selection.empty ? [] : [...colorMenuItems(editor, keyFor), { type: "separator" }];
   return [
+    ...colors,
     { label: "Add row above", icon: <BetweenHorizontalStart size={15} />, onSelect: () => c().addRowBefore().run() },
     { label: "Add row below", icon: <BetweenHorizontalEnd size={15} />, onSelect: () => c().addRowAfter().run() },
     { label: "Add column left", icon: <BetweenVerticalStart size={15} />, onSelect: () => c().addColumnBefore().run() },
     { label: "Add column right", icon: <BetweenVerticalEnd size={15} />, onSelect: () => c().addColumnAfter().run() },
+    { label: "Move column left", icon: <ArrowLeft size={15} />, disabled: !column || column.index === 0, onSelect: () => void moveColumnBy(editor, -1) },
+    { label: "Move column right", icon: <ArrowRight size={15} />, disabled: !column || column.index >= column.count - 1, onSelect: () => void moveColumnBy(editor, 1) },
     { type: "separator" },
     {
       label: "Align",
@@ -81,6 +93,9 @@ export function tableMenuItems(editor: Editor): MenuItem[] {
       })),
     },
     { label: "Toggle header row", icon: <PanelTop size={15} />, onSelect: () => c().toggleHeaderRow().run() },
+    { type: "separator" },
+    { label: "Merge cells", icon: <TableCellsMerge size={15} />, hint: keyFor?.("table.merge"), disabled: !editor.can().mergeCells(), onSelect: () => c().mergeCells().run() },
+    { label: "Split cell", icon: <TableCellsSplit size={15} />, hint: keyFor?.("table.merge"), disabled: !editor.can().splitCell(), onSelect: () => c().splitCell().run() },
     { type: "separator" },
     { label: "Delete row", icon: <Rows2 size={15} />, onSelect: () => c().deleteRow().run() },
     { label: "Delete column", icon: <Columns2 size={15} />, onSelect: () => c().deleteColumn().run() },
@@ -115,6 +130,8 @@ export default function Toolbar({ editor, openMenu, keyFor, onEmoji, onLink, onI
       callout: (e?.getAttributes("callout").kind as string | undefined) ?? "",
       codeBlock: e?.isActive("codeBlock") ?? false,
       table: e?.isActive("table") ?? false,
+      textColor: e ? textColorOf(e) : null,
+      highlight: e ? highlightOf(e) : null,
     }),
   });
 
@@ -193,6 +210,32 @@ export default function Toolbar({ editor, openMenu, keyFor, onEmoji, onLink, onI
         <Btn label="Strikethrough" icon={<Strikethrough size={16} />} title={tip("Strikethrough", "markdown.Strikethrough")} pressed={state.strike} onClick={() => c().toggleStrike().run()} />
         <Btn label="Inline code" icon={<Code size={16} />} title={tip("Inline code", "markdown.Inline code")} pressed={state.code} onClick={() => c().toggleCode().run()} />
         <Btn label="Spoiler" icon={<Eye size={16} />} title={tip("Spoiler", "markdown.Spoiler")} pressed={state.spoiler} onClick={() => c().toggleSpoiler().run()} />
+        <Btn
+          label="Text color"
+          icon={
+            // The "A" takes the selection's color.
+            <span className="flex" {...paint("text", state.textColor)}>
+              <Baseline size={16} />
+            </span>
+          }
+          title="Text color"
+          menu
+          pressed={Boolean(state.textColor)}
+          onClick={(e) => under(e, textColorItems(editor))}
+        />
+        <Btn
+          label="Highlight"
+          icon={
+            // The pen's tip takes the selection's highlight.
+            <span className="flex rounded-[4px] p-px" {...paint("highlight", state.highlight)}>
+              <Highlighter size={15} />
+            </span>
+          }
+          title={tip("Highlight", "format.highlight")}
+          menu
+          pressed={Boolean(state.highlight)}
+          onClick={(e) => under(e, highlightItems(editor))}
+        />
         <Btn label="Link" icon={<LinkIcon size={16} />} title={tip("Link", "markdown.Link")} pressed={state.link} onClick={onLink} />
         <Sep />
         <Btn label="Bullet list" icon={<List size={16} />} title={tip("Bullet list", "markdown.Bullet list")} pressed={state.bullet} onClick={() => c().toggleBulletList().run()} />
@@ -203,7 +246,7 @@ export default function Toolbar({ editor, openMenu, keyFor, onEmoji, onLink, onI
         <Btn label="Code block" icon={<SquareCode size={16} />} title={tip("Code block", "markdown.Code block")} pressed={state.codeBlock} onClick={() => c().toggleCodeBlock({ language: codeLanguage() }).run()} />
         <Btn label="Divider" icon={<Minus size={16} />} title={tip("Divider", "markdown.Divider")} onClick={() => c().setHorizontalRule().run()} />
         <Sep />
-        <Btn label="Table" icon={<TableIcon size={16} />} title="Table" menu pressed={state.table} onClick={(e) => under(e, tableMenuItems(editor))} />
+        <Btn label="Table" icon={<TableIcon size={16} />} title="Table" menu pressed={state.table} onClick={(e) => under(e, tableMenuItems(editor, keyFor))} />
         <Btn label="Picture" icon={<ImageIcon size={16} />} title="Picture" onClick={onImage} />
         <Btn
           label="Emoji"
@@ -218,6 +261,14 @@ export default function Toolbar({ editor, openMenu, keyFor, onEmoji, onLink, onI
       </div>
     </div>
   );
+}
+
+// A format bar icon in the selection's text color or highlight.
+function paint(kind: "text" | "highlight", color: string | null): React.HTMLAttributes<HTMLSpanElement> & Record<string, unknown> {
+  if (!color) return {};
+  const named = (palette as readonly string[]).includes(color);
+  if (kind === "text") return named ? { "data-text-color": color } : { style: { color } };
+  return named ? { "data-highlight": color } : { style: { background: color } };
 }
 
 function Btn({

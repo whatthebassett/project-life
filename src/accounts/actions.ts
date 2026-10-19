@@ -71,7 +71,7 @@ export function meetingPlan(e: Pick<CalEvent, "Kind" | "Call" | "JoinUrl" | "Pla
   return meetingAccount(e.Call, splitKey(e.Calendar)?.account);
 }
 
-// A link on its own, for an event on one of Project Life's own calendars (or
+// A link on its own, for an event on one of Cura's own calendars (or
 // on another provider's calendar). Asks once for Teams permission when needed.
 async function standaloneLink(account: Account, e: CalEvent): Promise<string> {
   try {
@@ -155,7 +155,7 @@ export async function saveRemote(draft: CalEvent, before: CalEvent | null) {
   };
   const prior = syncedEvents().find((e) => e.Id === draft.Id) ?? null;
   putSynced(shown);
-  // Moved here from Project Life's own calendars: it leaves events.json.
+  // Moved here from Cura's own calendars: it leaves events.json.
   const fromLocal = before && !before.Remote ? before : null;
   if (fromLocal) eventStore().change((f) => ({ ...f, Events: f.Events.filter((e) => e.Id !== fromLocal.Id && e.Of !== fromLocal.Id) }));
   try {
@@ -180,7 +180,7 @@ export async function saveRemote(draft: CalEvent, before: CalEvent | null) {
   }
 }
 
-// From a connected calendar to one of Project Life's own.
+// From a connected calendar to one of Cura's own.
 export async function moveRemoteToLocal(draft: CalEvent, before: CalEvent) {
   const remote = before.Remote!;
   const local: CalEvent = { ...draft, Id: newId(), Remote: null, Repeat: null, Skip: [] };
@@ -211,7 +211,7 @@ export async function deleteRemote(event: CalEvent) {
   }
 }
 
-// Project Life's own notes on a synced event (its note, task, reminders
+// Cura's own notes on a synced event (its note, task, reminders
 // fired): kept here, never sent.
 export function patchSynced(id: string, fields: Partial<CalEvent>): boolean {
   if (!syncedEvents().some((e) => e.Id === id)) return false;

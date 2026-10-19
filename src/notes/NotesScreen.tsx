@@ -397,7 +397,7 @@ function StatusBar() {
   );
 }
 
-// On this page, Linked in Project Life (to-dos sent to Tasks, and time on
+// On this page, Linked in Cura (to-dos sent to Tasks, and time on
 // the schedule), then Details.
 function RightPanel() {
   const n = useNotes();
@@ -481,7 +481,7 @@ function RightPanel() {
 
       {(sent.length > 0 || linkedHere.length > 0 || eventsHere.length > 0) && (
         <div className="flex flex-col gap-[10px]">
-          <SectionLabel>Linked in Project Life</SectionLabel>
+          <SectionLabel>Linked in Cura</SectionLabel>
           <div className="flex flex-col gap-[10px] rounded-[16px] border border-line bg-panel p-3.5">
             {eventsHere.slice(0, 3).map((o, i) => (
               <Fragment key={o.key}>

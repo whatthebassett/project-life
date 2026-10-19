@@ -1,5 +1,5 @@
 /* The note editor's styles, ported from Checkpoint (src/index.css there).
-   Checkpoint's color and type variables are mapped onto Project Life's theme
+   Checkpoint's color and type variables are mapped onto Cura's theme
    tokens here, so its rules carry over unchanged and follow all four themes. */
 :root {
   --fg: var(--text);
@@ -724,6 +724,102 @@ body.block-dragging * {
   user-select: none !important;
 }
 
+/* ---------- Column grips (components/ColumnHandle.tsx) ---------- */
+
+/* A small bar of dots sitting on the top edge of the hovered column. */
+.column-handle {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  width: 28px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--panel);
+  box-shadow: 0 0 0 1px var(--line);
+  color: var(--muted);
+  cursor: grab;
+  touch-action: none;
+  animation: column-handle-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition:
+    left 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    top 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 120ms,
+    box-shadow 120ms,
+    transform 140ms,
+    opacity 120ms;
+}
+.column-handle:hover {
+  color: var(--fg);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.column-handle:active {
+  cursor: grabbing;
+  transform: scale(0.92);
+}
+.column-handle.is-dragging {
+  opacity: 0;
+}
+@keyframes column-handle-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.85);
+  }
+}
+/* The column the grip belongs to, while pointing at the grip. */
+.column-lit {
+  position: absolute;
+  z-index: 2;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, transparent);
+  pointer-events: none;
+}
+/* While dragging, the column itself moves: its cells lift above the table
+   and follow the pointer (--column-drag-x, set by the drag), tinted and edged
+   in the accent; the columns it passes slide aside (editor/tables.ts). */
+.ProseMirror :is(td, th).column-lifted {
+  z-index: 3;
+  transform: translateX(var(--column-drag-x, 0px));
+  box-shadow:
+    inset 1.5px 0 0 var(--accent),
+    inset -1.5px 0 0 var(--accent);
+  will-change: transform;
+}
+.ProseMirror td.column-lifted {
+  background: color-mix(in srgb, var(--accent) 8%, var(--column-lift-bg, var(--bg)));
+}
+.ProseMirror th.column-lifted {
+  background: color-mix(in srgb, var(--accent) 14%, var(--panel));
+}
+.ProseMirror :is(td, th).column-shift {
+  transition: transform 240ms cubic-bezier(0.2, 0.9, 0.3, 1.15);
+  will-change: transform;
+}
+/* The place it will land: a rounded outline, breathing like a block's. */
+.column-slot {
+  position: absolute;
+  z-index: 2;
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 60%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  pointer-events: none;
+  transition:
+    left 240ms cubic-bezier(0.2, 0.9, 0.3, 1.15),
+    width 240ms cubic-bezier(0.2, 0.9, 0.3, 1.15);
+  animation: block-slot-breathe 1.6s ease-in-out infinite;
+}
+body.column-dragging,
+body.column-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+body.column-dragging .block-handle,
+body.block-dragging .column-handle {
+  display: none;
+}
+
 /* The note's own header: cover image, title, details. */
 .note-header {
   position: relative;
@@ -1295,7 +1391,7 @@ body.block-dragging * {
 }
 
 /* ======================================================================
-   Project Life's look (Notes.dc.html), over Checkpoint's rules above.
+   Cura's look (Notes.dc.html), over Checkpoint's rules above.
    Only how things are drawn changes; the editor behaves the same.
    ====================================================================== */
 
@@ -1429,24 +1525,103 @@ body.block-dragging * {
   overflow: hidden;
   font-size: 0.875em;
 }
+/* Every cell draws its own left and bottom lines, and the table only its top
+   and right, so merged cells (which can start a row anywhere, or end in the
+   last one) still get every line once. */
+.ProseMirror table {
+  border-left: 0;
+  border-bottom: 0;
+}
 .ProseMirror th,
 .ProseMirror td {
   border: 0;
+  border-left: 1px solid var(--table-line);
   border-bottom: 1px solid var(--table-line);
   padding: 11px 16px;
-}
-/* Every cell after the first in its row gets a line on its left. */
-.ProseMirror :is(th, td) + :is(th, td) {
-  border-left: 1px solid var(--table-line);
-}
-.ProseMirror tr:last-child > td {
-  border-bottom: 0;
 }
 .ProseMirror th {
   background: var(--panel);
   color: var(--muted);
   font-size: 0.857em;
   font-weight: 600;
+}
+
+/* Text colors and highlights (editor/colors.ts): the palette in shades for
+   dark themes, and for light ones, so colored text stays readable and a
+   highlight never hides the words. Global, so menus can show them too. */
+:root {
+  --ink-gray: #a3a39e;
+  --ink-brown: #c4946f;
+  --ink-orange: #f29a52;
+  --ink-yellow: #e8c45a;
+  --ink-green: #63c48f;
+  --ink-blue: #6cabf2;
+  --ink-purple: #b48ce3;
+  --ink-pink: #e97fbb;
+  --ink-red: #f27a72;
+  --mark-gray: rgba(160, 160, 155, 0.24);
+  --mark-brown: rgba(175, 120, 80, 0.28);
+  --mark-orange: rgba(245, 140, 40, 0.28);
+  --mark-yellow: rgba(250, 205, 50, 0.3);
+  --mark-green: rgba(70, 190, 115, 0.26);
+  --mark-blue: rgba(70, 155, 240, 0.28);
+  --mark-purple: rgba(160, 110, 225, 0.3);
+  --mark-pink: rgba(235, 95, 165, 0.28);
+  --mark-red: rgba(240, 85, 75, 0.28);
+}
+:root[data-scheme="light"] {
+  --ink-gray: #787774;
+  --ink-brown: #94603f;
+  --ink-orange: #c96510;
+  --ink-yellow: #a77d0c;
+  --ink-green: #2f7d52;
+  --ink-blue: #2b6db0;
+  --ink-purple: #7d4fb0;
+  --ink-pink: #b6417f;
+  --ink-red: #c73d36;
+  --mark-gray: rgba(140, 140, 135, 0.2);
+  --mark-brown: rgba(165, 110, 70, 0.2);
+  --mark-orange: rgba(245, 140, 40, 0.24);
+  --mark-yellow: rgba(250, 205, 50, 0.45);
+  --mark-green: rgba(70, 180, 110, 0.22);
+  --mark-blue: rgba(60, 150, 230, 0.2);
+  --mark-purple: rgba(150, 100, 210, 0.2);
+  --mark-pink: rgba(230, 90, 160, 0.2);
+  --mark-red: rgba(235, 80, 70, 0.2);
+}
+[data-text-color="gray"] { color: var(--ink-gray); }
+[data-text-color="brown"] { color: var(--ink-brown); }
+[data-text-color="orange"] { color: var(--ink-orange); }
+[data-text-color="yellow"] { color: var(--ink-yellow); }
+[data-text-color="green"] { color: var(--ink-green); }
+[data-text-color="blue"] { color: var(--ink-blue); }
+[data-text-color="purple"] { color: var(--ink-purple); }
+[data-text-color="pink"] { color: var(--ink-pink); }
+[data-text-color="red"] { color: var(--ink-red); }
+[data-highlight="gray"] { background: var(--mark-gray); }
+[data-highlight="brown"] { background: var(--mark-brown); }
+[data-highlight="orange"] { background: var(--mark-orange); }
+[data-highlight="yellow"] { background: var(--mark-yellow); }
+[data-highlight="green"] { background: var(--mark-green); }
+[data-highlight="blue"] { background: var(--mark-blue); }
+[data-highlight="purple"] { background: var(--mark-purple); }
+[data-highlight="pink"] { background: var(--mark-pink); }
+[data-highlight="red"] { background: var(--mark-red); }
+.ProseMirror mark {
+  color: inherit;
+  border-radius: 4px;
+  padding: 0.05em 0.15em;
+  margin: 0 -0.05em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* A misspelled word (editor/spellcheck.ts): a wavy red underline. */
+.ProseMirror .misspelled {
+  text-decoration: underline wavy var(--danger);
+  text-decoration-thickness: 1.5px;
+  text-decoration-skip-ink: none;
+  text-underline-offset: 3px;
 }
 
 /* Quotes. */

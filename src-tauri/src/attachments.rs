@@ -71,7 +71,7 @@ pub fn open_attachment(app: AppHandle, path: String) -> Result<(), String> {
     app.opener().open_path(file.to_string_lossy().to_string(), None::<&str>).map_err(err)
 }
 
-// Removing an attachment deletes Project Life's copy (never the original).
+// Removing an attachment deletes Cura's copy (never the original).
 #[tauri::command]
 pub fn remove_attachment(path: String) -> Result<(), String> {
     let file = resolve(&path)?;

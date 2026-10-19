@@ -165,6 +165,8 @@ pub(crate) fn entry(name: &str) -> Result<keyring::Entry, String> {
     if name.is_empty() || !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '.') {
         return Err("That isn't a secret's name.".into());
     }
+    // Saved under the app's first name, so sign-ins made before it was Cura
+    // are still found.
     keyring::Entry::new("Project Life", name).map_err(err)
 }
 
@@ -284,7 +286,7 @@ fn font_face_info(data: &[u8]) -> Option<(String, u16, bool)> {
     Some((family, weight.clamp(1, 1000), italic))
 }
 
-// Fonts downloaded into Data\Fonts, one folder per family. Project Life loads
+// Fonts downloaded into Data\Fonts, one folder per family. Cura loads
 // these itself; they're never installed into Windows.
 #[tauri::command(async)]
 pub fn list_app_fonts() -> Result<Vec<AppFont>, String> {
@@ -400,7 +402,7 @@ fn dir_size(dir: &Path) -> u64 {
 pub struct DataInfo {
     data: String,
     notes: String,
-    // Notes live inside Data (Project Life's own folder), not somewhere shared.
+    // Notes live inside Data (Cura's own folder), not somewhere shared.
     notes_inside: bool,
     bytes: u64,
     default_backups: String,
@@ -495,7 +497,7 @@ pub fn backup_now(folder: Option<String>, keep: usize) -> Result<String, String>
         Some(f) => ensure(PathBuf::from(f))?,
         None => ensure(data_dir().join("Backups"))?,
     };
-    let name = format!("Project Life {}.zip", chrono::Local::now().format("%Y-%m-%d"));
+    let name = format!("Cura {}.zip", chrono::Local::now().format("%Y-%m-%d"));
     let target = dir.join(&name);
     let tmp = dir.join(format!("{name}.tmp"));
     zip_everything(&tmp)?;
@@ -504,9 +506,10 @@ pub fn backup_now(folder: Option<String>, keep: usize) -> Result<String, String>
         .map_err(err)?
         .flatten()
         .map(|e| e.path())
-        .filter(|p| p.file_name().and_then(|n| n.to_str()).is_some_and(|n| n.starts_with("Project Life ") && n.ends_with(".zip")))
+        .filter(|p| p.file_name().and_then(|n| n.to_str()).is_some_and(|n| (n.starts_with("Cura ") || n.starts_with("Project Life ")) && n.ends_with(".zip")))
         .collect();
-    backups.sort();
+    // Oldest first by date, whichever name the backup was made under.
+    backups.sort_by_key(|p| p.file_name().and_then(|n| n.to_str()).map(|n| n.trim_start_matches("Project Life ").trim_start_matches("Cura ").to_string()));
     while backups.len() > keep.max(1) {
         let _ = fs::remove_file(backups.remove(0));
     }
@@ -524,7 +527,7 @@ pub fn clear_caches() -> Result<(), String> {
 }
 
 // Settings → Privacy → Delete all data on this PC: the Data folder, and the
-// notes too when they're Project Life's own (a notes folder shared with
+// notes too when they're Cura's own (a notes folder shared with
 // Checkpoint is never touched). The app restarts fresh afterwards.
 #[tauri::command]
 pub fn delete_all_data(app: AppHandle) -> Result<(), String> {

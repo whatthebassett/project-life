@@ -45,11 +45,9 @@ export default function HomeSidebar({ screen, onNavigate, onSettings }: Props) {
   return (
     <aside className="flex w-60 shrink-0 flex-col gap-7 border-r border-line bg-side pt-7 pr-[18px] pb-[22px] pl-[18px]">
       <div className="flex items-center gap-3 px-2">
-        <div className="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-accent text-accent-ink">
-          <Icon name="logo" size={20} stroke={2} />
-        </div>
+        <img src="/cura.png" alt="" draggable={false} className="h-[34px] w-[34px] select-none" />
         <div className="flex flex-col gap-0.5">
-          <div className="text-16 font-semibold tracking-[-0.01em]">Project Life</div>
+          <div className="text-16 font-semibold tracking-[-0.01em]">Cura</div>
           <div className="font-mono text-11 tracking-[0.04em] text-muted">by Checkpoint</div>
         </div>
       </div>

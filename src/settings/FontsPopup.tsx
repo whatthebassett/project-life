@@ -117,7 +117,7 @@ export default function FontsPopup({ current, onPick, onClose }: { current?: str
             </label>
           </div>
           {shown.map((f) => row(f))}
-          {!inTauri && <span className="px-3 py-4 text-13 text-muted">Installed fonts are listed in the Project Life app.</span>}
+          {!inTauri && <span className="px-3 py-4 text-13 text-muted">Installed fonts are listed in the Cura app.</span>}
         </div>
       </div>
     </Popup>

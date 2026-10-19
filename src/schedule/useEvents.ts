@@ -41,7 +41,7 @@ export function useEvents() {
   return { events: state.file.Events, loaded: state.loaded, error: state.error, store: s };
 }
 
-// Project Life's own events, the ones synced from connected calendars, the
+// Cura's own events, the ones synced from connected calendars, the
 // ones on subscribed calendars and the built-in US holidays, for everything
 // that shows events.
 // Declined invitations stay out unless Settings → Connected accounts says

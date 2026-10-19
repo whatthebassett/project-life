@@ -50,6 +50,9 @@ import { currentSettings } from "../lib/settings";
 import { NotedImage, insertDataImages, insertImageFiles } from "../editor/images";
 import { NotedCodeBlock } from "../editor/code";
 import { NotedUnderline } from "../editor/underline";
+import { Highlight, TextColor } from "../editor/colors";
+import { SpellCheck } from "../editor/spellcheck";
+import { spellingItems } from "./spellMenu";
 import { Caret, type CaretConfig } from "../editor/caret";
 import { TaskLinks, taskLinksKey, todoText, type TodoLink } from "../editor/taskLinks";
 import { formatting } from "../editor/formatting";
@@ -66,6 +69,7 @@ import { LinePlaceholder } from "../editor/placeholder";
 import { MarkdownShortcuts } from "../editor/markdownShortcuts";
 import Calendar from "../tasks/Calendar";
 import BlockHandle from "./BlockHandle";
+import ColumnHandle from "./ColumnHandle";
 import { nativeOf } from "../lib/emoji";
 import TocPanel from "./TocPanel";
 import { tableMenuItems } from "./Toolbar";
@@ -167,6 +171,9 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
       NotedLink.configure({ openOnClick: false, autolink: true, linkOnPaste: true, extend: () => currentSettings().ExtendLinks === true }),
       NotedCodeBlock,
       NotedUnderline,
+      TextColor,
+      Highlight,
+      SpellCheck,
       Caret.configure({ config: () => caretRef.current }),
       Markdown,
       NotedTable.configure({ resizable: true, cellMinWidth: 120 }),
@@ -468,17 +475,19 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
           const text = todoText(node);
           if (!text) break;
           e.preventDefault();
-          openMenu(e.clientX, e.clientY, menu({ text, checked: Boolean(node.attrs.checked) }));
+          const items = menu({ text, checked: Boolean(node.attrs.checked) });
+          void spellingItems(e.target as Element, e.clientX, e.clientY).then((spelling) => openMenu(e.clientX, e.clientY, [...spelling, ...items]));
           return;
         }
       }
       if (!editor.isActive("table")) return;
       e.preventDefault();
-      openMenu(e.clientX, e.clientY, tableMenuItems(editor));
+      const items = tableMenuItems(editor, keyFor);
+      void spellingItems(e.target as Element, e.clientX, e.clientY).then((spelling) => openMenu(e.clientX, e.clientY, [...spelling, ...items]));
     };
     el.addEventListener("contextmenu", onContext);
     return () => el.removeEventListener("contextmenu", onContext);
-  }, [editor, openMenu]);
+  }, [editor, openMenu, keyFor]);
 
   return (
     <div className="flex h-full flex-col">
@@ -488,6 +497,7 @@ export default function VisualEditor({ initial, readable, caret, keys, keyFor, o
           <div ref={blocksBox} className="relative px-10 pb-6">
             <EditorContent editor={editor} className="relative" />
             <BlockHandle editor={editor} wrapper={blocksBox} scroller={scroller} openMenu={openMenu} keyFor={keyFor} />
+            <ColumnHandle editor={editor} wrapper={blocksBox} openMenu={openMenu} />
           </div>
         </div>
         {/* A table of contents' options slide in from the right, beside the

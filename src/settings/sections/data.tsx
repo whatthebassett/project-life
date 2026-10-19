@@ -119,7 +119,7 @@ export function Accounts() {
         </ListGroup>
       ))}
       <Note>
-        Sign-in happens in your browser, and Project Life keeps it in Windows Credential Manager, never in its files. Synced events can be changed here and the change goes to {accounts.length ? [...new Set(accounts.map((a) => appName[a.Provider]))].join(" and ") : "Outlook or Google Calendar"}; a whole repeating series is changed there.
+        Sign-in happens in your browser, and Cura keeps it in Windows Credential Manager, never in its files. Synced events can be changed here and the change goes to {accounts.length ? [...new Set(accounts.map((a) => appName[a.Provider]))].join(" and ") : "Outlook or Google Calendar"}; a whole repeating series is changed there.
       </Note>
       {leaving && (
         <Dialog
@@ -142,7 +142,7 @@ export function Accounts() {
           }
         >
           <p className="m-0 leading-[1.6]">
-            {leaving.Email}'s calendars leave Project Life. Nothing changes in {appName[leaving.Provider]}, and you can connect again any time.
+            {leaving.Email}'s calendars leave Cura. Nothing changes in {appName[leaving.Provider]}, and you can connect again any time.
           </p>
         </Dialog>
       )}
@@ -186,7 +186,7 @@ export function Storage() {
 
   const exportAll = () =>
     run("export", async () => {
-      const target = await saveFile({ title: "Export everything", defaultPath: `Project Life export ${ymd(new Date())}.zip`, filters: [{ name: "Zip file", extensions: ["zip"] }] });
+      const target = await saveFile({ title: "Export everything", defaultPath: `Cura export ${ymd(new Date())}.zip`, filters: [{ name: "Zip file", extensions: ["zip"] }] });
       if (!target) return;
       await flushAll();
       await system.exportEverything(target);
@@ -205,7 +205,7 @@ export function Storage() {
       if (n.copied) parts.push(`Added ${n.copied} note${n.copied === 1 ? "" : "s"} from ${got.from}.`);
       if (n.renamed) parts.push(`${n.renamed} had the same name as a note already here, so ${n.renamed === 1 ? "it was" : "they were"} saved with a number on the end.`);
       if (n.same) parts.push(`${n.same} ${n.same === 1 ? "was" : "were"} already here, word for word.`);
-      if (!n.copied && !n.same) parts.push(`The notes in ${got.from} are already the ones Project Life uses.`);
+      if (!n.copied && !n.same) parts.push(`The notes in ${got.from} are already the ones Cura uses.`);
       if (tasks.added) parts.push(`Added ${tasks.added} task${tasks.added === 1 ? "" : "s"}.`);
       if (tasks.same) parts.push(`${tasks.same} task${tasks.same === 1 ? " was" : "s were"} already here.`);
       if (!got.tasks) parts.push("Checkpoint had no tasks there.");
@@ -337,7 +337,7 @@ export function Privacy() {
         >
           <div className="flex flex-col gap-3 leading-[1.6]">
             <p className="m-0">
-              This deletes your settings, tasks, schedule, habits, goals, backups kept in the Data folder, and the notes kept there. A notes folder you chose somewhere else is left alone. Project Life then
+              This deletes your settings, tasks, schedule, habits, goals, backups kept in the Data folder, and the notes kept there. A notes folder you chose somewhere else is left alone. Cura then
               starts fresh.
             </p>
             <label className="flex flex-col gap-1.5 text-13 text-muted">
@@ -389,7 +389,7 @@ export function About() {
       <ListGroup>
         <Info label="Version" value={`${version} beta${name ? ` · ${name}` : ""}`} />
         {updates.kind === "ready" ? (
-          <Action label={`Project Life ${updates.release.version} is ready`} desc="Restart to finish updating. Your data stays as it is." action="Restart now" tone="primary" onClick={() => void installUpdate()} />
+          <Action label={`Cura ${updates.release.version} is ready`} desc="Restart to finish updating. Your data stays as it is." action="Restart now" tone="primary" onClick={() => void installUpdate()} />
         ) : (
           <Action
             label="Check for updates"
@@ -418,7 +418,7 @@ export function About() {
       {open === "notes" && <ReleaseNotes onClose={() => setOpen(null)} />}
       {open === "licenses" && (
         <Dialog title="Open-source licenses" width={520} onClose={() => setOpen(null)}>
-          <p className="mt-0 leading-[1.5] text-muted">Project Life is built on these, with thanks.</p>
+          <p className="mt-0 leading-[1.5] text-muted">Cura is built on these, with thanks.</p>
           <div className="flex flex-col">
             {licenses.map(([name, license]) => (
               <div key={name} className="flex items-center justify-between gap-4 border-b border-line py-2.5 last:border-0">

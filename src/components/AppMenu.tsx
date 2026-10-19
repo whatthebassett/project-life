@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { EditorView } from "@codemirror/view";
 import type { EditorView as NoteView } from "@tiptap/pm/view";
 import { ExternalLink, Link2, PanelTop } from "lucide-react";
@@ -8,30 +8,58 @@ import type { LinkView } from "../editor/smartLinks";
 import { youTubeEmbed } from "../editor/videoEmbeds";
 import { openUrl, system } from "../lib/api";
 import { clipboardIcons } from "../lib/menuIcons";
+import type { Editor } from "@tiptap/core";
+import { colorMenuItems } from "./colorMenu";
+import { spellingItems } from "./spellMenu";
 import { toast } from "../ui/Toast";
 
 // Right-clicking anywhere a screen hasn't a menu of its own gets Project
 // Life's menu instead of the browser's (Back, Refresh, Print and the rest):
 // Cut, Copy, Paste and Select all in text boxes and notes, Open link and Copy
 // link on a link, and Copy for selected text. Elsewhere, nothing opens.
-// Shift+right-click still gives the browser's own menu, for its spelling
-// suggestions (and Inspect while developing).
+// On a misspelled word, Windows' suggestions come first (spellMenu.tsx).
+// Shift+right-click still gives the browser's own menu (and Inspect while
+// developing).
 export default function AppMenu() {
   const [menu, setMenu] = useState<MenuState | null>(null);
   const close = useCallback(() => setMenu(null), []);
+  // The latest right-click, so a slower spelling answer for an earlier one
+  // doesn't open its menu.
+  const asked = useRef(0);
 
   useEffect(() => {
+    const open = (e: MouseEvent) => {
+      e.preventDefault();
+      const target = e.target as Element | null;
+      const items = itemsAt(target);
+      const ask = ++asked.current;
+      void spellingItems(target, e.clientX, e.clientY).then((spelling) => {
+        if (ask !== asked.current) return;
+        const all = [...spelling, ...items];
+        setMenu(all.length ? { x: e.clientX, y: e.clientY, items: all } : null);
+      });
+    };
+    // Typing in a text box (or other editable text) always gets this menu,
+    // with spelling and Cut, Copy and Paste, even inside something with a
+    // menu of its own (a task, a list). Notes keep theirs (tables, to-dos).
+    const onTyping = (e: MouseEvent) => {
+      if (e.shiftKey || !(e.target instanceof Element) || !typingIn(e.target)) return;
+      e.stopPropagation();
+      open(e);
+    };
     const onContext = (e: MouseEvent) => {
       // A screen's own menu (a note, a task, a list) already opened.
-      if (e.defaultPrevented) return;
-      if (e.shiftKey) return;
-      e.preventDefault();
-      const items = itemsAt(e.target as Element | null);
-      setMenu(items.length ? { x: e.clientX, y: e.clientY, items } : null);
+      if (e.defaultPrevented || e.shiftKey) return;
+      open(e);
     };
-    // Bubbling, so screens' own handlers (React's, on the root) go first.
+    // Typing first, before anything else hears the click; the rest bubbling,
+    // so screens' own handlers (React's, on the root) go first.
+    window.addEventListener("contextmenu", onTyping, true);
     document.addEventListener("contextmenu", onContext);
-    return () => document.removeEventListener("contextmenu", onContext);
+    return () => {
+      window.removeEventListener("contextmenu", onTyping, true);
+      document.removeEventListener("contextmenu", onContext);
+    };
   }, []);
 
   return <ContextMenu menu={menu} onClose={close} />;
@@ -61,7 +89,7 @@ function itemsAt(target: Element | null): MenuItem[] {
     return [...items, ...fieldItems(field)];
   }
   const host = editingHost(target);
-  if (host) return [...items, ...editableItems(host)];
+  if (host) return [...items, ...noteColorItems(host), ...editableItems(host)];
 
   // Plain text on the page that's been selected.
   const selected = window.getSelection()?.toString() ?? "";
@@ -96,6 +124,14 @@ function noteLinkItems(link: Element): MenuItem[] {
       })),
     },
   ];
+}
+
+// Text selected in a note: its colors (editor/colors.ts).
+function noteColorItems(host: Element): MenuItem[] {
+  const note = host.closest(".ProseMirror") as (HTMLElement & { editor?: Editor }) | null;
+  const editor = note?.editor;
+  if (!editor || !editor.isEditable || editor.state.selection.empty) return [];
+  return [...colorMenuItems(editor), { type: "separator" }];
 }
 
 // A text box: what was selected is kept, since picking from the menu moves
@@ -227,6 +263,14 @@ function editableItems(host: HTMLElement): MenuItem[] {
       },
     },
   ];
+}
+
+// A text box, or editable text that isn't a note (Visual or Markdown).
+function typingIn(target: Element): boolean {
+  if (target.closest(".ProseMirror, .cm-editor")) return false;
+  const field = target.closest("input, textarea") as Field | null;
+  if (field) return field instanceof HTMLTextAreaElement || textInputs.has(field.getAttribute("type") ?? "");
+  return Boolean(editingHost(target));
 }
 
 // The outermost editable element around the target, if any.

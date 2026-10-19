@@ -41,6 +41,7 @@ import type { MenuItem } from "../components/ContextMenu";
 import { Icon } from "../ui/icons";
 import { SectionLabel } from "../ui/bits";
 import { useSettings } from "../lib/SettingsContext";
+import { currentSettings } from "../lib/settings";
 import NoteIcon from "./NoteIcon";
 import { useNotes, type NotesFilter } from "./NotesContext";
 
@@ -69,7 +70,16 @@ export default function NotesSidebar({ trashCount }: { trashCount: number }) {
   const [unpinning, setUnpinning] = useState(false);
   const pinZoneTimer = useRef<number | undefined>(undefined);
   const [pinDrop, setPinDrop] = useState<{ name: string; where: "before" | "after" } | "end" | null>(null);
-  const sortByPriority = Boolean(useSettings().settings.SortByPriority);
+  const { settings, update } = useSettings();
+  const sortByPriority = Boolean(settings.SortByPriority);
+  // Pinned, Notebooks and Tags fold away to save room, and stay that way.
+  const folded = new Set(settings.NotesSidebarFolded ?? []);
+  const isOpen = (id: string) => !folded.has(id);
+  // From the settings as they are this moment, so two quick clicks both count.
+  const toggle = (id: string) => {
+    const now = currentSettings().NotesSidebarFolded ?? [];
+    update({ NotesSidebarFolded: now.includes(id) ? now.filter((f) => f !== id) : [...now, id] });
+  };
 
   const nb = notebook!;
 
@@ -471,73 +481,82 @@ export default function NotesSidebar({ trashCount }: { trashCount: number }) {
             }}
             onDrop={dropOnPins}
           >
-            <SectionLabel className="px-2 pb-1.5">Pinned</SectionLabel>
-            {pinned.map((note) => {
-              const active = note.name === current;
-              const icon = iconFor(note.name);
-              const dropping = pinDrop && pinDrop !== "end" && pinDrop.name === note.name ? pinDrop.where : null;
-              return (
-                <div
-                  key={note.name}
-                  data-note={note.name}
-                  draggable={renaming !== note.name}
-                  className={clsx(
-                    "pin-row group flex h-9 cursor-default items-center gap-[10px] rounded-[10px] px-2 text-13",
-                    isSelected(note.name) ? "note-selected text-text" : active ? "bg-panel text-text" : "text-muted hover:bg-panel hover:text-text",
-                    dragging === note.name && "opacity-40",
-                    dropping === "before" && "drop-before",
-                    dropping === "after" && "drop-after",
-                  )}
-                  onClick={(e) => clickNote(e, note.name, pinned.map((n) => n.name))}
-                  onDoubleClick={(e) => {
-                    if (e.ctrlKey) return;
-                    actions.rename(note.name);
-                  }}
-                  onAuxClick={(e) => {
-                    if (e.button === 1) actions.openInTab(note.name);
-                  }}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    openMenu(e.clientX, e.clientY, menuFor(note.name));
-                  }}
-                  onDragStart={(e) => startDrag(e, note.name, "pins")}
-                  onDragEnd={endDrag}
-                  onDragOver={(e) => dragOverPin(e, note.name)}
-                  onDrop={dropOnPins}
-                >
-                  <Pin size={14} strokeWidth={1.8} className="shrink-0 text-accent" />
-                  {icon && <NoteIcon icon={icon} className="-mr-1" />}
-                  {renaming === note.name ? (
-                    <RenameField initial={titleOf(note.name)} onDone={(t) => finishRename(note.name, t)} />
-                  ) : (
-                    <span className="min-w-0 flex-1 truncate">{titleOf(note.name)}</span>
-                  )}
-                  <button
-                    className="hidden shrink-0 rounded-[6px] p-1 text-muted group-hover:block hover:bg-panel2 hover:text-text"
-                    title="Unpin"
-                    aria-label={`Unpin ${titleOf(note.name)}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      actions.setPinned(note.name, false);
+            <div className="flex items-center gap-2 pr-1 pb-1.5 pl-2">
+              <FoldLabel open={isOpen("pinned")} onToggle={() => toggle("pinned")}>
+                Pinned
+              </FoldLabel>
+              {!isOpen("pinned") && <span className="font-mono text-11 text-muted">{nb.pins.length}</span>}
+            </div>
+            <Fold open={isOpen("pinned")} className="flex flex-col gap-0.5">
+              {pinned.map((note) => {
+                const active = note.name === current;
+                const icon = iconFor(note.name);
+                const dropping = pinDrop && pinDrop !== "end" && pinDrop.name === note.name ? pinDrop.where : null;
+                return (
+                  <div
+                    key={note.name}
+                    data-note={note.name}
+                    draggable={renaming !== note.name}
+                    className={clsx(
+                      "pin-row group flex h-9 cursor-default items-center gap-[10px] rounded-[10px] px-2 text-13",
+                      isSelected(note.name) ? "note-selected text-text" : active ? "bg-panel text-text" : "text-muted hover:bg-panel hover:text-text",
+                      dragging === note.name && "opacity-40",
+                      dropping === "before" && "drop-before",
+                      dropping === "after" && "drop-after",
+                    )}
+                    onClick={(e) => clickNote(e, note.name, pinned.map((n) => n.name))}
+                    onDoubleClick={(e) => {
+                      if (e.ctrlKey) return;
+                      actions.rename(note.name);
                     }}
+                    onAuxClick={(e) => {
+                      if (e.button === 1) actions.openInTab(note.name);
+                    }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      openMenu(e.clientX, e.clientY, menuFor(note.name));
+                    }}
+                    onDragStart={(e) => startDrag(e, note.name, "pins")}
+                    onDragEnd={endDrag}
+                    onDragOver={(e) => dragOverPin(e, note.name)}
+                    onDrop={dropOnPins}
                   >
-                    <PinOff size={12} />
-                  </button>
+                    <Pin size={14} strokeWidth={1.8} className="shrink-0 text-accent" />
+                    {icon && <NoteIcon icon={icon} className="-mr-1" />}
+                    {renaming === note.name ? (
+                      <RenameField initial={titleOf(note.name)} onDone={(t) => finishRename(note.name, t)} />
+                    ) : (
+                      <span className="min-w-0 flex-1 truncate">{titleOf(note.name)}</span>
+                    )}
+                    <button
+                      className="hidden shrink-0 rounded-[6px] p-1 text-muted group-hover:block hover:bg-panel2 hover:text-text"
+                      title="Unpin"
+                      aria-label={`Unpin ${titleOf(note.name)}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        actions.setPinned(note.name, false);
+                      }}
+                    >
+                      <PinOff size={12} />
+                    </button>
+                  </div>
+                );
+              })}
+              {nb.pins.length === 0 && (
+                <div className={clsx("mx-1 flex h-9 items-center justify-center gap-1.5 rounded-[10px] border border-dashed text-12", pinDrop ? "border-accent text-text" : "border-line text-muted")}>
+                  <Pin size={12} /> Drop here to pin
                 </div>
-              );
-            })}
-            {nb.pins.length === 0 && (
-              <div className={clsx("mx-1 flex h-9 items-center justify-center gap-1.5 rounded-[10px] border border-dashed text-12", pinDrop ? "border-accent text-text" : "border-line text-muted")}>
-                <Pin size={12} /> Drop here to pin
-              </div>
-            )}
-            {nb.pins.length > 0 && pinned.length === 0 && <div className="px-2 py-1 text-12 text-muted">No pinned notes match.</div>}
+              )}
+              {nb.pins.length > 0 && pinned.length === 0 && <div className="px-2 py-1 text-12 text-muted">No pinned notes match.</div>}
+            </Fold>
           </div>
         )}
 
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2 pr-1 pb-1.5 pl-2">
-            <SectionLabel className="flex-1">{filter === "recent" ? "Edited this week" : "Notebooks"}</SectionLabel>
+            <FoldLabel open={isOpen("notebooks")} onToggle={() => toggle("notebooks")}>
+              {filter === "recent" ? "Edited this week" : "Notebooks"}
+            </FoldLabel>
             <span className="font-mono text-11 text-muted">{rows.length}</span>
             {filter !== "recent" && (
               <button
@@ -555,114 +574,119 @@ export default function NotesSidebar({ trashCount }: { trashCount: number }) {
               </button>
             )}
           </div>
-          <div
-            ref={treeRef}
-            className={clsx("relative flex flex-col gap-0.5", unpinning && "drop-unpin")}
-            onDragOver={(e) => {
-              if (!dragging) return;
-              e.preventDefault();
-              if (dragFrom === "pins" && !unpinning) setUnpinning(true);
-            }}
-            onDragLeave={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget as Node)) setUnpinning(false);
-            }}
-            // A pinned note dropped anywhere in the list comes off the pinned list.
-            onDrop={(e) => {
-              e.preventDefault();
-              if (dragging && dragFrom === "pins") actions.setPinned(dragging, false);
-              endDrag();
-            }}
-          >
-            {rows.map(({ note, depth, hasChildren, collapsed }) => {
-              const ids = lookup(nb.tags.Notes, note.name) ?? [];
-              const priority = (lookup(nb.tags.Priorities, note.name) ?? 0) as PriorityValue;
-              const active = note.name === current;
-              const dropping = drop?.name === note.name ? drop.where : null;
-              const pinnedHere = pinnedNames.has(note.name.toLowerCase());
-              const icon = iconFor(note.name);
-              return (
-                <div
-                  key={note.name}
-                  data-note={note.name}
-                  draggable={renaming !== note.name}
-                  aria-expanded={hasChildren ? !collapsed : undefined}
-                  className={clsx(
-                    "group flex h-9 shrink-0 cursor-default items-center gap-2 rounded-[10px] pr-2 text-13",
-                    isSelected(note.name) ? "note-selected text-text" : active ? "bg-accent-soft font-medium text-text" : "hover:bg-panel",
-                    !active && !isSelected(note.name) && (depth === 0 ? "font-medium text-text" : "text-muted hover:text-text"),
-                    dragging === note.name && "opacity-40",
-                    dropping === "before" && "drop-before",
-                    dropping === "after" && "drop-after",
-                    dropping === "inside" && "drop-inside",
-                  )}
-                  style={{ paddingLeft: 8 + depth * 18 }}
-                  onClick={(e) => clickNote(e, note.name, rows.map((r) => r.note.name))}
-                  onDoubleClick={(e) => {
-                    if (e.ctrlKey) return;
-                    actions.rename(note.name);
-                  }}
-                  onAuxClick={(e) => {
-                    if (e.button === 1) actions.openInTab(note.name);
-                  }}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    openMenu(e.clientX, e.clientY, menuFor(note.name));
-                  }}
-                  onDragStart={(e) => startDrag(e, note.name, "tree")}
-                  onDragEnd={endDrag}
-                  onDragOver={(e) => dragOverRow(e, note.name)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // From Pinned: unpinned, and placed where it was dropped.
-                    if (dragging && dragFrom === "pins") actions.setPinned(dragging, false);
-                    if (dragging && drop && drop.name === note.name) actions.drop(dragging, note.name, drop.where);
-                    endDrag();
-                  }}
-                >
-                  <button
-                    className={clsx("flex w-3.5 shrink-0 items-center justify-center text-muted", !hasChildren && "invisible")}
-                    aria-label={collapsed ? `Open ${titleOf(note.name)}` : `Fold ${titleOf(note.name)}`}
-                    tabIndex={hasChildren ? 0 : -1}
-                    onClick={(e) => {
+          <Fold open={isOpen("notebooks")}>
+            <div
+              ref={treeRef}
+              className={clsx("relative flex flex-col gap-0.5", unpinning && "drop-unpin")}
+              onDragOver={(e) => {
+                if (!dragging) return;
+                e.preventDefault();
+                if (dragFrom === "pins" && !unpinning) setUnpinning(true);
+              }}
+              onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) setUnpinning(false);
+              }}
+              // A pinned note dropped anywhere in the list comes off the pinned list.
+              onDrop={(e) => {
+                e.preventDefault();
+                if (dragging && dragFrom === "pins") actions.setPinned(dragging, false);
+                endDrag();
+              }}
+            >
+              {rows.map(({ note, depth, hasChildren, collapsed }) => {
+                const ids = lookup(nb.tags.Notes, note.name) ?? [];
+                const priority = (lookup(nb.tags.Priorities, note.name) ?? 0) as PriorityValue;
+                const active = note.name === current;
+                const dropping = drop?.name === note.name ? drop.where : null;
+                const pinnedHere = pinnedNames.has(note.name.toLowerCase());
+                const icon = iconFor(note.name);
+                return (
+                  <div
+                    key={note.name}
+                    data-note={note.name}
+                    draggable={renaming !== note.name}
+                    aria-expanded={hasChildren ? !collapsed : undefined}
+                    className={clsx(
+                      "group flex h-9 shrink-0 cursor-default items-center gap-2 rounded-[10px] pr-2 text-13",
+                      isSelected(note.name) ? "note-selected text-text" : active ? "bg-accent-soft font-medium text-text" : "hover:bg-panel",
+                      !active && !isSelected(note.name) && (depth === 0 ? "font-medium text-text" : "text-muted hover:text-text"),
+                      dragging === note.name && "opacity-40",
+                      dropping === "before" && "drop-before",
+                      dropping === "after" && "drop-after",
+                      dropping === "inside" && "drop-inside",
+                    )}
+                    style={{ paddingLeft: 8 + depth * 18 }}
+                    onClick={(e) => clickNote(e, note.name, rows.map((r) => r.note.name))}
+                    onDoubleClick={(e) => {
+                      if (e.ctrlKey) return;
+                      actions.rename(note.name);
+                    }}
+                    onAuxClick={(e) => {
+                      if (e.button === 1) actions.openInTab(note.name);
+                    }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      openMenu(e.clientX, e.clientY, menuFor(note.name));
+                    }}
+                    onDragStart={(e) => startDrag(e, note.name, "tree")}
+                    onDragEnd={endDrag}
+                    onDragOver={(e) => dragOverRow(e, note.name)}
+                    onDrop={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
-                      actions.toggleCollapse(note.name);
+                      // From Pinned: unpinned, and placed where it was dropped.
+                      if (dragging && dragFrom === "pins") actions.setPinned(dragging, false);
+                      if (dragging && drop && drop.name === note.name) actions.drop(dragging, note.name, drop.where);
+                      endDrag();
                     }}
                   >
-                    <ChevronRight size={12} strokeWidth={2.4} className={clsx("transition-transform", !collapsed && "rotate-90")} />
-                  </button>
-                  {icon && <NoteIcon icon={icon} />}
-                  {renaming === note.name ? (
-                    <RenameField initial={titleOf(note.name)} onDone={(t) => finishRename(note.name, t)} />
-                  ) : (
-                    <span className="min-w-0 flex-1 truncate">{titleOf(note.name)}</span>
-                  )}
-                  <TagDots ids={ids} tagById={tagById} />
-                  {priority > 0 && <span title={`${priorityLabel[priority]} priority`} className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: priorityColor[priority] }} />}
-                  {hasChildren && collapsed && <span className="font-mono text-11 font-normal text-muted">{inside.get(note.name.toLowerCase()) ?? ""}</span>}
-                  {renaming !== note.name && (
                     <button
-                      className={clsx("shrink-0 rounded-[6px] p-1 hover:bg-panel2 hover:text-text", pinnedHere ? "text-accent" : "hidden text-muted group-hover:block")}
-                      title={pinnedHere ? "Unpin" : "Pin to top"}
-                      aria-label={`${pinnedHere ? "Unpin" : "Pin"} ${titleOf(note.name)}`}
+                      className={clsx("flex w-3.5 shrink-0 items-center justify-center text-muted", !hasChildren && "invisible")}
+                      aria-label={collapsed ? `Open ${titleOf(note.name)}` : `Fold ${titleOf(note.name)}`}
+                      tabIndex={hasChildren ? 0 : -1}
                       onClick={(e) => {
                         e.stopPropagation();
-                        actions.setPinned(note.name, !pinnedHere);
+                        actions.toggleCollapse(note.name);
                       }}
                     >
-                      <Pin size={12} className={clsx(pinnedHere && "rotate-45")} />
+                      <ChevronRight size={12} strokeWidth={2.4} className={clsx("transition-transform", !collapsed && "rotate-90")} />
                     </button>
-                  )}
-                </div>
-              );
-            })}
-            {rows.length === 0 && <div className="px-2 py-3 text-13 text-muted">{notes.length ? "No notes here." : "No notes yet. Press + to write one."}</div>}
-          </div>
+                    {icon && <NoteIcon icon={icon} />}
+                    {renaming === note.name ? (
+                      <RenameField initial={titleOf(note.name)} onDone={(t) => finishRename(note.name, t)} />
+                    ) : (
+                      <span className="min-w-0 flex-1 truncate">{titleOf(note.name)}</span>
+                    )}
+                    <TagDots ids={ids} tagById={tagById} />
+                    {priority > 0 && <span title={`${priorityLabel[priority]} priority`} className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: priorityColor[priority] }} />}
+                    {hasChildren && collapsed && <span className="font-mono text-11 font-normal text-muted">{inside.get(note.name.toLowerCase()) ?? ""}</span>}
+                    {renaming !== note.name && (
+                      <button
+                        className={clsx("shrink-0 rounded-[6px] p-1 hover:bg-panel2 hover:text-text", pinnedHere ? "text-accent" : "hidden text-muted group-hover:block")}
+                        title={pinnedHere ? "Unpin" : "Pin to top"}
+                        aria-label={`${pinnedHere ? "Unpin" : "Pin"} ${titleOf(note.name)}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          actions.setPinned(note.name, !pinnedHere);
+                        }}
+                      >
+                        <Pin size={12} className={clsx(pinnedHere && "rotate-45")} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+              {rows.length === 0 && <div className="px-2 py-3 text-13 text-muted">{notes.length ? "No notes here." : "No notes yet. Press + to write one."}</div>}
+            </div>
+          </Fold>
         </div>
 
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between px-2">
-            <SectionLabel>Tags</SectionLabel>
+          <div className="flex items-center gap-2 px-2">
+            <FoldLabel open={isOpen("tags")} onToggle={() => toggle("tags")}>
+              Tags
+            </FoldLabel>
+            {!isOpen("tags") && <span className="font-mono text-11 text-muted">{nb.tags.Tags.length}</span>}
             <div className="flex gap-0.5">
               <button className="rounded-[6px] p-1 text-muted hover:bg-panel hover:text-text" title="New tag" aria-label="New tag" onClick={actions.newTag}>
                 <Plus size={13} />
@@ -672,7 +696,7 @@ export default function NotesSidebar({ trashCount }: { trashCount: number }) {
               </button>
             </div>
           </div>
-          <div className="flex flex-wrap gap-1.5 px-1">
+          <Fold open={isOpen("tags")} className="flex flex-wrap gap-1.5 px-1">
             {nb.tags.Tags.map((tag) => {
               const on = isFilter({ tag: tag.Id });
               return (
@@ -700,7 +724,7 @@ export default function NotesSidebar({ trashCount }: { trashCount: number }) {
               );
             })}
             {nb.tags.Tags.length === 0 && <span className="px-1 text-12 text-muted">No tags yet.</span>}
-          </div>
+          </Fold>
         </div>
       </div>
 
@@ -773,5 +797,39 @@ function TagDots({ ids, tagById }: { ids: string[]; tagById: Map<string, Tag> })
         return tag ? <span key={id} className="h-[6px] w-[6px] rounded-full opacity-80" style={{ background: tag.Color }} title={tag.Name} /> : null;
       })}
     </span>
+  );
+}
+
+// A sidebar section's name, as a button that folds it away or opens it.
+function FoldLabel({ open, onToggle, children }: { open: boolean; onToggle: () => void; children: React.ReactNode }) {
+  return (
+    <button type="button" aria-expanded={open} onClick={onToggle} title={open ? "Fold away" : "Open"} className="group/fold -ml-1 flex min-w-0 flex-1 items-center gap-1 rounded-[6px] py-0.5 pl-1 text-left">
+      <ChevronRight size={11} strokeWidth={2.4} className={clsx("shrink-0 text-muted transition-transform duration-200 group-hover/fold:text-text", open && "rotate-90")} />
+      <SectionLabel className="truncate group-hover/fold:text-text">{children}</SectionLabel>
+    </button>
+  );
+}
+
+// A section's contents, sliding shut and open. While it moves (and while
+// it's shut) whatever spills over its edge is cut off; once open, nothing is,
+// so drop lines and rings around tags still show.
+function Fold({ open, className, children }: { open: boolean; className?: string; children: React.ReactNode }) {
+  const [moving, setMoving] = useState(false);
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    setMoving(!motionReduced());
+  }, [open]);
+  return (
+    <div
+      className={clsx("grid transition-[grid-template-rows] duration-200 ease-out", open ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}
+      inert={!open}
+      onTransitionEnd={(e) => e.target === e.currentTarget && setMoving(false)}
+    >
+      <div className={clsx("min-h-0", (!open || moving) && "overflow-hidden", className)}>{children}</div>
+    </div>
   );
 }

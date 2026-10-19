@@ -224,7 +224,7 @@ export default function EventPopup({ event, occ, isNew, events, now, openMenu, o
     .join(" · ");
 
   const save = () => {
-    // Someone else's event: only Project Life's own links to it change.
+    // Someone else's event: only Cura's own links to it change.
     if (readOnly) {
       if (event.Feed) patchFeedEvent(event.Id, { Note: f.note, Task: f.task });
       else patchSynced(event.Id, { Note: f.note, Task: f.task });
@@ -257,7 +257,7 @@ export default function EventPopup({ event, occ, isNew, events, now, openMenu, o
   };
   const dot = (color: string) => <span className="h-[9px] w-[9px] rounded-[3px]" style={{ background: color }} />;
 
-  // Project Life's calendars, then each connected account's.
+  // Cura's calendars, then each connected account's.
   const calendarMenu = (e: React.MouseEvent<HTMLElement>) =>
     under(e, [
       ...currentLists().map<MenuItem>((l) => ({ label: l.name, icon: dot(l.color), checked: l.id === f.calendar, onSelect: () => set({ calendar: l.id }) })),
@@ -269,7 +269,7 @@ export default function EventPopup({ event, occ, isNew, events, now, openMenu, o
             label: `${c.Name} · ${appName[account.Provider]}`,
             icon: dot(listFor(key).color),
             checked: key === f.calendar,
-            // Repeating events stay on Project Life's own calendars.
+            // Repeating events stay on Cura's own calendars.
             disabled: f.repeat !== "never" && !onSynced,
             onSelect: () => set({ calendar: key }),
           };
@@ -301,7 +301,7 @@ export default function EventPopup({ event, occ, isNew, events, now, openMenu, o
   const holiday = isHoliday(event);
   const provider = appName[remoteAccount?.Provider ?? "microsoft"];
   const notice = holiday
-    ? `On “${feed}”, the calendar that comes with Project Life, so it can't be changed here.`
+    ? `On “${feed}”, the calendar that comes with Cura, so it can't be changed here.`
     : feed
       ? `On “${feed}”, a calendar you subscribe to, so it's changed where it comes from. You can still link a note or task to it here.`
       : remote && readOnly

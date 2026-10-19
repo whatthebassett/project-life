@@ -243,7 +243,7 @@ export interface Attached {
 }
 
 export async function attachFile(task: string, source: string): Promise<Attached> {
-  if (!inTauri) throw new Error("Attachments work in the Project Life app.");
+  if (!inTauri) throw new Error("Attachments work in the Cura app.");
   return invoke<Attached>("attach_file", { task, source });
 }
 
@@ -290,7 +290,7 @@ export const system = {
   // The clipboard's text and HTML, for Paste in the right-click menu.
   readClipboard: () =>
     inTauri ? invoke<{ text: string; html: string }>("read_clipboard") : navigator.clipboard.readText().then((text) => ({ text, html: "" })),
-  location: () => (inTauri ? invoke<{ latitude: number; longitude: number }>("current_location") : Promise.reject(new Error("Location works in the Project Life app."))),
+  location: () => (inTauri ? invoke<{ latitude: number; longitude: number }>("current_location") : Promise.reject(new Error("Location works in the Cura app."))),
   secretGet: (name: string) => tauriOnly<string | null>(null, () => invoke("secret_get", { name })),
   secretSet: (name: string, value: string | null) => tauriOnly(undefined, () => invoke<void>("secret_set", { name, value })),
   systemFonts: () => tauriOnly<string[]>([], () => invoke("list_system_fonts")),
@@ -356,7 +356,7 @@ export interface RemoteEventInput {
   meeting: boolean;
 }
 
-const needsApp = () => Promise.reject(new Error("Connected accounts work in the Project Life app."));
+const needsApp = () => Promise.reject(new Error("Connected accounts work in the Cura app."));
 
 export const accountsApi = {
   available: () => tauriOnly<Record<ProviderId, boolean>>({ microsoft: false, google: false }, () => invoke("accounts_available")),

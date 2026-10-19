@@ -92,7 +92,7 @@ function build(): Sample {
     events: [
       { id: "e1", title: "Morning walk", start: at(9.5), end: at(10), calendar: "personal", meta: "30 min · Outside" },
       { id: "e2", title: "Standup", start: at(11), end: at(11.25), calendar: "checkpoint", meta: "15 min · Video call", call: "meet", joinUrl: "https://meet.google.com/" },
-      { id: "e3", title: "Deep work: Project Life", start: at(14), end: at(16), calendar: "checkpoint", meta: "2 hr · Focus mode" },
+      { id: "e3", title: "Deep work: Cura", start: at(14), end: at(16), calendar: "checkpoint", meta: "2 hr · Focus mode" },
       {
         id: "e4",
         title: "Design review",

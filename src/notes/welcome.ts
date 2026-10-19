@@ -9,7 +9,7 @@ export const GUIDE = "How to use Notes";
 
 export function welcomeNotes(now = new Date()): [string, string][] {
   const today = ymd(now);
-  const welcome = `Notes is where your writing lives in Project Life. Every note is a plain Markdown file on this PC, so it opens in any other app too, and nothing here needs an account or the internet.
+  const welcome = `Notes is where your writing lives in Cura. Every note is a plain Markdown file on this PC, so it opens in any other app too, and nothing here needs an account or the internet.
 
 > [!info] **Start here**
 > Open **How to use Notes** in the notebook on the left for a tour of every block you can make and every way to format text. It's a normal note, so try things out right in it.
@@ -21,6 +21,7 @@ export function welcomeNotes(now = new Date()): [string, string][] {
 - [ ] Press **Ctrl /** to see this note as plain Markdown, then again to come back
 - [ ] Right-click a note in the notebook to pin it, tag it, or tuck it inside another note
 - [ ] Press **Ctrl T** to jump to any note by name (Ctrl Enter opens it in a new tab)
+- [ ] Right-click a word underlined in red for spelling suggestions
 
 ## Where things are
 
@@ -49,6 +50,7 @@ Select some text and use a shortcut, or type the Markdown around it and it turns
 - ~~Strikethrough~~: Ctrl Shift X, or \`~~struck~~\`
 - \`Inline code\`: Ctrl E, or put it between backticks
 - ||A spoiler||: Ctrl Shift P, or \`||hidden||\`. It stays blurred until you click it.
+- ==Highlight==: Ctrl Shift H, or \`==highlight==\`. For other highlight colors, and for <span style="color: #3a86c8">colored text</span>, select some words and use the **A** and the pen in the format bar, or right-click them. **Custom…** picks any color.
 - [A link](https://tauri.app): Ctrl K, or \`[text](address)\`. Click a link for its bar (show it another way, open it, copy it), or Ctrl+click to open it straight away.
 
 It works whichever way you type: the marks first and then the words between them, or on keyboards where the backtick and tilde are dead keys.
@@ -105,7 +107,7 @@ function greet(name) {
 
 ## Tables
 
-Type a row like **| Day | Plan |** and press Enter, or pick Table from the / menu. Right-click a table to add or remove rows and columns, or to line up the text in the cells you've selected.
+Type a row like **| Day | Plan |** and press Enter, or pick Table from the / menu. Right-click a table to add or remove rows and columns, or to line up the text in the cells you've selected. To move a column, point at it and drag the dots on its top edge left or right. To merge cells, drag across them (or hold Shift and use the arrow keys), then right-click and pick **Merge cells**, or press **Ctrl Shift M**. The same key splits a merged cell again. **Ctrl Shift A** selects everything in the cell you're in, rather than the whole note.
 
 | Day | Plan | Done |
 | --- | --- | --- |

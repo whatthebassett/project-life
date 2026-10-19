@@ -150,7 +150,7 @@ export default function App() {
     <NotesProvider visible={screen === "notes"} onShow={showNotes}>
       <div className="flex h-full flex-col">
         <TitleBar
-          title={`Project Life · ${screenName(screen)}`}
+          title={`Cura · ${screenName(screen)}`}
           onGallery={import.meta.env.DEV ? () => setScreen(screen === "gallery" ? "home" : "gallery") : undefined}
           galleryOpen={screen === "gallery"}
         />

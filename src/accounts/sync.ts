@@ -1,4 +1,4 @@
-// Bringing connected calendars into Project Life (Settings → Connected
+// Bringing connected calendars into Cura (Settings → Connected
 // accounts → Sync calendars): a month back to six months ahead, each
 // repeating event as its separate days. What was last synced stays in
 // accounts.json, so the Schedule still has it offline.
@@ -16,7 +16,7 @@ const AHEAD_DAYS = 186;
 
 const RECONNECT = "RECONNECT:";
 
-// Fields that belong to Project Life, not Outlook or Google: kept across syncs.
+// Fields that belong to Cura, not Outlook or Google: kept across syncs.
 const LOCAL_FIELDS = ["Reminded", "Note", "Task", "Created"] as const;
 
 export function toEvent(account: Account, calendar: SyncedCalendar, r: RemoteEvent, before?: CalEvent): CalEvent {
@@ -132,7 +132,7 @@ export async function syncAll(): Promise<void> {
 }
 
 // When calendars sync: on start, then every 5 or 15 minutes, or only when
-// Project Life opens and when the Schedule is opened ("Only when open").
+// Cura opens and when the Schedule is opened ("Only when open").
 export function useAccountSync() {
   const { settings } = useSettings();
   const every = settings.SyncEvery ?? "5";

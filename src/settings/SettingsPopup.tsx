@@ -39,11 +39,11 @@ interface Section {
 }
 
 const groups: { label: string; items: Section[] }[] = [
-  { label: "YOU", items: [{ id: "profile", label: "Profile", desc: "How Project Life greets you and where you are", icon: "profile", keywords: "display name greeting home location weather news profile picture avatar" }] },
+  { label: "YOU", items: [{ id: "profile", label: "Profile", desc: "How Cura greets you and where you are", icon: "profile", keywords: "display name greeting home location weather news profile picture avatar" }] },
   {
     label: "APP",
     items: [
-      { id: "general", label: "General", desc: "Startup, dates and language", icon: "settings", keywords: "open when windows starts startup keep running in the tray close open to week starts on time format 12-hour 24-hour clock date format language english updates update channel beta" },
+      { id: "general", label: "General", desc: "Startup, dates and language", icon: "settings", keywords: "open when windows starts startup keep running in the tray close open to spell check spelling dictionary week starts on time format 12-hour 24-hour clock date format language english updates update channel beta" },
       { id: "appearance", label: "Appearance", desc: "Themes, fonts and how the app feels", icon: "appearance", keywords: "theme match windows light dark accent color window background mica acrylic headline font text size add a font google fonts density compact sidebar icons" },
       { id: "home", label: "Home screen", desc: "Pick what shows up on Home", icon: "home", keywords: "cards up next today's progress schedule tasks goals habits recent notes news weather news sources temperature" },
       { id: "notifications", label: "Notifications", desc: "What can interrupt you, and when", icon: "notifications", keywords: "remind me about events calls about to start join tasks due habit reminders goal check-ins quiet hours stay quiet while i'm live obs meld streaming sound chime pop test" },
@@ -54,7 +54,7 @@ const groups: { label: string; items: Section[] }[] = [
   {
     label: "FEATURES",
     items: [
-      { id: "notes", label: "Notes", desc: "The editor and where notes are kept", icon: "notes", keywords: "open notes in visual markdown link previews spell check cursor block underline new tab word wrap line numbers notes folder editor copy" },
+      { id: "notes", label: "Notes", desc: "The editor and where notes are kept", icon: "notes", keywords: "open notes in visual markdown link previews cursor block underline new tab word wrap line numbers notes folder editor copy" },
       { id: "schedule", label: "Schedule", desc: "Defaults for new events", icon: "schedule", keywords: "new events calendar length reminder video call teams meet zoom open to week month time zone" },
       { id: "tasks", label: "Tasks", desc: "Quick add, lists and Later", icon: "tasks", keywords: "new tasks go to list read dates from what i type later today tomorrow completed tasks show fold hide" },
       { id: "habits", label: "Habits and goals", desc: "Streaks, days and check-ins", icon: "habits", keywords: "my day ends at midnight streak saver show habits in tasks today weekly check-in celebrate finished goals" },

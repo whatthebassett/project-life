@@ -1,6 +1,6 @@
-# Project Life: Design Spec
+# Cura: Design Spec
 
-Project Life is a desktop life-assistant app for Windows: notes, schedule, tasks, habits and goals in one place, with a Home screen that shows a bit of everything. It is an offshoot of **Checkpoint** (`C:\Coding Projects\Noted\noted-tauri`) and should reuse its stack and code where it fits.
+Cura (first called Project Life) is a desktop life-assistant app for Windows: notes, schedule, tasks, habits and goals in one place, with a Home screen that shows a bit of everything. It is an offshoot of **Checkpoint** (`C:\Coding Projects\Noted\noted-tauri`) and should reuse its stack and code where it fits.
 
 This file is the source of truth for the look and feel. The `design/` folder holds a mockup of every screen.
 
@@ -213,7 +213,7 @@ Build these once and use them everywhere:
 - **New:**
   - A slim icon rail.
   - Filter chips (All, Recent, High priority, Untagged).
-  - Right panel: "On this page" outline, **Linked in Project Life** (events and to-dos sent to Tasks), and details (word count, to-do progress, file path).
+  - Right panel: "On this page" outline, **Linked in Cura** (events and to-dos sent to Tasks), and details (word count, to-do progress, file path).
   - A status bar showing it's saved.
 
 ### Schedule (`Calendar.dc.html`) and New event (`EventNew.dc.html`)

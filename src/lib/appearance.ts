@@ -1,4 +1,5 @@
 import { Effect, getCurrentWindow } from "@tauri-apps/api/window";
+import { setSpellOn } from "./spell";
 import { inTauri, system } from "./api";
 import { textScale, type Settings } from "./settings";
 import { themeFor, type Theme } from "./themes";
@@ -67,10 +68,12 @@ export function applyAppearance(settings: Settings) {
   flag(root, "targets", settings.BigTargets, "big");
   flag(root, "links", settings.UnderlineLinks, "underline");
   flag(root, "density", settings.Density === "compact", "compact");
-  // Settings → Notes: the cursor's shape, and spell check (inherited by every
-  // text box and note that doesn't turn it off itself).
+  // Settings → Notes: the cursor's shape. Settings → General: spell check
+  // (inherited by every text box that doesn't turn it off itself; notes
+  // underline their own, lib/spell.ts).
   flag(root, "cursor", settings.Cursor === "block" || settings.Cursor === "underline", settings.Cursor);
   root.spellcheck = settings.SpellCheck !== false;
+  setSpellOn(settings.SpellCheck !== false);
 
   const accent = accentChoices.find((a) => a.id === settings.Accent);
   if (accent) {

@@ -64,7 +64,7 @@ export function stepDay(h: Habit, day: string, by: number) {
   sayDay(h, day);
 }
 
-// The timer for time habits: it runs while Project Life is open (the tray
+// The timer for time habits: it runs while Cura is open (the tray
 // too) and, stopped, adds its minutes to today.
 export function startTimer(h: Habit) {
   edit(h.Id, (x) => ({ ...x, Timer: new Date().toISOString() }));

@@ -9,7 +9,7 @@ import { motionReduced } from "../lib/motion";
 //
 // In the file it's the form other Markdown tools write too: an ordinary list
 // of links between two comments, so other apps show a working contents list
-// and Project Life reads the whole block back as this one.
+// and Cura reads the whole block back as this one.
 //   <!-- toc -->
 //   - [Plans](#plans)
 //     - [This week](#this-week)

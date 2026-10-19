@@ -18,7 +18,7 @@ export const priorityLabel: Record<PriorityValue, string> = {
   2: "Medium",
   3: "High",
 };
-// Project Life's priority colors (DESIGN.md §2): High danger, Medium warn,
+// Cura's priority colors (DESIGN.md §2): High danger, Medium warn,
 // Low accent2, so notes match tasks.
 export const priorityColor: Record<PriorityValue, string> = {
   0: "",

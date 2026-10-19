@@ -49,7 +49,9 @@ export interface Settings {
   TasksView?: string;
   TasksGroupBy?: "date" | "list";
   TasksFolded?: string[];
-  // Closing the window keeps Project Life in the tray (default), so
+  // The Notes sidebar's sections folded away: "pinned", "notebooks", "tags".
+  NotesSidebarFolded?: string[];
+  // Closing the window keeps Cura in the tray (default), so
   // reminders still fire. Read by Rust too (lib.rs).
   KeepInTray?: boolean;
   // Schedule: the view, and the calendars hidden from it.

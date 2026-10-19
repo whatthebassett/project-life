@@ -1,4 +1,4 @@
-// The tray icon: closing the window can leave Project Life running there
+// The tray icon: closing the window can leave Cura running there
 // (Settings → General → Keep running in the tray, on by default), so
 // reminders still fire. Clicking the icon brings the window back; its menu
 // has Open and Quit. Reminders arrive as Windows toasts, a call's with a
@@ -44,13 +44,15 @@ pub fn register_toast_identity(app: &tauri::App) {
     if dev {
         return;
     }
+    // Written again whenever the app's icon changes.
     let icon = data_dir().join("app-icon.png");
-    if !icon.exists() {
+    let png: &[u8] = include_bytes!("../icons/128x128@2x.png");
+    if std::fs::read(&icon).ok().as_deref() != Some(png) {
         let _ = std::fs::create_dir_all(data_dir());
-        let _ = std::fs::write(&icon, include_bytes!("../icons/128x128@2x.png"));
+        let _ = std::fs::write(&icon, png);
     }
     let key = format!("HKCU\\Software\\Classes\\AppUserModelId\\{}", app.config().identifier);
-    for (name, value) in [("DisplayName", "Project Life".to_string()), ("IconUri", icon.to_string_lossy().to_string())] {
+    for (name, value) in [("DisplayName", "Cura".to_string()), ("IconUri", icon.to_string_lossy().to_string())] {
         let _ = std::process::Command::new("reg")
             .args(["add", &key, "/v", name, "/t", "REG_SZ", "/d", &value, "/f"])
             .creation_flags(0x0800_0000) // CREATE_NO_WINDOW
@@ -59,11 +61,11 @@ pub fn register_toast_identity(app: &tauri::App) {
 }
 
 pub fn setup(app: &tauri::App) -> tauri::Result<()> {
-    let open = MenuItem::with_id(app, "open", "Open Project Life", true, None::<&str>)?;
+    let open = MenuItem::with_id(app, "open", "Open Cura", true, None::<&str>)?;
     let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&open, &quit_item])?;
     let mut tray = TrayIconBuilder::with_id("main")
-        .tooltip("Project Life")
+        .tooltip("Cura")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -103,7 +105,7 @@ pub fn quit_app(app: AppHandle) {
 }
 
 // A reminder. With a join link, the toast gets a button ("Join Teams") that
-// opens it; clicking the toast itself brings Project Life forward.
+// opens it; clicking the toast itself brings Cura forward.
 #[tauri::command]
 pub fn show_toast(app: AppHandle, title: String, body: String, join_label: Option<String>, join_url: Option<String>, sound: Option<String>) -> Result<(), String> {
     #[cfg(windows)]

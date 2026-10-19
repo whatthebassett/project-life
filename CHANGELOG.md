@@ -1,5 +1,45 @@
 # Changelog
 
+## Power (1.0.0)
+
+*October 19, 2026.* Project Life is now Cura, with a new icon. Table columns you can drag into place and cells you can merge, colored and highlighted text, spell check everywhere you type, and sidebar sections that fold away.
+
+### Features
+
+#### Cura
+
+- Project Life is now called Cura, with a new icon in the taskbar, the tray, notifications and the sidebar.
+- The portable app is now Cura.exe in a Cura folder. Your settings and sign-ins carry over; move the Data folder from beside Project Life.exe to beside Cura.exe and everything comes with you.
+
+#### Tables
+
+- Move a column by dragging the dots on its top edge: the column follows the pointer, the others slide aside to make room, and a rounded outline shows where it will land. Let go to finish the move, or press Escape to put it back.
+- Move column left and Move column right in the table menu, with the columns sliding into their new places.
+- Merge cells: select them (drag across, or Shift and the arrow keys), then right-click and pick Merge cells, or press Ctrl+Shift+M. The same key, or Split cell, takes them apart again. Other Markdown apps see an ordinary table.
+- Ctrl+Shift+A selects everything in the cell you're in, rather than the whole note.
+
+#### Notes
+
+- Text colors and highlights: select some words and use the A and the pen in the format bar, or right-click them. Nine colors that stay readable in every theme, or Custom… for any other.
+- Ctrl+Shift+H highlights in the last color you picked, and takes it off again. Typing `==text==` highlights too.
+- Colors are saved so other apps can show them: `==yellow==`, `<mark>` for other highlights, and `<span style="color">` for colored text.
+- Pinned, Notebooks and Tags in the sidebar fold away to save room, and stay folded next time.
+
+#### Spell check
+
+- Misspelled words in a note are underlined in red, checked by Windows' own spell checker in your Windows language.
+- Right-click a misspelled word anywhere you can type (a note, Markdown mode, any text box) for suggestions, Add to dictionary (shared with Edge and Office) and Ignore.
+- It's now in Settings → General → Typing, since it covers the whole app.
+
+### Defect fixes
+
+- **Everywhere**: right-clicking in a text box inside a task, a list or another item opened that item's menu; it now opens the text menu, with Cut, Copy, Paste and spelling.
+
+### Known issues
+
+- **Updates**: copies from before the rename (Project Life) can't update themselves to Cura. Download the Cura zip from the Releases page instead; updates work again from there.
+- **Tables**: a column that only exists inside merged cells has no drag handle; use Move column left or right in the table menu.
+
 ## Lon Lon Ranch (0.5.0 beta)
 
 *October 15, 2026.* Twitch emotes and links between notes; Home cards you can size to anything down to a small square, that show more as they grow; a roomier event editor; three new themes and a full date format.
